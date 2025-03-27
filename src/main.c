@@ -2,6 +2,7 @@
 
 #include "raylib.h"
 #include "raymath.h"
+#include "player.h"
 
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 
@@ -15,11 +16,7 @@ int main() {
     bool drawing3D = false;
 
     // PLAYER VARS
-    int playerX = 0;
-    int playerY = 0;
-    int playerSize = 10;
-    int playerSpeed = 2;
-    int playerRotation = 0;
+    Player player = PlayerCreate(10, 10, 0);
 
     // MAP VARS
     int** grid = calloc(20, sizeof(int*));
@@ -48,24 +45,7 @@ int main() {
     while (!WindowShouldClose()) {		// run the loop untill the user presses ESCAPE or presses the Close button on the window
 
         // Player control
-        if (IsKeyDown(KEY_W)) {
-            playerY -= playerSpeed;
-        }
-        if (IsKeyDown(KEY_S)) {
-            playerY += playerSpeed;
-        }
-        if (IsKeyDown(KEY_A)) {
-            playerX -= playerSpeed;
-        }
-        if (IsKeyDown(KEY_D)) {
-            playerX += playerSpeed;
-        }
-        if (IsKeyDown(KEY_LEFT)) {
-            playerRotation -= playerSpeed;
-        }
-        if (IsKeyDown(KEY_RIGHT)) {
-            playerRotation += playerSpeed;
-        }
+        PlayerInput(player);
         if (IsKeyPressed(KEY_G)) {
             drawing3D = !drawing3D;
         }
@@ -90,8 +70,7 @@ int main() {
                     }
                 }
     
-                DrawCircle(playerX, playerY, playerSize, (Color) {255, 0, 0, 255});
-                DrawLine(playerX, playerY, playerX + (20*cos(DEG2RAD*playerRotation)), playerY + (20*sin(DEG2RAD*playerRotation)), (Color) {0, 0, 255, 255});
+                PlayerDraw2D(player);
             }
 
 
@@ -105,6 +84,8 @@ int main() {
         free(grid[i]);
     }    
     free(grid);
+
+    PlayerDestroy(&player);
 
     // Destroy the window and cleanup the OpenGL context
     CloseWindow();
