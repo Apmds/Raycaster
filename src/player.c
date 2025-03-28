@@ -1,18 +1,19 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 #include "player.h"
 
 struct player {
-    int posX;
-    int posY;
+    double posX;
+    double posY;
     int size;
     int speed;
-    int rotation;
-    int rotationSpeed;
+    double rotation;               // Radianos
+    double rotationSpeed;          // Radianos
 };
 
 
-Player PlayerCreate(int playerX, int playerY, int playerRotationDeg) {
+Player PlayerCreate(int playerX, int playerY, int playerRotationRad) {
     Player pl = malloc(sizeof(struct player));
     assert(pl != NULL);
 
@@ -20,8 +21,8 @@ Player PlayerCreate(int playerX, int playerY, int playerRotationDeg) {
     pl->posY = playerY;
     pl->size = 10;
     pl->speed = 2;
-    pl->rotation = playerRotationDeg;
-    pl->rotationSpeed = 1;
+    pl->rotation = playerRotationRad;
+    pl->rotationSpeed = 2*DEG2RAD;
 
     return pl;
 }
@@ -46,35 +47,48 @@ int PlayerGetY(Player p) {
 }
 
 int PlayerGetRotationDeg(Player p) {
-    return p->rotation;
+    return p->rotation*RAD2DEG;
 }
 
 int PlayerGetRotationRad(Player p) {
-    return p->rotation*DEG2RAD;
+    return p->rotation;
 }
 
 void PlayerDraw2D(Player p) {
     DrawCircle(p->posX, p->posY, p->size, (Color) {255, 0, 0, 255});
-    DrawLine(p->posX, p->posY, p->posX + (20*cos(DEG2RAD*p->rotation)), p->posY + (20*sin(DEG2RAD*p->rotation)), (Color) {0, 0, 255, 255});
+    DrawLine(p->posX, p->posY, p->posX + (20*cos(p->rotation)), p->posY + (20*sin(p->rotation)), (Color) {0, 0, 255, 255});
 }
 
 void PlayerInput(Player p) {
+    double movement_angle = p->rotation;
+    bool moving = false;
+
     if (IsKeyDown(KEY_W)) {
-        p->posY -= p->speed;
+        moving = true;
+        movement_angle = p->rotation + 0;
     }
     if (IsKeyDown(KEY_S)) {
-        p->posY += p->speed;
+        moving = true;
+        movement_angle = p->rotation + 180*DEG2RAD;
     }
     if (IsKeyDown(KEY_A)) {
-        p->posX -= p->speed;
+        moving = true;
+        movement_angle = p->rotation + 270*DEG2RAD;
     }
     if (IsKeyDown(KEY_D)) {
-        p->posX += p->speed;
+        moving = true;
+        movement_angle = p->rotation + 90*DEG2RAD;
     }
+
+    if (moving) {
+        p->posX += p->speed*cos(movement_angle);
+        p->posY += p->speed*sin(movement_angle);
+    }
+
     if (IsKeyDown(KEY_LEFT)) {
-        p->rotation -= p->speed;
+        p->rotation -= p->rotationSpeed;
     }
     if (IsKeyDown(KEY_RIGHT)) {
-        p->rotation += p->speed;
+        p->rotation += p->rotationSpeed;
     }
 }
