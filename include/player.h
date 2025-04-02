@@ -1,6 +1,3 @@
-#include "raylib.h"
-#include "raymath.h"
-
 #ifndef PLAYER_H
 #define PLAYER_H
 

@@ -3,6 +3,7 @@
 #include "raylib.h"
 #include "raymath.h"
 #include "player.h"
+#include "map.h"
 
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 
@@ -19,20 +20,17 @@ int main() {
     Player player = PlayerCreate(10, 10, 0);
 
     // MAP VARS
-    int** grid = calloc(20, sizeof(int*));
-    for (int i = 0; i < 20; i++) {
-        grid[i] = calloc(20, sizeof(int));
-    }
-    grid[0][5] = 1;
-    grid[0][6] = 1;
-    grid[0][7] = 1;
-    grid[0][8] = 1;
-    grid[1][8] = 1;
-    grid[2][8] = 1;
-    grid[3][8] = 1;
-    grid[4][8] = 1;
-    grid[5][8] = 1;
-    grid[6][8] = 1;
+    Map map = MapCreate(20, 20);
+    MapSetTile(map, 0, 5, WALL);
+    MapSetTile(map, 0, 6, WALL);
+    MapSetTile(map, 0, 7, WALL);
+    MapSetTile(map, 0, 8, WALL);
+    MapSetTile(map, 1, 8, WALL);
+    MapSetTile(map, 2, 8, WALL);
+    MapSetTile(map, 3, 8, WALL);
+    MapSetTile(map, 4, 8, WALL);
+    MapSetTile(map, 5, 8, WALL);
+    MapSetTile(map, 6, 8, WALL);
 
     // Create the window and OpenGL context
     InitWindow(window_size_x, window_size_y, "Hello Raylib");
@@ -58,17 +56,7 @@ int main() {
             if (drawing3D) {
 
             } else {
-                for (int i = 0; i < 20; i++) {
-                    for (int j = 0; j < 20; j++) {
-                        Color color;
-                        if (grid[i][j] == 1) {
-                            color = (Color) {255, 255, 255, 255};
-                        } else {
-                            color = (Color) {0, 0, 0, 255};
-                        }
-                        DrawRectangle(i*50, j*50, 50, 50, color);
-                    }
-                }
+                MapDraw2D(map);
     
                 PlayerDraw2D(player);
             }
@@ -80,11 +68,7 @@ int main() {
 
     // Cleanup
     // Unload the render texture and objects.
-    for (int i = 0; i < 20; i++) {
-        free(grid[i]);
-    }    
-    free(grid);
-
+    MapDestroy(&map);
     PlayerDestroy(&player);
 
     // Destroy the window and cleanup the OpenGL context

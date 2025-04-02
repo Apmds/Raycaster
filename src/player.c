@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <assert.h>
 #include "player.h"
+#include "raylib.h"
+#include "raymath.h"
 
 struct player {
     double posX;
@@ -39,27 +41,39 @@ void PlayerDestroy(Player* pp) {
 }
 
 int PlayerGetX(Player p) {
+    assert(p != NULL);
+    
     return p->posX;
 }
 
 int PlayerGetY(Player p) {
+    assert(p != NULL);
+    
     return p->posY;
 }
 
 int PlayerGetRotationDeg(Player p) {
+    assert(p != NULL);
+    
     return p->rotation*RAD2DEG;
 }
 
 int PlayerGetRotationRad(Player p) {
+    assert(p != NULL);
+    
     return p->rotation;
 }
 
 void PlayerDraw2D(Player p) {
+    assert(p != NULL);
+
     DrawCircle(p->posX, p->posY, p->size, (Color) {255, 0, 0, 255});
     DrawLine(p->posX, p->posY, p->posX + (20*cos(p->rotation)), p->posY + (20*sin(p->rotation)), (Color) {0, 0, 255, 255});
 }
 
 void PlayerInput(Player p) {
+    assert(p != NULL);
+
     double movement_angle = p->rotation;
     bool moving = false;
 
