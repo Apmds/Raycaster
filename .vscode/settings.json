@@ -13,6 +13,7 @@
 		"typeinfo": "cpp",
 		"ninja.h": "c",
 		"raylib.h": "c",
-		"stdlib.h": "c"
+		"stdlib.h": "c",
+		"player.h": "c"
 	}
 }

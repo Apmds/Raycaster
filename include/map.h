@@ -14,6 +14,11 @@ void MapDestroy(Map* mp);
 void MapSetTile(Map map, int row, int col, MapTile tile);
 MapTile MapGetTile(Map map, int row, int col);
 
+int MapGetTileSize(Map map);
+int MapGetNumRows(Map map);
+int MapGetNumCols(Map map);
+
+
 void MapDraw2D(Map map);
 
 #endif

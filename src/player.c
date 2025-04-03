@@ -12,6 +12,7 @@ struct player {
     int speed;
     double rotation;               // Radianos
     double rotationSpeed;          // Radianos
+    Map map;
 };
 
 
@@ -22,9 +23,10 @@ Player PlayerCreate(int playerX, int playerY, int playerRotationRad) {
     pl->posX = playerX;
     pl->posY = playerY;
     pl->size = 10;
-    pl->speed = 2;
+    pl->speed = 10;
     pl->rotation = playerRotationRad;
     pl->rotationSpeed = 2*DEG2RAD;
+    pl->map = NULL;
 
     return pl;
 }
@@ -39,6 +41,13 @@ void PlayerDestroy(Player* pp) {
 
     *pp = NULL;
 }
+
+void PlayerSetMap(Player p, Map map) {
+    assert(p != NULL);
+
+    p->map = map;
+}
+
 
 int PlayerGetX(Player p) {
     assert(p != NULL);
@@ -63,6 +72,20 @@ int PlayerGetRotationRad(Player p) {
     
     return p->rotation;
 }
+
+bool PlayerIsColliding(Player p) {
+    assert(p != NULL);
+
+    if (p->map == NULL) {
+        return false;
+    }
+
+    int gridPosX = (int) p->posX / MapGetTileSize(p->map);
+    int gridPosY = (int) p->posY / MapGetTileSize(p->map);
+
+    return MapGetTile(p->map, gridPosX, gridPosY) != GROUND;
+}
+
 
 void PlayerDraw2D(Player p) {
     assert(p != NULL);
@@ -94,9 +117,20 @@ void PlayerInput(Player p) {
         movement_angle = p->rotation + 90*DEG2RAD;
     }
 
+    double move_amount_x = p->speed*cos(movement_angle);
+    double move_amount_y = p->speed*sin(movement_angle);
+
+    // Movimento com colisão
     if (moving) {
-        p->posX += p->speed*cos(movement_angle);
-        p->posY += p->speed*sin(movement_angle);
+        p->posX += move_amount_x;
+        if (PlayerIsColliding(p)) {
+            p->posX -= move_amount_x;
+        }
+        
+        p->posY += move_amount_y;
+        if (PlayerIsColliding(p)) {
+            p->posY -= move_amount_y;
+        }
     }
 
     if (IsKeyDown(KEY_LEFT)) {

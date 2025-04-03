@@ -6,7 +6,7 @@
 struct map {
     int numRows;
     int numCols;
-    int gridSize;                   // Tamanho de cada grelha
+    int tileSize;                   // Tamanho de cada quadrado
     MapTile** grid;
 };
 
@@ -26,7 +26,7 @@ Map MapCreate(int numRows, int numCols) {
 
     map->numCols = numCols;
     map->numRows = numRows;
-    map->gridSize = 30;
+    map->tileSize = 30;
 
     return map;
 }
@@ -58,8 +58,29 @@ void MapSetTile(Map map, int row, int col, MapTile tile) {
 
 MapTile MapGetTile(Map map, int row, int col) {
     assert(map != NULL);
+    if (row >= map->numRows || col >= map->numCols) {
+        return GROUND;
+    }
 
     return map->grid[row][col];
+}
+
+int MapGetTileSize(Map map) {
+    assert(map != NULL);
+    
+    return map->tileSize;
+}
+
+int MapGetNumRows(Map map) {
+    assert(map != NULL);
+
+    return map->numRows;
+}
+
+int MapGetNumCols(Map map) {
+    assert(map != NULL);
+
+    return map->numCols;
 }
 
 void MapDraw2D(Map map) {
@@ -73,7 +94,7 @@ void MapDraw2D(Map map) {
             } else {
                 color = (Color) {0, 0, 0, 255};
             }
-            DrawRectangle(row*map->gridSize, col*map->gridSize, map->gridSize, map->gridSize, color);
+            DrawRectangle(row*map->tileSize, col*map->tileSize, map->tileSize, map->tileSize, color);
         }
     }
 }
