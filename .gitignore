@@ -405,4 +405,4 @@ Makefile
 TODO.txt
 
 # Vscode settings folder
-vscode/*
+.vscode/*
