@@ -403,3 +403,6 @@ Makefile
 
 # TODO file
 TODO.txt
+
+# Vscode settings folder
+vscode/*
