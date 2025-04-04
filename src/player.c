@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include "player.h"
+#include "mapray.h"
 #include "raylib.h"
 #include "raymath.h"
 
@@ -10,9 +11,10 @@ struct player {
     double posY;
     int size;
     int speed;
-    double rotation;               // Radianos
-    double rotationSpeed;          // Radianos
-    Map map;
+    double rotation;                // Radianos
+    double rotationSpeed;           // Radianos
+    int FOV;                        // Graus
+    Map map;                        // NULL se não faz parte de nenhum mapa
 };
 
 
@@ -26,6 +28,7 @@ Player PlayerCreate(int playerX, int playerY, int playerRotationRad) {
     pl->speed = 10;
     pl->rotation = playerRotationRad;
     pl->rotationSpeed = 2*DEG2RAD;
+    pl->FOV = 60;
     pl->map = NULL;
 
     return pl;
