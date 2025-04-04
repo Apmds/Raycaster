@@ -58,7 +58,7 @@ void MapSetTile(Map map, int row, int col, MapTile tile) {
 
 MapTile MapGetTile(Map map, int row, int col) {
     assert(map != NULL);
-    if (row >= map->numRows || col >= map->numCols) {
+    if (row >= map->numRows || row < 0 || col >= map->numCols || col < 0) {
         return GROUND;
     }
 
