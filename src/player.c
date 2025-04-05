@@ -53,7 +53,7 @@ Player PlayerCreate(int playerX, int playerY, int playerRotationDeg, int numRays
     // Initialize rays.
     double angle_offset = pl->FOV/2;
     for (int i = 0; i < pl->numRays; i++) {
-        pl->rays[i] = MapRayCreate(pl->rotation, angle_offset, pl->map);
+        pl->rays[i] = MapRayCreate(pl->posX, pl->posY, pl->rotation, angle_offset, pl->map);
         angle_offset += (double) pl->FOV / (double) pl->numRays;
     }
 
@@ -142,6 +142,11 @@ void PlayerDraw2D(Player p) {
 
     DrawCircle(p->posX, p->posY, p->size, (Color) {255, 0, 0, 255});
     DrawLine(p->posX, p->posY, p->posX + (20*cos(p->rotation)), p->posY + (20*sin(p->rotation)), (Color) {0, 0, 255, 255});
+
+    // Draw MapRays
+    for (int i = 0; i < p->numRays; i++) {
+        MapRayDraw2D(p->rays[i]);
+    }
 }
 
 void PlayerInput(Player p) {
@@ -188,5 +193,12 @@ void PlayerInput(Player p) {
     }
     if (IsKeyDown(KEY_RIGHT)) {
         p->rotation += p->rotationSpeed;
+    }
+
+    // Update MapRays
+    for (int i = 0; i < p->numRays; i++) {
+        MapRaySetAngle(p->rays[i], p->rotation);
+        MapRaySetPosition(p->rays[i], p->posX, p->posY);
+        MapRayCast(p->rays[i]);
     }
 }

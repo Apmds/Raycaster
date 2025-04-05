@@ -7,18 +7,20 @@
 
 typedef struct mapray* MapRay;
 
-MapRay MapRayCreate(double angle, double angleOffset, Map map);
+MapRay MapRayCreate(int posX, int posY, double angle, double angleOffset, Map map);
 void MapRayDestroy(MapRay* mrp);
 
 void MapRaySetAngle(MapRay ray, double angle);
+void MapRaySetPosition(MapRay ray, int posX, int posY);
 void MapRaySetMap(MapRay ray, Map map);
 double MapRayGetTrueAngleRad(MapRay ray);
 int MapRayGetTrueAngleDeg(MapRay ray);
 bool MapRayIsColliding(MapRay ray);
 Vector2 MapRayGetCollisionPoint(MapRay ray);
+Vector2 MapRayGetCollisionPointGrid(MapRay ray);
 
 void MapRayCast(MapRay ray);
-void DrawRay2D(MapRay ray);
+void MapRayDraw2D(MapRay ray);
 
 
 #endif
