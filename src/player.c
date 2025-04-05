@@ -14,6 +14,8 @@ struct player {
     double rotation;                // Radians
     double rotationSpeed;           // Radians
     int FOV;                        // Degrees
+    int numRays;
+    MapRay* rays;
     Map map;                        // NULL if player is not in any map
 };
 
@@ -31,7 +33,7 @@ static bool isColliding(int posX, int posY, Map map) {
     return MapGetTile(map, gridPosX, gridPosY) != GROUND;
 }
 
-Player PlayerCreate(int playerX, int playerY, int playerRotationRad) {
+Player PlayerCreate(int playerX, int playerY, int playerRotationDeg, int numRays, Map map) {
     Player pl = malloc(sizeof(struct player));
     assert(pl != NULL);
 
@@ -39,10 +41,21 @@ Player PlayerCreate(int playerX, int playerY, int playerRotationRad) {
     pl->posY = playerY;
     pl->size = 10;
     pl->speed = 10;
-    pl->rotation = playerRotationRad;
+    pl->rotation = playerRotationDeg*DEG2RAD;
     pl->rotationSpeed = 2*DEG2RAD;
     pl->FOV = 60;
-    pl->map = NULL;
+    pl->numRays = numRays;
+    pl->map = map;
+
+    pl->rays = malloc(sizeof(MapRay)*numRays);
+    assert(pl->rays != NULL);
+
+    // Initialize rays.
+    double angle_offset = pl->FOV/2;
+    for (int i = 0; i < pl->numRays; i++) {
+        pl->rays[i] = MapRayCreate(pl->rotation, angle_offset, pl->map);
+        angle_offset += (double) pl->FOV / (double) pl->numRays;
+    }
 
     return pl;
 }
@@ -55,6 +68,11 @@ void PlayerDestroy(Player* pp) {
 
     free(p);
 
+    // Destroy rays.
+    for (int i = 0; i < p->numRays; i++) {
+        free(p->rays[i]);
+    }
+
     *pp = NULL;
 }
 
@@ -62,6 +80,10 @@ void PlayerSetMap(Player p, Map map) {
     assert(p != NULL);
 
     p->map = map;
+
+    for (int i = 0; i < p->numRays; i++) {
+        MapRaySetMap(p->rays[i], map);
+    }
 }
 
 
@@ -80,10 +102,10 @@ int PlayerGetY(Player p) {
 int PlayerGetRotationDeg(Player p) {
     assert(p != NULL);
     
-    return p->rotation*RAD2DEG;
+    return (int) (p->rotation*RAD2DEG);
 }
 
-int PlayerGetRotationRad(Player p) {
+double PlayerGetRotationRad(Player p) {
     assert(p != NULL);
     
     return p->rotation;

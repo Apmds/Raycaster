@@ -6,14 +6,14 @@
 
 typedef struct player* Player;
 
-Player PlayerCreate(int playerX, int playerY, int playerRotationDeg);
+Player PlayerCreate(int playerX, int playerY, int playerRotationDeg, int numRays, Map map);
 void PlayerDestroy(Player* pp);
 
 void PlayerSetMap(Player p, Map map);
 int PlayerGetX(Player p);
 int PlayerGetY(Player p);
 int PlayerGetRotationDeg(Player p);
-int PlayerGetRotationRad(Player p);
+double PlayerGetRotationRad(Player p);
 
 bool PlayerIsColliding(Player p);
 
