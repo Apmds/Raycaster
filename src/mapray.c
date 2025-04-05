@@ -4,7 +4,7 @@
 
 struct mapray {
     double angle;
-    double angle_offset;        // Offset em relação ao player
+    double angle_offset;        // Offset in relation to player
 };
 
 

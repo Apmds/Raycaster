@@ -16,7 +16,7 @@ Map MapCreate(int numRows, int numCols) {
     assert(numRows > 0);
     assert(numCols > 0);
 
-    // Inicializar grid
+    // Initialize grid
     map->grid = malloc(sizeof(MapTile*)*numRows);
     assert(map->grid != NULL);
     for (int i = 0; i < numRows; i++) {
@@ -37,7 +37,7 @@ void MapDestroy(Map* mp) {
 
     Map map = *mp;
 
-    // Destruir grid
+    // Destroy grid
     for (int i = 0; i < map->numRows; i++) {
         free(map->grid[i]);
     }

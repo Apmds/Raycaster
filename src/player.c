@@ -11,12 +11,25 @@ struct player {
     double posY;
     int size;
     int speed;
-    double rotation;                // Radianos
-    double rotationSpeed;           // Radianos
-    int FOV;                        // Graus
-    Map map;                        // NULL se não faz parte de nenhum mapa
+    double rotation;                // Radians
+    double rotationSpeed;           // Radians
+    int FOV;                        // Degrees
+    Map map;                        // NULL if player is not in any map
 };
 
+// Internal: check if position is colliding with map
+static bool isColliding(int posX, int posY, Map map) {
+    // No collision if there's no map.
+    if (map == NULL) {
+        return false;
+    }
+
+    // Get grid position
+    int gridPosX = (int) (posX) / MapGetTileSize(map);
+    int gridPosY = (int) (posY) / MapGetTileSize(map);
+
+    return MapGetTile(map, gridPosX, gridPosY) != GROUND;
+}
 
 Player PlayerCreate(int playerX, int playerY, int playerRotationRad) {
     Player pl = malloc(sizeof(struct player));
@@ -79,14 +92,26 @@ int PlayerGetRotationRad(Player p) {
 bool PlayerIsColliding(Player p) {
     assert(p != NULL);
 
+    // No collision if there's no map.
     if (p->map == NULL) {
         return false;
     }
 
-    int gridPosX = (int) p->posX / MapGetTileSize(p->map);
-    int gridPosY = (int) p->posY / MapGetTileSize(p->map);
+    bool colliding = isColliding(p->posX, p->posY, p->map);
 
-    return MapGetTile(p->map, gridPosX, gridPosY) != GROUND;
+    // Try collision around player.
+    bool colliding_front = isColliding(p->posX + 10*cos(p->rotation), p->posY + 10*sin(p->rotation), p->map);
+    bool colliding_back = isColliding(p->posX + 10*cos(p->rotation + 180*DEG2RAD), p->posY + 10*sin(p->rotation + 180*DEG2RAD), p->map);
+    bool colliding_left = isColliding(p->posX + 10*cos(p->rotation + 270*DEG2RAD), p->posY + 10*sin(p->rotation + 270*DEG2RAD), p->map);
+    bool colliding_right = isColliding(p->posX + 10*cos(p->rotation + 90*DEG2RAD), p->posY + 10*sin(p->rotation + 90*DEG2RAD), p->map);
+
+    bool colliding_front_left = isColliding(p->posX + 10*cos(p->rotation + 315*DEG2RAD), p->posY + 10*sin(p->rotation + 315*DEG2RAD), p->map);
+    bool colliding_front_right = isColliding(p->posX + 10*cos(p->rotation + 45*DEG2RAD), p->posY + 10*sin(p->rotation + 45*DEG2RAD), p->map);
+    
+    bool colliding_back_left = isColliding(p->posX + 10*cos(p->rotation + 225*DEG2RAD), p->posY + 10*sin(p->rotation + 225*DEG2RAD), p->map);
+    bool colliding_back_right = isColliding(p->posX + 10*cos(p->rotation + 135*DEG2RAD), p->posY + 10*sin(p->rotation + 135*DEG2RAD), p->map);
+    
+    return colliding || colliding_front || colliding_back || colliding_left || colliding_right || colliding_front_left || colliding_front_right || colliding_back_left || colliding_back_right;
 }
 
 
@@ -123,7 +148,7 @@ void PlayerInput(Player p) {
     double move_amount_x = p->speed*cos(movement_angle);
     double move_amount_y = p->speed*sin(movement_angle);
 
-    // Movimento com colisão
+    // Movement with collision
     if (moving) {
         p->posX += move_amount_x;
         if (PlayerIsColliding(p)) {
