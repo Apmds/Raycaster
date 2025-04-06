@@ -61,7 +61,7 @@ int main() {
                 PlayerDraw2D(player);
             }
 
-
+            DrawFPS(0, 0);
         // End the frame and get ready for the next one  (display frame, poll input, etc...)
         EndDrawing();
     }

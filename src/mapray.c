@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "mapray.h"
+#include "raymath.h"
 
 struct mapray {
     double angle;               // Not the true angle (usually the same as the player's angle);  Radians.
@@ -14,6 +15,19 @@ struct mapray {
     Map map;
 };
 
+// Internal: check if position is colliding with map
+static bool isColliding(int posX, int posY, Map map) {
+    // No collision if there's no map.
+    if (map == NULL) {
+        return false;
+    }
+
+    // Get grid position
+    int gridPosX = (int) (posX) / MapGetTileSize(map);
+    int gridPosY = (int) (posY) / MapGetTileSize(map);
+
+    return MapGetTile(map, gridPosX, gridPosY) != GROUND;
+}
 
 MapRay MapRayCreate(int posX, int posY, double angle, double angleOffset, Map map) {
     MapRay map_ray = malloc(sizeof(struct mapray));
@@ -21,7 +35,7 @@ MapRay MapRayCreate(int posX, int posY, double angle, double angleOffset, Map ma
 
     map_ray->angle = angle;
     map_ray->angle_offset = angleOffset;
-    map_ray->max_length = 300;
+    map_ray->max_length = 500;
     map_ray->posX = posX;
     map_ray->posY = posY;
     map_ray->is_colliding = false;
@@ -100,22 +114,38 @@ Vector2 MapRayGetCollisionPointGrid(MapRay ray) {
 
 void MapRayCast(MapRay ray) {
     assert(ray != NULL);
-    
+
+    ray->is_colliding = false;
+    ray->collisionX = ray->posX + ray->max_length*cos(MapRayGetTrueAngleRad(ray));
+    ray->collisionY = ray->posY + ray->max_length*sin(MapRayGetTrueAngleRad(ray));
+    if (ray->map == NULL) {
+        return;
+    }
+
     // TODO: implement
-    int length = 0;
+    double length = 0;
     ray->collisionX = 0;
     ray->collisionY = 0;
     
     while (length < ray->max_length && !ray->is_colliding) {
-        /* code */
-        break;
-    }
-    
+        length += 1;
+        ray->collisionX = ray->posX + length*cos(MapRayGetTrueAngleRad(ray));
+        ray->collisionY = ray->posY + length*sin(MapRayGetTrueAngleRad(ray));
+
+        ray->is_colliding = isColliding(ray->collisionX, ray->collisionY, ray->map);
+    }    
 }
 
 void MapRayDraw2D(MapRay ray) {
     assert(ray != NULL);
     
     // TODO: implement
+    Color color;
+    if (ray->is_colliding) {
+        color = (Color) {255, 0, 255, 255};
+    } else {
+        color = (Color) {0, 255, 255, 255};
+    }
+    DrawLine(ray->posX, ray->posY, ray->collisionX, ray->collisionY, color);
 }
 
