@@ -30,7 +30,7 @@ int main() {
     MapSetTile(map, 6, 8, WALL);
 
     // PLAYER VARS
-    Player player = PlayerCreate(10, 10, 0, 120, map);
+    Player player = PlayerCreate(10, 10, 0, 300, map);
 
     // Create the window and OpenGL context
     InitWindow(window_size_x, window_size_y, "Hello Raylib");
@@ -54,7 +54,7 @@ int main() {
             ClearBackground(BLACK);
 
             if (drawing3D) {
-
+                PlayerDraw3D(player, window_size_x, window_size_y);
             } else {
                 MapDraw2D(map);
     

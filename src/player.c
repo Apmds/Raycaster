@@ -149,6 +149,28 @@ void PlayerDraw2D(Player p) {
     }
 }
 
+void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
+    assert(p != NULL);
+
+    int line_width = screenWidth / p->numRays;
+
+    for (int i = 0; i < p->numRays; i++) {
+        MapRay ray = p->rays[i];
+        if (!MapRayIsColliding(ray)) {
+            continue;
+        }
+        
+        int rayX = (line_width/2)+i*line_width;
+
+        Vector2 collisionPoint = MapRayGetCollisionPoint(ray);
+        double distance = (double) MapRayGetMaxLength(ray) / Vector2Distance(collisionPoint, (Vector2) {p->posX, p->posY});
+        distance *= cos(-((p->FOV/2))*DEG2RAD);
+        distance *= 50;
+
+        DrawRectangle(rayX, (screenHeight/2)-(distance/2), line_width, distance, (Color) {255, 255, 255, 255});
+    }
+}
+
 void PlayerInput(Player p) {
     assert(p != NULL);
 

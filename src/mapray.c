@@ -89,6 +89,13 @@ int MapRayGetTrueAngleDeg(MapRay ray) {
     return (int) ((ray->angle + ray->angle_offset)*RAD2DEG);
 }
 
+double MapRayGetAngleOffsetRad(MapRay ray) {
+    assert(ray != NULL);
+
+    return ray->angle_offset;
+}
+
+
 bool MapRayIsColliding(MapRay ray) {
     assert(ray != NULL);
 
@@ -109,6 +116,12 @@ Vector2 MapRayGetCollisionPointGrid(MapRay ray) {
     }
     
     return (Vector2) {(int) (ray->collisionX / MapGetTileSize(ray->map)), (int) (ray->collisionY / MapGetTileSize(ray->map))};
+}
+
+int MapRayGetMaxLength(MapRay ray) {
+    assert(ray != NULL);
+
+    return ray->max_length;
 }
 
 

@@ -18,6 +18,7 @@ double PlayerGetRotationRad(Player p);
 bool PlayerIsColliding(Player p);
 
 void PlayerDraw2D(Player p);
+void PlayerDraw3D(Player p, int screenWidth, int screenHeight);
 
 void PlayerInput(Player p);
 
