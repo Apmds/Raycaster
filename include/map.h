@@ -9,6 +9,7 @@ typedef enum MapTile {
 typedef struct map* Map;
 
 Map MapCreate(int numRows, int numCols);
+Map MapCreateFromFile(const char* filename);
 void MapDestroy(Map* mp);
 
 void MapSetTile(Map map, int row, int col, MapTile tile);

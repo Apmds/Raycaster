@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <assert.h>
 #include "map.h"
 #include "raylib.h"
@@ -27,6 +29,70 @@ Map MapCreate(int numRows, int numCols) {
     map->numCols = numCols;
     map->numRows = numRows;
     map->tileSize = 30;
+
+    return map;
+}
+
+Map MapCreateFromFile(const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        perror("Error opening file!");
+        exit(EXIT_FAILURE);
+    }
+    
+    Map map = malloc(sizeof(struct map));
+    assert(map != NULL);
+
+    int numRows = 0;
+    int numCols = 0;
+    int tileSize = 0;
+
+    char line[500];
+    int lineIdx = 0;
+    
+    while (fgets(line, sizeof(line), file) != NULL) {
+        // Format first line
+        if (lineIdx == 0) {
+            if (sscanf(line, "%d,%d,%d", &numRows, &numCols, &tileSize) != 3) {
+                printf("Map properties not formatted correctly: the first line must be: <numRows>,<numCols>,<tileSize>");
+                exit(EXIT_FAILURE);
+            }
+
+            // Initialize grid
+            map->grid = malloc(sizeof(MapTile*)*numRows);
+            assert(map->grid != NULL);
+            for (int i = 0; i < numRows; i++) {
+                map->grid[i] = calloc(numCols, sizeof(MapTile));
+                assert(map->grid[i] != NULL);
+            }
+        
+            map->numCols = numCols;
+            map->numRows = numRows;
+            map->tileSize = tileSize;
+
+        } else {
+            // Read tiles
+            int tileX = 0;
+            int tileY = 0;
+            char tileName[50];
+            if (sscanf(line, "%d,%d,%s", &tileX, &tileY, tileName) != 3) {
+                printf("Map properties not formatted correctly: the line must be: <tileX>,<tileY>,<tileName>");
+                exit(EXIT_FAILURE);
+            }
+            
+            // Set tiles
+            if (strcmp(tileName, "WALL") == 0) {
+                MapSetTile(map, tileX, tileY, WALL);
+            }
+            if (strcmp(tileName, "GROUND") == 0) {
+                MapSetTile(map, tileX, tileY, GROUND);
+            }
+        }
+            
+        lineIdx++;
+    }
+    fclose(file);
+
 
     return map;
 }

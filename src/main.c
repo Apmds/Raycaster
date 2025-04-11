@@ -10,6 +10,9 @@
 int main() {
     // Tell the window to use vsync and work on high DPI displays
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
+    
+    // Utility function from resource_dir.h to find the resources folder and set it as the current working directory so we can load from it
+    SearchAndSetResourceDir("resources");
 
     int window_size_x = 1280;
     int window_size_y = 720;
@@ -17,39 +20,14 @@ int main() {
     bool drawing3D = false;
     
     // MAP VARS
-    Map map = MapCreate(20, 20);
-    MapSetTile(map, 0, 5, WALL);
-    MapSetTile(map, 0, 6, WALL);
-    MapSetTile(map, 0, 7, WALL);
-    MapSetTile(map, 0, 8, WALL);
-    MapSetTile(map, 1, 8, WALL);
-    MapSetTile(map, 2, 8, WALL);
-    MapSetTile(map, 3, 8, WALL);
-    MapSetTile(map, 4, 8, WALL);
-    MapSetTile(map, 5, 8, WALL);
-    MapSetTile(map, 6, 8, WALL);
-    MapSetTile(map, 12, 8, WALL);
-    MapSetTile(map, 13, 8, WALL);
-    MapSetTile(map, 14, 8, WALL);
-    MapSetTile(map, 15, 8, WALL);
-    MapSetTile(map, 16, 8, WALL);
-    MapSetTile(map, 17, 8, WALL);
-    MapSetTile(map, 18, 8, WALL);
-    MapSetTile(map, 18, 7, WALL);
-    MapSetTile(map, 18, 6, WALL);
-    MapSetTile(map, 18, 5, WALL);
-    MapSetTile(map, 18, 4, WALL);
-    MapSetTile(map, 18, 3, WALL);
-
+    Map map = MapCreateFromFile("maptest.map");
+    
     // PLAYER VARS
     Player player = PlayerCreate(10, 10, 0, 1280, map);
 
     // Create the window and OpenGL context
     InitWindow(window_size_x, window_size_y, "Hello Raylib");
     SetTargetFPS(60);
-
-    // Utility function from resource_dir.h to find the resources folder and set it as the current working directory so we can load from it
-    SearchAndSetResourceDir("resources");
 
     // game loop
     while (!WindowShouldClose()) {		// run the loop untill the user presses ESCAPE or presses the Close button on the window
