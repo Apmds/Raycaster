@@ -185,7 +185,7 @@ void MapRayCast(MapRay ray) {
     }
     if (rayDirY < 0) {
         sideY = -1;
-        sideDistY = (ray->posX - mapY * tileSize) * deltaDistY / tileSize;
+        sideDistY = (ray->posY - mapY * tileSize) * deltaDistY / tileSize;
     } else {
         sideY = 1;
         sideDistY = ((mapY + 1)*tileSize - ray->posY) * deltaDistY / tileSize;
@@ -203,12 +203,10 @@ void MapRayCast(MapRay ray) {
             sideDistX += deltaDistX;
             mapX += sideX;
             length = sideDistX - deltaDistX;
-            //length = (mapX - ray->posX + (1 - sideX) / 2) / rayDirX;
         } else {
             sideDistY += deltaDistY;
             mapY += sideY;
             length = sideDistY - deltaDistY;
-            //length = (mapY - ray->posY + (1 - sideY) / 2) / rayDirY;
         }
         //printf("length: %f, max: (%d, %d), rayDir: (%f, %f), sideDist: (%f, %f), deltaDist: (%f, %f)\n", length, mapX, mapY, rayDirX, rayDirY, sideDistX, sideDistY, deltaDistX, deltaDistY);
         
@@ -218,8 +216,6 @@ void MapRayCast(MapRay ray) {
         }
         i++;
     }
-    //ray->collisionX = mapX*tileSize;
-    //ray->collisionY = mapY*tileSize;
     ray->collisionX = ray->posX + length*rayDirX;
     ray->collisionY = ray->posY + length*rayDirY;
     //printf("%d, %d\n", mapX, mapY);

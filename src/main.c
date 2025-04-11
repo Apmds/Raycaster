@@ -28,6 +28,18 @@ int main() {
     MapSetTile(map, 4, 8, WALL);
     MapSetTile(map, 5, 8, WALL);
     MapSetTile(map, 6, 8, WALL);
+    MapSetTile(map, 12, 8, WALL);
+    MapSetTile(map, 13, 8, WALL);
+    MapSetTile(map, 14, 8, WALL);
+    MapSetTile(map, 15, 8, WALL);
+    MapSetTile(map, 16, 8, WALL);
+    MapSetTile(map, 17, 8, WALL);
+    MapSetTile(map, 18, 8, WALL);
+    MapSetTile(map, 18, 7, WALL);
+    MapSetTile(map, 18, 6, WALL);
+    MapSetTile(map, 18, 5, WALL);
+    MapSetTile(map, 18, 4, WALL);
+    MapSetTile(map, 18, 3, WALL);
 
     // PLAYER VARS
     Player player = PlayerCreate(10, 10, 0, 1280, map);
