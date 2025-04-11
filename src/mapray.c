@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "mapray.h"
 #include "raymath.h"
@@ -128,25 +129,91 @@ int MapRayGetMaxLength(MapRay ray) {
 void MapRayCast(MapRay ray) {
     assert(ray != NULL);
 
+    // Set start variables
+    double length = 0;
+    ray->collisionX = ray->posX;
+    ray->collisionY = ray->posY;
     ray->is_colliding = false;
-    ray->collisionX = ray->posX + ray->max_length*cos(MapRayGetTrueAngleRad(ray));
-    ray->collisionY = ray->posY + ray->max_length*sin(MapRayGetTrueAngleRad(ray));
+
+    // No map behaviour
     if (ray->map == NULL) {
         return;
     }
+    // If inside wall, do not do anything more.
+    ray->is_colliding = isColliding(ray->collisionX, ray->collisionY, ray->map);
+    if (ray->is_colliding) {
+        return;
+    }
 
-    // TODO: implement
-    double length = 0;
-    ray->collisionX = 0;
-    ray->collisionY = 0;
+    int tileSize = MapGetTileSize(ray->map);
+
+    // Position of ray in map
+    Vector2 mapPos = MapRayGetCollisionPointGrid(ray);
+    int mapX = (int) mapPos.x;
+    int mapY = (int) mapPos.y;
+    printf("init: %d\n", mapX);
+
+    // Angle of ray by axis
+    double rayDirX = cos(MapRayGetTrueAngleRad(ray));
+    double rayDirY = sin(MapRayGetTrueAngleRad(ray));
+    //printf("%f, %f\n", rayDirX, rayDirY);
+    
+    // Length that ray must traverse to go from one X/Y to the next, respectively.
+    double deltaDistX = ray->max_length;
+    if (rayDirX != 0) {
+        deltaDistX = abs(1 / rayDirX);
+        deltaDistX *= tileSize;
+    }
+    double deltaDistY = ray->max_length;
+    if (rayDirY != 0) {
+        deltaDistY = abs(1 / rayDirY);
+        deltaDistY *= tileSize;
+    }
+
+    // Length that ray must traverse initially to go to the next X/Y, respectively. (fraction of deltaDist)
+    double sideDistX;
+    double sideDistY;
+    // Side where player is facing in each direction
+    int sideX;
+    int sideY;
+    if (rayDirX < 0) {
+        sideX = -1;
+        sideDistX = (ray->collisionX - mapX) * deltaDistX;
+    } else {
+        sideX = 1;
+        sideDistX = (mapX + 1 - ray->collisionX) * deltaDistX;
+    }
+    if (rayDirY < 0) {
+        sideY = -1;
+        sideDistY = (ray->collisionY - mapY) * deltaDistY;
+    } else {
+        sideY = 1;
+        sideDistY = (mapY + 1 - ray->collisionY) * deltaDistY;
+    }
     
     while (length < ray->max_length && !ray->is_colliding) {
-        length += 1;
-        ray->collisionX = ray->posX + length*cos(MapRayGetTrueAngleRad(ray));
-        ray->collisionY = ray->posY + length*sin(MapRayGetTrueAngleRad(ray));
+        // Slow method
+        //length += 1;
+        //ray->collisionX = ray->posX + length*cos(MapRayGetTrueAngleRad(ray));
+        //ray->collisionY = ray->posY + length*sin(MapRayGetTrueAngleRad(ray));
+        //ray->is_colliding = isColliding(ray->collisionX, ray->collisionY, ray->map);
 
-        ray->is_colliding = isColliding(ray->collisionX, ray->collisionY, ray->map);
-    }    
+        //printf("%f, (%d, %d)\n", length, mapX, mapY);
+        if (sideDistX < sideDistY) {
+            sideDistX += deltaDistX;
+            mapX += sideX;
+            length = sideDistX - deltaDistX;
+        } else {
+            sideDistY += deltaDistY;
+            mapY += sideY;
+            length = sideDistY - deltaDistY;
+        }
+        
+        ray->is_colliding = MapGetTile(ray->map, mapX, mapY) != GROUND;
+    }
+    ray->collisionX = mapX*tileSize;
+    ray->collisionY = mapY*tileSize;
+    printf("%d, %d\n", mapX, mapY);
 }
 
 void MapRayDraw2D(MapRay ray) {
