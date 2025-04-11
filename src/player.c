@@ -52,12 +52,10 @@ Player PlayerCreate(int playerX, int playerY, int playerRotationDeg, int numRays
 
     // Initialize rays.
     if (pl->numRays == 1) {
-        printf("hehe");
         pl->rays[0] = MapRayCreate(pl->posX, pl->posY, pl->rotation, 0, pl->map);
     } else {   
         double angle_offset = -pl->FOV/2;
         for (int i = 0; i < pl->numRays; i++) {
-            printf("offset: %f\n", angle_offset);
             pl->rays[i] = MapRayCreate(pl->posX, pl->posY, pl->rotation, angle_offset*DEG2RAD, pl->map);
             angle_offset += (double) pl->FOV / (double) (pl->numRays - 1);
         }
@@ -223,6 +221,7 @@ void PlayerInput(Player p) {
         p->rotation += p->rotationSpeed;
     }
 
+    //printf("%f (%f, %f)\n", p->rotation, cos(p->rotation), sin(p->rotation));
     // Update MapRays
     for (int i = 0; i < p->numRays; i++) {
         MapRaySetAngle(p->rays[i], p->rotation);
