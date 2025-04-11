@@ -212,11 +212,19 @@ void PlayerInput(Player p) {
         p->posX += move_amount_x;
         if (PlayerIsColliding(p)) {
             p->posX -= move_amount_x;
+            while (!PlayerIsColliding(p)) {
+                p->posX += move_amount_x / fabs(move_amount_x);
+            }
+            p->posX -= move_amount_x / fabs(move_amount_x);
         }
         
         p->posY += move_amount_y;
         if (PlayerIsColliding(p)) {
             p->posY -= move_amount_y;
+            while (!PlayerIsColliding(p)) {
+                p->posY += move_amount_y / fabs(move_amount_y);
+            }
+            p->posY -= move_amount_y / fabs(move_amount_y);
         }
     }
 
