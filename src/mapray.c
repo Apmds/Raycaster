@@ -13,6 +13,7 @@ struct mapray {
     bool is_colliding;
     double collisionX;
     double collisionY;
+    MapRayHitSide hitSide;
     Map map;
 };
 
@@ -42,6 +43,7 @@ MapRay MapRayCreate(int posX, int posY, double angle, double angleOffset, Map ma
     map_ray->is_colliding = false;
     map_ray->collisionX = 0;
     map_ray->collisionY = 0;
+    map_ray->hitSide = NONE;
     map_ray->map = map;
 
     return map_ray;
@@ -125,6 +127,12 @@ int MapRayGetMaxLength(MapRay ray) {
     return ray->max_length;
 }
 
+MapRayHitSide MapRayGetHitSide(MapRay ray) {
+    assert(ray != NULL);
+
+    return ray->hitSide;
+}
+
 
 void MapRayCast(MapRay ray) {
     assert(ray != NULL);
@@ -134,6 +142,7 @@ void MapRayCast(MapRay ray) {
     ray->collisionX = ray->posX;
     ray->collisionY = ray->posY;
     ray->is_colliding = false;
+    ray->hitSide = NONE;
 
     // No map behaviour
     if (ray->map == NULL) {
@@ -203,10 +212,12 @@ void MapRayCast(MapRay ray) {
             sideDistX += deltaDistX;
             mapX += sideX;
             length = sideDistX - deltaDistX;
+            ray->hitSide = X_AXIS;
         } else {
             sideDistY += deltaDistY;
             mapY += sideY;
             length = sideDistY - deltaDistY;
+            ray->hitSide = Y_AXIS;
         }
         //printf("length: %f, max: (%d, %d), rayDir: (%f, %f), sideDist: (%f, %f), deltaDist: (%f, %f)\n", length, mapX, mapY, rayDirX, rayDirY, sideDistX, sideDistY, deltaDistX, deltaDistY);
         

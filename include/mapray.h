@@ -5,6 +5,12 @@
 #ifndef MAPRAY_H
 #define MAPRAY_H
 
+typedef enum MapRayHitSide {
+    X_AXIS,
+    Y_AXIS,
+    NONE,
+} MapRayHitSide;
+
 typedef struct mapray* MapRay;
 
 MapRay MapRayCreate(int posX, int posY, double angle, double angleOffset, Map map);
@@ -20,6 +26,7 @@ bool MapRayIsColliding(MapRay ray);
 Vector2 MapRayGetCollisionPoint(MapRay ray);
 Vector2 MapRayGetCollisionPointGrid(MapRay ray);
 int MapRayGetMaxLength(MapRay ray);
+MapRayHitSide MapRayGetHitSide(MapRay ray);
 
 void MapRayCast(MapRay ray);
 void MapRayDraw2D(MapRay ray);

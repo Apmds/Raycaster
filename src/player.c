@@ -171,7 +171,13 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
         distance *= cos(-((p->FOV/2))*DEG2RAD);
         distance *= 50;
 
-        DrawRectangle(rayX, (screenHeight/2)-(distance/2), line_width, distance, (Color) {255, 255, 255, 255});
+        Color drawColor;
+        if (MapRayGetHitSide(ray) == X_AXIS) {
+            drawColor = (Color) {255, 255, 255, 255};
+        } else {
+            drawColor = (Color) {210, 210, 210, 255};
+        }
+        DrawRectangle(rayX, (screenHeight/2)-(distance/2), line_width, distance, drawColor);
     }
 }
 
