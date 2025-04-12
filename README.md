@@ -15,6 +15,8 @@ In the future, I'm planning on adding better movement to the player and texture 
 - **Switch 2D and 3D view:** G. 
 
 ## Building
+There is at least one Linux and Windows build available in the _releases_ tab, but you can follow the guide here for doing it yourself.
+
 ### Linux
 **1. Clone** this repository (```git clone git@github.com:Apmds/raycaster.git```) and change directory to the project root (```cd raycaster/```)
 
