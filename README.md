@@ -27,10 +27,24 @@ make
 ```
 If there are errors during compilation, womp womp ig.
 
-**3. Run:** the executable file should be ```bin/Debug/raycaster```.
+**3. Run:** the executable file should be in ```bin/Debug/```, named ```raycaster```.
 
 ### Windows
-**When** I build it using Windows, I'll detail the process here.
+I don't know how to compile using Visual Studio and I haven't searched for it, so these instructions apply to those that use [w64devkit](https://github.com/skeeto/w64devkit/releases).
+
+**1. Clone** this repository (```git clone https://github.com/Apmds/raycaster.git```).
+
+**2. Build:** Using w64devkit:
+```
+cd /path/to/raycaster/
+cd build
+./premake5.exe gmake2
+cd ..
+make
+```
+If there are errors during compilation, refer to the [Linux](#linux) section.
+
+**3. Run:** the executable file should be in ```bin/Debug/```, named ```raycaster```.
 
 ### MacOS
 **If** I get a build of it using MacOS, I'll detail the process here.
