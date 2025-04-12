@@ -18,7 +18,7 @@ In the future, I'm planning on adding better movement to the player and texture 
 ### Linux
 **1. Clone** this repository (```git clone git@github.com:Apmds/raycaster.git```) and change directory to the project root (```cd raycaster/```)
 
-**2. Run:**
+**2. Build:**
 ```
 cd build
 ./premake5 gmake2
@@ -26,6 +26,8 @@ cd ..
 make
 ```
 If there are errors during compilation, womp womp ig.
+
+**3. Run:** the executable file should be ```bin/Debug/raycaster```.
 
 ### Windows
 **When** I build it using Windows, I'll detail the process here.
