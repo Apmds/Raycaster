@@ -8,6 +8,7 @@ struct mapray {
     double angle;               // Not the true angle (usually the same as the player's angle);  Radians.
     double angle_offset;        // Offset in relation to player; Add this to angle to get the true angle; Radians.
     int max_length;             // In pixels.
+    double length;
     int posX;
     int posY;
     bool is_colliding;
@@ -38,6 +39,7 @@ MapRay MapRayCreate(int posX, int posY, double angle, double angleOffset, Map ma
     map_ray->angle = angle;
     map_ray->angle_offset = angleOffset;
     map_ray->max_length = 500;
+    map_ray->length = 0;
     map_ray->posX = posX;
     map_ray->posY = posY;
     map_ray->is_colliding = false;
@@ -127,6 +129,13 @@ int MapRayGetMaxLength(MapRay ray) {
     return ray->max_length;
 }
 
+double MapRayGetLength(MapRay ray) {
+    assert(ray != NULL);
+
+    return ray->length;
+}
+
+
 MapRayHitSide MapRayGetHitSide(MapRay ray) {
     assert(ray != NULL);
 
@@ -138,7 +147,7 @@ void MapRayCast(MapRay ray) {
     assert(ray != NULL);
 
     // Set start variables
-    double length = 0;
+    ray->length = 0;
     ray->collisionX = ray->posX;
     ray->collisionY = ray->posY;
     ray->is_colliding = false;
@@ -201,25 +210,25 @@ void MapRayCast(MapRay ray) {
     }
     
     int i = 0;
-    while (/*length < ray->max_length && */!ray->is_colliding) {
+    while (/*ray->length < ray->max_length && */!ray->is_colliding) {
         // Slow method
-        //length += 1;
-        //ray->collisionX = ray->posX + length*cos(MapRayGetTrueAngleRad(ray));
-        //ray->collisionY = ray->posY + length*sin(MapRayGetTrueAngleRad(ray));
+        //ray->length += 1;
+        //ray->collisionX = ray->posX + ray->length*cos(MapRayGetTrueAngleRad(ray));
+        //ray->collisionY = ray->posY + ray->length*sin(MapRayGetTrueAngleRad(ray));
         //ray->is_colliding = isColliding(ray->collisionX, ray->collisionY, ray->map);
 
         if (sideDistX < sideDistY) {
             sideDistX += deltaDistX;
             mapX += sideX;
-            length = sideDistX - deltaDistX;
+            ray->length = sideDistX - deltaDistX;
             ray->hitSide = X_AXIS;
         } else {
             sideDistY += deltaDistY;
             mapY += sideY;
-            length = sideDistY - deltaDistY;
+            ray->length = sideDistY - deltaDistY;
             ray->hitSide = Y_AXIS;
         }
-        //printf("length: %f, max: (%d, %d), rayDir: (%f, %f), sideDist: (%f, %f), deltaDist: (%f, %f)\n", length, mapX, mapY, rayDirX, rayDirY, sideDistX, sideDistY, deltaDistX, deltaDistY);
+        //printf("ray->length: %f, max: (%d, %d), rayDir: (%f, %f), sideDist: (%f, %f), deltaDist: (%f, %f)\n", ray->length, mapX, mapY, rayDirX, rayDirY, sideDistX, sideDistY, deltaDistX, deltaDistY);
         
         ray->is_colliding = MapGetTile(ray->map, mapX, mapY) != GROUND;
         if (i == 50) {
@@ -227,8 +236,8 @@ void MapRayCast(MapRay ray) {
         }
         i++;
     }
-    ray->collisionX = ray->posX + length*rayDirX;
-    ray->collisionY = ray->posY + length*rayDirY;
+    ray->collisionX = ray->posX + ray->length*rayDirX;
+    ray->collisionY = ray->posY + ray->length*rayDirY;
     //printf("%d, %d\n", mapX, mapY);
 }
 

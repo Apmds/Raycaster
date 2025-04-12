@@ -167,9 +167,10 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
         int rayX = (line_width/2)+i*line_width;
 
         Vector2 collisionPoint = MapRayGetCollisionPoint(ray);
-        double distance = (double) MapRayGetMaxLength(ray) / Vector2Distance(collisionPoint, (Vector2) {p->posX, p->posY});
-        distance *= cos(-((p->FOV/2))*DEG2RAD);
-        distance *= 50;
+        //double distance = (double) MapRayGetMaxLength(ray) / Vector2Distance(collisionPoint, (Vector2) {p->posX, p->posY});
+        //distance *= cos(-((p->FOV/2))*DEG2RAD);
+        //distance *= 50;
+        double distance = 50*screenHeight / MapRayGetLength(ray);
 
         Color drawColor;
         if (MapRayGetHitSide(ray) == X_AXIS) {

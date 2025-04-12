@@ -26,6 +26,7 @@ bool MapRayIsColliding(MapRay ray);
 Vector2 MapRayGetCollisionPoint(MapRay ray);
 Vector2 MapRayGetCollisionPointGrid(MapRay ray);
 int MapRayGetMaxLength(MapRay ray);
+double MapRayGetLength(MapRay ray);
 MapRayHitSide MapRayGetHitSide(MapRay ray);
 
 void MapRayCast(MapRay ray);
