@@ -125,19 +125,11 @@ bool PlayerIsColliding(Player p) {
 
     bool colliding = isColliding(p->posX, p->posY, p->map);
 
-    // Try collision around player.
-    bool colliding_front = isColliding(p->posX + 10*cos(p->rotation), p->posY + 10*sin(p->rotation), p->map);
-    bool colliding_back = isColliding(p->posX + 10*cos(p->rotation + 180*DEG2RAD), p->posY + 10*sin(p->rotation + 180*DEG2RAD), p->map);
-    bool colliding_left = isColliding(p->posX + 10*cos(p->rotation + 270*DEG2RAD), p->posY + 10*sin(p->rotation + 270*DEG2RAD), p->map);
-    bool colliding_right = isColliding(p->posX + 10*cos(p->rotation + 90*DEG2RAD), p->posY + 10*sin(p->rotation + 90*DEG2RAD), p->map);
-
-    bool colliding_front_left = isColliding(p->posX + 10*cos(p->rotation + 315*DEG2RAD), p->posY + 10*sin(p->rotation + 315*DEG2RAD), p->map);
-    bool colliding_front_right = isColliding(p->posX + 10*cos(p->rotation + 45*DEG2RAD), p->posY + 10*sin(p->rotation + 45*DEG2RAD), p->map);
-    
-    bool colliding_back_left = isColliding(p->posX + 10*cos(p->rotation + 225*DEG2RAD), p->posY + 10*sin(p->rotation + 225*DEG2RAD), p->map);
-    bool colliding_back_right = isColliding(p->posX + 10*cos(p->rotation + 135*DEG2RAD), p->posY + 10*sin(p->rotation + 135*DEG2RAD), p->map);
-    
-    return colliding || colliding_front || colliding_back || colliding_left || colliding_right || colliding_front_left || colliding_front_right || colliding_back_left || colliding_back_right;
+    // Try collision at 8 points around player.
+    for (int angle = 0; angle < 360; angle+=45) {
+        colliding = colliding || isColliding(p->posX + 10*cos(p->rotation + angle*DEG2RAD), p->posY + 10*sin(p->rotation + angle*DEG2RAD), p->map);;
+    }
+    return colliding;
 }
 
 
