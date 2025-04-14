@@ -1,6 +1,6 @@
 # My Raycasting Engine
 
-This project aims to implement a "[Wolfenstein 3D](https://pt.wikipedia.org/wiki/Wolfenstein_3D)"-type raycasting engine. I'm developing it using C, with the [Raylib](https://www.raylib.com/) framework.
+This project aims to implement a [Wolfenstein 3D](https://pt.wikipedia.org/wiki/Wolfenstein_3D)-type raycasting engine. I'm developing it using C, with the [Raylib](https://www.raylib.com/) framework.
 
 ## Capabilites
 
@@ -12,7 +12,8 @@ In the future, I'm planning on adding better movement to the player and texture 
 
 - **Movement:** WASD.
 - **Rotate camera:** Left and Right arrow keys.
-- **Switch 2D and 3D view:** G. 
+- **Switch 2D and 3D view:** G.
+- **Quit:** Esc.
 
 ## Building
 There is at least one Linux and Windows build available in the _releases_ tab, but you can follow the guide here for doing it yourself.
