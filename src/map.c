@@ -51,6 +51,12 @@ Map MapCreateFromFile(const char* filename) {
     int lineIdx = 0;
     
     while (fgets(line, sizeof(line), file) != NULL) {
+        // Ignore empty lines
+        size_t line_size = strlen(line);
+        if (line_size == 0 || line[0] == '\n' || line_size == strspn(line, " \r\n\t")) {
+            continue;
+        }
+        
         // Format first line
         if (lineIdx == 0) {
             if (sscanf(line, "%d,%d,%d", &numRows, &numCols, &tileSize) != 3) {
