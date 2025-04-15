@@ -182,17 +182,19 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
         
         int ray_percentage;  // Percentage of tile that ray hit (not really percentage, just number of tile pixels)
         if (MapRayGetHitSide(ray) == X_AXIS) {
-            ray_percentage = (int) (collisionPoint.y) % MapGetTileSize(p->map);
-            //printf("X_axis: %d\n", ray_percentage);
+            ray_percentage = (int) (collisionPoint.y) % MapGetTileSize(p->map) + 1;
+            //printf("X_axis: %d %% %d = %d\n", (int) (collisionPoint.y), MapGetTileSize(p->map), ray_percentage);
         } else {
-            ray_percentage = (int) (collisionPoint.x) % MapGetTileSize(p->map); 
-            //printf("Y_axis: %d %% %d = %d\n", (int) (collisionPoint.y), MapGetTileSize(p->map), ray_percentage);
+            ray_percentage = (int) (collisionPoint.x) % MapGetTileSize(p->map) + 1; 
+            //printf("Y_axis: %d %% %d = %d\n", (int) (collisionPoint.x), MapGetTileSize(p->map), ray_percentage);
         }
-        double texture_width = ((double) (ray_percentage) / (double) (MapGetTileSize(p->map)))*((double) tex.width);
+        double texture_offset = ((double) (ray_percentage) / (double) (MapGetTileSize(p->map)))*((double) tex.width);        // Supposed to be the x offset of texture
+        // Missing true witdh
+        
         //printf("texture_width: %f\n", texture_width);
 
         DrawTexturePro(tex,
-            (Rectangle) {0, 0, texture_width, tex.height},
+            (Rectangle) {texture_offset, 0, texture_offset, tex.height},
             (Rectangle) {rayX, (screenHeight/2)-(distance/2), line_width, distance},
             (Vector2) {0, 0}, 0, drawColor);
 
