@@ -190,11 +190,12 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
         }
         double texture_offset = ((double) (ray_percentage) / (double) (MapGetTileSize(p->map)))*((double) tex.width);        // Supposed to be the x offset of texture
         // Missing true witdh
+        int texture_width = (tex.width / p->numRays);
         
-        //printf("texture_width: %f\n", texture_width);
+        //printf("texture_width: %d\n", texture_width);
 
         DrawTexturePro(tex,
-            (Rectangle) {texture_offset, 0, texture_offset, tex.height},
+            (Rectangle) {texture_offset, 0, texture_width, tex.height},
             (Rectangle) {rayX, (screenHeight/2)-(distance/2), line_width, distance},
             (Vector2) {0, 0}, 0, drawColor);
 
