@@ -19,15 +19,15 @@ int main() {
 
     bool drawing3D = false;
     
+    // Create the window and OpenGL context
+    InitWindow(window_size_x, window_size_y, "Hello Raylib");
+    SetTargetFPS(60);
+    
     // MAP VARS
     Map map = MapCreateFromFile("maptest.map");
     
     // PLAYER VARS
     Player player = PlayerCreate(10, 10, 0, 1280, map);
-
-    // Create the window and OpenGL context
-    InitWindow(window_size_x, window_size_y, "Hello Raylib");
-    SetTargetFPS(60);
 
     // game loop
     while (!WindowShouldClose()) {		// run the loop untill the user presses ESCAPE or presses the Close button on the window

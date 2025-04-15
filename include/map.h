@@ -1,3 +1,5 @@
+#include "raylib.h"
+
 #ifndef MAP_H
 #define MAP_H
 
@@ -19,6 +21,7 @@ int MapGetTileSize(Map map);
 int MapGetNumRows(Map map);
 int MapGetNumCols(Map map);
 
+Texture MapGetTextureAt(Map map, int row, int col);
 
 void MapDraw2D(Map map);
 

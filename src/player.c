@@ -165,9 +165,9 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
         //distance *= 50;
         
         double distance = (50*screenHeight) / (MapRayGetLength(ray)*cos(MapRayGetAngleOffsetRad(ray)));
-        if (distance > screenHeight) {
-            distance = screenHeight;
-        }
+        //if (distance > screenHeight) {
+        //    distance = screenHeight;
+        //}
 
         Color drawColor;
         if (MapRayGetHitSide(ray) == X_AXIS) {
@@ -175,7 +175,27 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
         } else {
             drawColor = (Color) {210, 210, 210, 255};
         }
-        DrawRectangle(rayX, (screenHeight/2)-(distance/2), line_width, distance, drawColor);
+        //DrawRectangle(rayX, (screenHeight/2)-(distance/2), line_width, distance, drawColor);
+
+        Vector2 collisionPointGrid = MapRayGetCollisionPointGrid(ray);
+        Texture tex = MapGetTextureAt(p->map, collisionPointGrid.x, collisionPointGrid.y);
+        
+        int ray_percentage;  // Percentage of tile that ray hit (not really percentage, just number of tile pixels)
+        if (MapRayGetHitSide(ray) == X_AXIS) {
+            ray_percentage = (int) (collisionPoint.y) % MapGetTileSize(p->map);
+            //printf("X_axis: %d\n", ray_percentage);
+        } else {
+            ray_percentage = (int) (collisionPoint.x) % MapGetTileSize(p->map); 
+            //printf("Y_axis: %d %% %d = %d\n", (int) (collisionPoint.y), MapGetTileSize(p->map), ray_percentage);
+        }
+        double texture_width = ((double) (ray_percentage) / (double) (MapGetTileSize(p->map)))*((double) tex.width);
+        //printf("texture_width: %f\n", texture_width);
+
+        DrawTexturePro(tex,
+            (Rectangle) {0, 0, texture_width, tex.height},
+            (Rectangle) {rayX, (screenHeight/2)-(distance/2), line_width, distance},
+            (Vector2) {0, 0}, 0, drawColor);
+
     }
 }
 

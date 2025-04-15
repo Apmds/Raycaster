@@ -9,6 +9,7 @@ struct map {
     int numRows;
     int numCols;
     int tileSize;                   // Tamanho de cada quadrado
+    Texture wall_img;                 // TEMPORARY
     MapTile** grid;
 };
 
@@ -29,6 +30,9 @@ Map MapCreate(int numRows, int numCols) {
     map->numCols = numCols;
     map->numRows = numRows;
     map->tileSize = 30;
+
+    // TEMPORARY
+    map->wall_img = LoadTexture("map.png");
 
     return map;
 }
@@ -99,6 +103,8 @@ Map MapCreateFromFile(const char* filename) {
     }
     fclose(file);
 
+    // TEMPORARY
+    map->wall_img = LoadTexture("map.png");
 
     return map;
 }
@@ -115,6 +121,8 @@ void MapDestroy(Map* mp) {
     }
     free(map->grid);
 
+    UnloadTexture(map->wall_img);
+    
     free(map);
 
     *mp = NULL;
@@ -154,6 +162,14 @@ int MapGetNumCols(Map map) {
 
     return map->numCols;
 }
+
+Texture MapGetTextureAt(Map map, int row, int col) {
+    assert(map != NULL);
+
+    // TEMPORARY
+    return map->wall_img;
+}
+
 
 void MapDraw2D(Map map) {
     assert(map != NULL);
