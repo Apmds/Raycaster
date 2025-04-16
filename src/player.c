@@ -164,7 +164,7 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
         //distance *= cos(-((p->FOV/2))*DEG2RAD);
         //distance *= 50;
         
-        double distance = (50*screenHeight) / (MapRayGetLength(ray)*cos(MapRayGetAngleOffsetRad(ray)));
+        double distance = (1.5*MapGetTileSize(p->map)*screenHeight) / (MapRayGetLength(ray)*cos(MapRayGetAngleOffsetRad(ray)));
         //if (distance > screenHeight) {
         //    distance = screenHeight;
         //}
