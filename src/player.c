@@ -165,9 +165,6 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
         //distance *= 50;
         
         double distance = (1.5*MapGetTileSize(p->map)*screenHeight) / (MapRayGetLength(ray)*cos(MapRayGetAngleOffsetRad(ray)));
-        //if (distance > screenHeight) {
-        //    distance = screenHeight;
-        //}
 
         Color drawColor;
         if (MapRayGetHitSide(ray) == X_AXIS) {
@@ -183,19 +180,11 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
         int ray_percentage;  // Percentage of tile that ray hit (not really percentage, just number of tile pixels)
         if (MapRayGetHitSide(ray) == X_AXIS) {
             ray_percentage = (int) (collisionPoint.y) % MapGetTileSize(p->map) + 1;
-            //printf("X_axis: %d %% %d = %d\n", (int) (collisionPoint.y), MapGetTileSize(p->map), ray_percentage);
         } else {
             ray_percentage = (int) (collisionPoint.x) % MapGetTileSize(p->map) + 1; 
-            //printf("Y_axis: %d %% %d = %d\n", (int) (collisionPoint.x), MapGetTileSize(p->map), ray_percentage);
         }
-        double texture_offset = ((double) (ray_percentage) / (double) (MapGetTileSize(p->map)))*((double) tex.width);        // Supposed to be the x offset of texture
-        // Missing true witdh
-        //int texture_width = (tex.width / p->numRays);
+        double texture_offset = ((double) (ray_percentage) / (double) (MapGetTileSize(p->map)))*((double) tex.width);
         int texture_width = 1;
-        
-        //printf("texture_width: %d\n", texture_width);
-
-        printf("texture_offset: %f\n", texture_offset);
 
         DrawTexturePro(tex,
             (Rectangle) {texture_offset-1, 0, texture_width, tex.height},
@@ -259,7 +248,6 @@ void PlayerInput(Player p) {
         p->rotation += p->rotationSpeed;
     }
 
-    //printf("%f (%f, %f)\n", p->rotation, cos(p->rotation), sin(p->rotation));
     // Update MapRays
     for (int i = 0; i < p->numRays; i++) {
         MapRaySetAngle(p->rays[i], p->rotation);
