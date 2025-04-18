@@ -9,26 +9,26 @@ typedef struct list* List;
 List ListCreate();
 
 // Destroys a List
-void ListDestroy(List* list);
+void ListDestroy(List* listp);
 
 
 // Appends an item to the start of the List, returning whether or not it was successful
-bool ListAppendFirst(List map, void* item);
+bool ListAppendFirst(List list, void* item);
 
 // Appends an item in to the end of the  List, returning whether or not it was successful
-bool ListAppendLast(List map, void* item);
+bool ListAppendLast(List list, void* item);
 
 // Puts an item in the List, returning whether or not it was successful
-bool ListPut(List map, int index, void* item);
+bool ListPut(List list, int index, void* item);
 
 // Returns an item from the List
-void* ListGet(List map, int index);
+void* ListGet(List list, int index);
 
 // Removes the first item from the List, returning whether or not it was successful
-bool ListRemoveFirst(List map, int index);
+bool ListRemoveFirst(List list, int index);
 // Removes the last item from the List, returning whether or not it was successful
-bool ListRemoveLast(List map, int index);
+bool ListRemoveLast(List list, int index);
 // Removes an item from the List, returning whether or not it was successful
-bool ListRemove(List map, int index);
+bool ListRemove(List list, int index);
 
 #endif

@@ -5,8 +5,8 @@
 
 typedef struct hashmap* HashMap;
 
-// Creates a HashMap (compareFunc must return a value > 0 if key1 > key2, 0 if key1 = key2, and a value < 0 if key1 < key2)
-HashMap HashMapCreate(int (*compareFunc) (void* key1, void* key2));
+// Creates a HashMap (hashFunc is the function used fir hashing the key)
+HashMap HashMapCreate(int (*hashFunc) (void* key));
 
 // Destroys a HashMap
 void HashMapDestroy(HashMap* mapp);
