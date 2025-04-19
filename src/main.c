@@ -16,7 +16,7 @@ void strPrint(void* value) {
 int main(int argc, char* argv[]) {
     if (argc > 1) {
         printf("Testing mode :]\n");
-        List list = ListCreate();
+        List list = ListCreate(strPrint);
         ListAppendFirst(list, "bruh");
         ListAppendFirst(list, "bruh2");
         ListAppendFirst(list, "bruh3");
@@ -25,7 +25,8 @@ int main(int argc, char* argv[]) {
         ListAppendLast(list, "bruh2");
         ListAppendLast(list, "bruh1");
         ListPut(list, 5, "bruhtop");
-        ListPrint(list, false, strPrint);
+        ListPrint(list, false, NULL);
+        ListDestroy(&list);
         return EXIT_SUCCESS;
     }
 

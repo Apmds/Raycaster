@@ -13,15 +13,17 @@ struct listnode {
 struct list {
     ListNode firstNode;
     ListNode currentNode;       // Node somewhere in the list where we can start operations in
+    void (*printFunc) (void* item);
     int size;
 };
 
 
-// Creates a List
-List ListCreate() {
+// Creates a List. printFunc (optional) prints an item from the list)
+List ListCreate(void (*printFunc) (void* item)) {
     List list = malloc(sizeof(struct list));
     assert(list != NULL);
     
+    list->printFunc = printFunc;
     list->size = 0;
 }
 
@@ -155,13 +157,30 @@ bool ListRemoveLast(List list, int index);
 bool ListRemove(List list, int index);
 
 
-// Prints the list in the usual format (printFunc prints the item correctly)
+// Prints the list in the usual format. printFunc (optional) prints the item correctly)
 void ListPrint(List list, bool newline, void (*printFunc) (void* item)) {
+    assert(list != NULL);
+    
+    void (*usedPrintFunc) (void* item) = list->printFunc;
+    if (printFunc != NULL) {
+        usedPrintFunc = printFunc;
+    } else {
+        usedPrintFunc = list->printFunc;
+    }
+
+    if (usedPrintFunc == NULL) {
+        printf("NO PRINT FUNCTION SPECIFIED!");
+        if (newline) {
+            printf("\n");
+        }
+        return;
+    }
+
     printf("[");
     list->currentNode = list->firstNode;
     while (list->currentNode != NULL) {
-        printFunc(list->currentNode->value);
-        
+        usedPrintFunc(list->currentNode->value);
+
         list->currentNode = list->currentNode->nextNode;
 
         if (list->currentNode != NULL) {
