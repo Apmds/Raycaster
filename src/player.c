@@ -70,13 +70,12 @@ void PlayerDestroy(Player* pp) {
 
     Player p = *pp;
 
-    free(p);
-
     // Destroy rays.
     for (int i = 0; i < p->numRays; i++) {
         MapRayDestroy(&p->rays[i]);
     }
-
+    free(p->rays);
+    free(p);
     *pp = NULL;
 }
 
