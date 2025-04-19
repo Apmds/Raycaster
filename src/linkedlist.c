@@ -47,13 +47,101 @@ void ListDestroy(List* listp) {
 
 
 // Appends an item to the start of the List, returning whether or not it was successful
-bool ListAppendFirst(List list, void* item);
+bool ListAppendFirst(List list, void* item) {
+    if (list == NULL) {
+        return false;
+    }
+
+    ListNode node = malloc(sizeof(struct listnode));
+    if (node == NULL) {
+        return false;
+    }
+
+    node->value = item;
+    node->nextNode = list->firstNode;
+    
+    // Change the current node if its pointing to the first node
+    if (list->currentNode == list->firstNode) {
+        list->currentNode = node;
+    }
+    list->firstNode = node;
+    list->size++;
+
+    return true;
+}
 
 // Appends an item in to the end of the  List, returning whether or not it was successful
-bool ListAppendLast(List list, void* item);
+bool ListAppendLast(List list, void* item) {
+    if (list == NULL) {
+        return false;
+    }
+
+    // Loop until last index
+    while (list->currentNode->nextNode != NULL) {
+        list->currentNode=list->currentNode->nextNode;
+    }
+
+    // Creating new node
+    ListNode node = malloc(sizeof(struct listnode));
+    if (node == NULL) {
+        return false;
+    }
+    node->value = item;
+
+    // Put node at the end
+    list->currentNode->nextNode = node;
+    list->size++;
+
+    return true;
+}
 
 // Puts an item in the List, returning whether or not it was successful
-bool ListPut(List list, int index, void* item);
+bool ListPut(List list, int index, void* item) {
+    if (list == NULL) {
+        return false;
+    }
+
+    // Index at the lists edges
+    if (index == 0) {
+        return ListAppendFirst(list, item);
+    }
+    if (index == list->size) {
+        return ListAppendLast(list, item);
+    }
+
+    // Invalid index
+    if (index > list->size) {
+        return false;
+    }
+
+    // Loop until right index
+    ListNode lastNode = NULL;
+    list->currentNode = list->firstNode;
+    int i = 0;
+    for (i = 0; i < index && list->currentNode != NULL; i++) {
+        lastNode = list->currentNode;
+        list->currentNode=list->currentNode->nextNode;
+    }
+
+    // Didn't reach the desired index
+    if (list->currentNode == NULL && i < index) {
+        return false;
+    }    
+
+    // Creating new node
+    ListNode node = malloc(sizeof(struct listnode));
+    if (node == NULL) {
+        return false;
+    }
+    node->value = item;
+    
+    // node points to currentNode and lastNode points to node
+    node->nextNode = list->currentNode;
+    lastNode->nextNode = node;
+    list->size++;
+
+    return true;
+}
 
 // Returns an item from the List
 void* ListGet(List list, int index);
