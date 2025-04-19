@@ -1,13 +1,34 @@
 #include <stdlib.h>
-
+#include <stdio.h>
 #include "raylib.h"
 #include "raymath.h"
 #include "player.h"
 #include "map.h"
+#include "list.h"
 
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 
-int main() {
+void strPrint(void* value) {
+    char* strValue = (char*) value;
+    printf("%s", strValue);
+}
+
+int main(int argc, char* argv[]) {
+    if (argc > 1) {
+        printf("Testing mode :]\n");
+        List list = ListCreate();
+        ListAppendFirst(list, "bruh");
+        ListAppendFirst(list, "bruh2");
+        ListAppendFirst(list, "bruh3");
+        ListAppendFirst(list, "bruh4");
+        ListAppendLast(list, "bruh3");
+        ListAppendLast(list, "bruh2");
+        ListAppendLast(list, "bruh1");
+        ListPut(list, 5, "bruhtop");
+        ListPrint(list, false, strPrint);
+        return EXIT_SUCCESS;
+    }
+
     // Tell the window to use vsync and work on high DPI displays
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
     

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 #include "list.h"
 
@@ -152,3 +153,24 @@ bool ListRemoveFirst(List list, int index);
 bool ListRemoveLast(List list, int index);
 // Removes an item from the List, returning whether or not it was successful
 bool ListRemove(List list, int index);
+
+
+// Prints the list in the usual format (printFunc prints the item correctly)
+void ListPrint(List list, bool newline, void (*printFunc) (void* item)) {
+    printf("[");
+    list->currentNode = list->firstNode;
+    while (list->currentNode != NULL) {
+        printFunc(list->currentNode->value);
+        
+        list->currentNode = list->currentNode->nextNode;
+
+        if (list->currentNode != NULL) {
+            printf(", ");
+        }
+    }
+    
+    printf("]");
+    if (newline) {
+        printf("\n");
+    }
+}
