@@ -4,44 +4,28 @@
 #include "raymath.h"
 #include "player.h"
 #include "map.h"
-#include "list.h"
+#include "hashmap.h"
 
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 
-void strPrint(void* value) {
-    char* strValue = (char*) value;
-    printf("%s", strValue);
+// djb2 hash
+int djb2hash(void* key) {
+    char* str = (char*) key;
+
+    int hash = 5381;
+    int c;
+
+    while (c = *str++)
+       hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+    return hash;
 }
 
 int main(int argc, char* argv[]) {
     if (argc > 1) {
         printf("Testing mode :]\n");
-        printf("Adding stuff:\n");
-        List list = ListCreate(strPrint);
-        ListAppendLast(list, "bruh");
-        ListAppendFirst(list, "bruh2");
-        ListAppendFirst(list, "bruh3");
-        ListAppendFirst(list, "bruh4");
-        ListAppendLast(list, "bruh3");
-        ListAppendLast(list, "bruh2");
-        ListAppendLast(list, "bruh1");
-        ListPut(list, 5, "bruhtop");
-        ListPrint(list, true, NULL);
-
-        printf("Removing stuff:\n");
-        ListRemoveFirst(list);
-        ListPrint(list, true, NULL);
-        printf("Popped first: %s\n", (char*) ListPopFirst(list));
-        ListPrint(list, true, NULL);
-        ListRemoveLast(list);
-        ListPrint(list, true, NULL);
-        ListRemove(list, 3);
-        ListPrint(list, true, NULL);
-        printf("Popped index 1: %s\n", (char*) ListPop(list, 1));
-        ListPrint(list, true, NULL);
-        printf("Popped last: %s\n", (char*) ListPopLast(list));
-        ListPrint(list, true, NULL);
-        ListDestroy(&list);
+        HashMap hashmap = HashMapCreate(5, djb2hash);
+        HashMapDestroy(&hashmap);
         return EXIT_SUCCESS;
     }
 

@@ -23,6 +23,8 @@ List ListCreate(void (*printFunc) (void* item)) {
     List list = malloc(sizeof(struct list));
     assert(list != NULL);
     
+    list->firstNode = NULL;
+    list->currentNode = NULL;
     list->printFunc = printFunc;
     list->size = 0;
 }
