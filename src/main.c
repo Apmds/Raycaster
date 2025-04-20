@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
         printf("Testing mode :]\n");
         printf("Adding stuff:\n");
         List list = ListCreate(strPrint);
-        ListAppendFirst(list, "bruh");
+        ListAppendLast(list, "bruh");
         ListAppendFirst(list, "bruh2");
         ListAppendFirst(list, "bruh3");
         ListAppendFirst(list, "bruh4");
@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
         ListPrint(list, true, NULL);
         ListRemoveLast(list);
         ListPrint(list, true, NULL);
-        ListRemoveLast(list);
+        ListRemove(list, 3);
         ListPrint(list, true, NULL);
         ListRemoveLast(list);
         ListPrint(list, true, NULL);

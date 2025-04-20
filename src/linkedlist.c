@@ -75,6 +75,10 @@ bool ListAppendFirst(List list, void* item) {
 bool ListAppendLast(List list, void* item) {
     assert(list != NULL);
     
+    if (list->size == 0) {
+        return ListAppendFirst(list, item);
+    }
+
     // Loop until last index
     while (list->currentNode->nextNode != NULL) {
         list->currentNode=list->currentNode->nextNode;
@@ -218,7 +222,45 @@ bool ListRemoveLast(List list) {
 }
 
 // Removes an item from the List, returning whether or not it was successful
-bool ListRemove(List list, int index);
+bool ListRemove(List list, int index) {
+    assert(list != NULL);
+
+    if (list->size == 0) {
+        return false;
+    }
+
+    // Index outside bounds.
+    if (index >= list->size || index < 0) {
+        return NULL;
+    }
+
+    if (index == 0) {
+        return ListRemoveFirst(list);
+    }
+    if (index == list->size-1) {
+        return ListRemoveLast(list);
+    }
+
+    // Loop until right index and the node before that
+    ListNode beforeCurrent = NULL;
+    list->currentNode = list->firstNode;
+    int idx = 0;
+    while (idx != index && list->currentNode->nextNode != NULL) {
+        beforeCurrent = list->currentNode;
+        list->currentNode = list->currentNode->nextNode;
+        idx++;
+    }
+    
+    // Remove currentNode from chain.
+    if (beforeCurrent != NULL) {
+        beforeCurrent->nextNode = list->currentNode->nextNode;
+    }
+    // Free currentNode.
+    free(list->currentNode);
+    list->size--;
+
+    return true;
+}
 
 // Removes the first item from the List, returning it
 void* ListPopFirst(List list);
