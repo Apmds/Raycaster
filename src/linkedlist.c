@@ -51,9 +51,7 @@ void ListDestroy(List* listp) {
 
 // Appends an item to the start of the List, returning whether or not it was successful
 bool ListAppendFirst(List list, void* item) {
-    if (list == NULL) {
-        return false;
-    }
+    assert(list != NULL);
 
     ListNode node = malloc(sizeof(struct listnode));
     if (node == NULL) {
@@ -75,10 +73,8 @@ bool ListAppendFirst(List list, void* item) {
 
 // Appends an item in to the end of the  List, returning whether or not it was successful
 bool ListAppendLast(List list, void* item) {
-    if (list == NULL) {
-        return false;
-    }
-
+    assert(list != NULL);
+    
     // Loop until last index
     while (list->currentNode->nextNode != NULL) {
         list->currentNode=list->currentNode->nextNode;
@@ -100,7 +96,10 @@ bool ListAppendLast(List list, void* item) {
 
 // Puts an item in the List, returning whether or not it was successful
 bool ListPut(List list, int index, void* item) {
-    if (list == NULL) {
+    assert(list != NULL);
+
+    // Invalid index
+    if (index > list->size || index < 0) {
         return false;
     }
 
@@ -112,10 +111,6 @@ bool ListPut(List list, int index, void* item) {
         return ListAppendLast(list, item);
     }
 
-    // Invalid index
-    if (index > list->size) {
-        return false;
-    }
 
     // Loop until right index
     ListNode lastNode = NULL;
@@ -147,15 +142,90 @@ bool ListPut(List list, int index, void* item) {
 }
 
 // Returns an item from the List
-void* ListGet(List list, int index);
+void* ListGet(List list, int index) {
+    assert(list != NULL);
+
+    // Index outside bounds.
+    if (index >= list->size || index < 0) {
+        return NULL;
+    }
+
+    // Loop through list until index
+    list->currentNode = list->firstNode;
+    int idx = 0;
+    while (list->currentNode != NULL) {
+        if (idx == index) {
+            return list->currentNode->value;
+        }
+        list->currentNode = list->currentNode->nextNode;
+        idx++;
+    }
+    
+    return NULL;
+}
 
 // Removes the first item from the List, returning whether or not it was successful
-bool ListRemoveFirst(List list, int index);
+bool ListRemoveFirst(List list) {
+    assert(list != NULL);
+
+    if (list->size == 0) {
+        return false;
+    }
+
+    // Free first node and set it to second node
+    ListNode first = list->firstNode;
+    //printf("first: %p, list->firstNode: %p, list->firstNode->nextNode: %p\n", first, list->firstNode, list->firstNode->nextNode);
+    if (list->currentNode == list->firstNode) {
+        list->currentNode = list->firstNode->nextNode;
+    }
+    list->firstNode = list->firstNode->nextNode;
+    //printf("first: %p (%s), list->firstNode: %p (%s), list->firstNode->nextNode: %p (%s)\n", first, (char*) first->value, list->firstNode, (char*) list->firstNode->value, list->firstNode->nextNode, (char*) list->firstNode->nextNode->value);
+
+    free(first);    
+    list->size--;
+
+    return true;
+}
+
 // Removes the last item from the List, returning whether or not it was successful
-bool ListRemoveLast(List list, int index);
+bool ListRemoveLast(List list) {
+    assert(list != NULL);
+
+    if (list->size == 0) {
+        return false;
+    }
+
+    // Get last node and node before last
+    ListNode beforeLast = NULL;
+    list->currentNode = list->firstNode;
+    while (list->currentNode->nextNode != NULL) {
+        beforeLast = list->currentNode;
+        list->currentNode = list->currentNode->nextNode;
+    }
+    
+    // Free last node and set the current node to the first node
+    ListNode last = list->currentNode;
+    list->currentNode = list->firstNode;
+    free(last);
+    list->size--;
+
+    // If node before last exists, make it the last
+    if (beforeLast != NULL) {
+        beforeLast->nextNode = NULL;
+    }
+
+    return true;
+}
+
 // Removes an item from the List, returning whether or not it was successful
 bool ListRemove(List list, int index);
 
+// Removes the first item from the List, returning it
+void* ListPopFirst(List list);
+// Removes the last item from the List, returning it
+void* ListPopLast(List list);
+// Removes an item from the list, returning it
+void* ListPop(List list, int index);
 
 // Prints the list in the usual format. printFunc (optional) prints the item correctly)
 void ListPrint(List list, bool newline, void (*printFunc) (void* item)) {

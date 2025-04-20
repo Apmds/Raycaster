@@ -3,6 +3,7 @@
 #ifndef LIST_H
 #define LIST_H
 
+// List type. Pointers stored inside the list are not freed when removing them or destroying the list.
 typedef struct list* List;
 
 // Creates a List. printFunc (optional) prints an item from the list)
@@ -25,11 +26,18 @@ bool ListPut(List list, int index, void* item);
 void* ListGet(List list, int index);
 
 // Removes the first item from the List, returning whether or not it was successful
-bool ListRemoveFirst(List list, int index);
+bool ListRemoveFirst(List list);
 // Removes the last item from the List, returning whether or not it was successful
-bool ListRemoveLast(List list, int index);
+bool ListRemoveLast(List list);
 // Removes an item from the List, returning whether or not it was successful
 bool ListRemove(List list, int index);
+
+// Removes the first item from the List, returning it
+void* ListPopFirst(List list);
+// Removes the last item from the List, returning it
+void* ListPopLast(List list);
+// Removes an item from the list, returning it
+void* ListPop(List list, int index);
 
 // Prints the list in the usual format. printFunc (optional) prints the item correctly)
 void ListPrint(List list, bool newline, void (*printFunc) (void* item));
