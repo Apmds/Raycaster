@@ -145,6 +145,7 @@ bool ListPut(List list, int index, void* item) {
     return true;
 }
 
+
 // Returns an item from the List
 void* ListGet(List list, int index) {
     assert(list != NULL);
@@ -168,6 +169,7 @@ void* ListGet(List list, int index) {
     return NULL;
 }
 
+
 // Removes the first item from the List, returning whether or not it was successful
 bool ListRemoveFirst(List list) {
     assert(list != NULL);
@@ -178,12 +180,10 @@ bool ListRemoveFirst(List list) {
 
     // Free first node and set it to second node
     ListNode first = list->firstNode;
-    //printf("first: %p, list->firstNode: %p, list->firstNode->nextNode: %p\n", first, list->firstNode, list->firstNode->nextNode);
     if (list->currentNode == list->firstNode) {
         list->currentNode = list->firstNode->nextNode;
     }
     list->firstNode = list->firstNode->nextNode;
-    //printf("first: %p (%s), list->firstNode: %p (%s), list->firstNode->nextNode: %p (%s)\n", first, (char*) first->value, list->firstNode, (char*) list->firstNode->value, list->firstNode->nextNode, (char*) list->firstNode->nextNode->value);
 
     free(first);    
     list->size--;
@@ -231,7 +231,7 @@ bool ListRemove(List list, int index) {
 
     // Index outside bounds.
     if (index >= list->size || index < 0) {
-        return NULL;
+        return false;
     }
 
     if (index == 0) {
@@ -262,12 +262,105 @@ bool ListRemove(List list, int index) {
     return true;
 }
 
+
 // Removes the first item from the List, returning it
-void* ListPopFirst(List list);
+void* ListPopFirst(List list) {
+    assert(list != NULL);
+
+    if (list->size == 0) {
+        return NULL;
+    }
+
+    // Free first node and set it to second node
+    ListNode first = list->firstNode;
+    //printf("first: %p, list->firstNode: %p, list->firstNode->nextNode: %p\n", first, list->firstNode, list->firstNode->nextNode);
+    if (list->currentNode == list->firstNode) {
+        list->currentNode = list->firstNode->nextNode;
+    }
+    list->firstNode = list->firstNode->nextNode;
+    //printf("first: %p (%s), list->firstNode: %p (%s), list->firstNode->nextNode: %p (%s)\n", first, (char*) first->value, list->firstNode, (char*) list->firstNode->value, list->firstNode->nextNode, (char*) list->firstNode->nextNode->value);
+
+    void* value = first->value;
+    free(first);
+    list->size--;
+
+    return value;
+}
+
 // Removes the last item from the List, returning it
-void* ListPopLast(List list);
+void* ListPopLast(List list) {
+    assert(list != NULL);
+
+    if (list->size == 0) {
+        return NULL;
+    }
+
+    // Get last node and node before last
+    ListNode beforeLast = NULL;
+    list->currentNode = list->firstNode;
+    while (list->currentNode->nextNode != NULL) {
+        beforeLast = list->currentNode;
+        list->currentNode = list->currentNode->nextNode;
+    }
+    
+    // Free last node and set the current node to the first node
+    ListNode last = list->currentNode;
+    list->currentNode = list->firstNode;
+
+    void* value = last->value;
+    free(last);
+    list->size--;
+
+    // If node before last exists, make it the last
+    if (beforeLast != NULL) {
+        beforeLast->nextNode = NULL;
+    }
+
+    return value;
+}
+
 // Removes an item from the list, returning it
-void* ListPop(List list, int index);
+void* ListPop(List list, int index) {
+    assert(list != NULL);
+
+    if (list->size == 0) {
+        return NULL;
+    }
+
+    // Index outside bounds.
+    if (index >= list->size || index < 0) {
+        return NULL;
+    }
+
+    if (index == 0) {
+        return ListPopFirst(list);
+    }
+    if (index == list->size-1) {
+        return ListPopLast(list);
+    }
+
+    // Loop until right index and the node before that
+    ListNode beforeCurrent = NULL;
+    list->currentNode = list->firstNode;
+    int idx = 0;
+    while (idx != index && list->currentNode->nextNode != NULL) {
+        beforeCurrent = list->currentNode;
+        list->currentNode = list->currentNode->nextNode;
+        idx++;
+    }
+    
+    // Remove currentNode from chain.
+    if (beforeCurrent != NULL) {
+        beforeCurrent->nextNode = list->currentNode->nextNode;
+    }
+    // Free currentNode.
+    void* value = list->currentNode->value;
+    free(list->currentNode);
+    list->size--;
+
+    return value;
+}
+
 
 // Prints the list in the usual format. printFunc (optional) prints the item correctly)
 void ListPrint(List list, bool newline, void (*printFunc) (void* item)) {

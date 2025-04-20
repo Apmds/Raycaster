@@ -31,13 +31,15 @@ int main(int argc, char* argv[]) {
         printf("Removing stuff:\n");
         ListRemoveFirst(list);
         ListPrint(list, true, NULL);
-        ListRemoveFirst(list);
+        printf("Popped first: %s\n", (char*) ListPopFirst(list));
         ListPrint(list, true, NULL);
         ListRemoveLast(list);
         ListPrint(list, true, NULL);
         ListRemove(list, 3);
         ListPrint(list, true, NULL);
-        ListRemoveLast(list);
+        printf("Popped index 1: %s\n", (char*) ListPop(list, 1));
+        ListPrint(list, true, NULL);
+        printf("Popped last: %s\n", (char*) ListPopLast(list));
         ListPrint(list, true, NULL);
         ListDestroy(&list);
         return EXIT_SUCCESS;
