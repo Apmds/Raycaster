@@ -47,6 +47,24 @@ void* ListPopLast(List list);
 void* ListPop(List list, int index);
 
 
+// List Looping functions
+
+// Moves the pointer to the start
+void ListMoveToStart(List list);
+
+// Moves the pointer to the next element (returns false if at the end)
+bool ListMoveToNext(List list);
+
+// Moves the pointer to the end of the list
+void ListMoveToEnd(List list);
+
+// Returns the current item from the list
+void* ListGetCurrent(List list);
+
+// Returns whether or not the list has a next element
+bool ListHasNext(List list);
+
+
 // Prints the list in the usual format. printFunc (optional) prints the item correctly)
 void ListPrint(List list, bool newline, void (*printFunc) (void* item));
 

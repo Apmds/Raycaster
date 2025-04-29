@@ -92,6 +92,7 @@ bool ListAppendLast(List list, void* item) {
         return false;
     }
     node->value = item;
+    node->nextNode = NULL;
 
     // Put node at the end
     list->currentNode->nextNode = node;
@@ -361,6 +362,49 @@ void* ListPop(List list, int index) {
     list->size--;
 
     return value;
+}
+
+
+// Moves the pointer to the start
+void ListMoveToStart(List list) {
+    assert(list != NULL);
+
+    list->currentNode = list->firstNode;
+}
+
+// Moves the pointer to the next element (returns false if at the end)
+bool ListMoveToNext(List list) {
+    assert(list != NULL);
+
+    if (list->currentNode->nextNode == NULL) {
+        return false;
+    }
+
+    list->currentNode = list->currentNode->nextNode;
+    return true;
+}
+
+// Moves the pointer to the end of the list
+void ListMoveToEnd(List list) {
+    assert(list != NULL);
+
+    while (list->currentNode->nextNode != NULL) {
+        list->currentNode = list->currentNode->nextNode;
+    }
+}
+
+// Returns the current item from the list
+void* ListGetCurrent(List list) {
+    assert(list != NULL);
+
+    return list->currentNode->value;
+}
+
+// Returns whether or not the list has a next element
+bool ListHasNext(List list) {
+    assert(list != NULL);
+
+    return list->currentNode->nextNode != NULL;
 }
 
 

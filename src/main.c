@@ -5,6 +5,7 @@
 #include "player.h"
 #include "map.h"
 #include "hashmap.h"
+#include "list.h"
 
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 
@@ -24,7 +25,24 @@ int djb2hash(void* key) {
 int main(int argc, char* argv[]) {
     if (argc > 1) {
         printf("Testing mode :]\n");
+        List list = ListCreate(NULL);
+        ListAppendLast(list, "skibidi");
+        ListAppendLast(list, "gayat");
+        ListAppendLast(list, "sussy bakana");
+        ListAppendLast(list, "groot");
+        ListAppendLast(list, "busy");
+        
+        ListMoveToStart(list);
+        printf("[");
+        while (ListHasNext(list)) {    
+            char* string = (char*) ListGetCurrent(list);
+            printf("%s,", string);
+            ListMoveToNext(list);
+        }
+        printf("]\n");
+
         HashMap hashmap = HashMapCreate(5, djb2hash);
+        ListDestroy(&list);
         HashMapDestroy(&hashmap);
         return EXIT_SUCCESS;
     }
