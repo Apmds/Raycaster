@@ -18,10 +18,13 @@ bool HashMapPut(HashMap map, void* key, void* value);
 // Returns an item from the HashMap
 void* HashMapGet(HashMap map, void* key);
 
+// Returns whether or not the HashMap contains a value for the given key
+bool HashMapContains(HashMap map, void* key);
+
 // Removes an item from the HashMap, returning whether or not it was successful
 bool HashMapRemove(HashMap map, void* key);
 
 // Prints the map in usual format. printFunc (optional) prints the item correctly)
-void HashMapPrint(HashMap map, void (*printFunc) (void* key, void* value));
+void HashMapPrint(HashMap map, bool newline, void (*printFunc) (void* key, void* value));
 
 #endif

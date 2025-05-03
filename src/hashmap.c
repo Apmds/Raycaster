@@ -74,7 +74,7 @@ bool HashMapPut(HashMap map, void* key, void* value) {
     unsigned int hash_val = map->hashFunc(key) % map->size;
 
     // Update item if exists
-    if (HashMapGet(map, key) != NULL) {
+    if (HashMapContains(map, key)) {
         List list = map->values[hash_val];
 
         ListMoveToStart(list);
@@ -127,15 +127,23 @@ void* HashMapGet(HashMap map, void* key) {
     return value;
 }
 
+// Returns whether or not the HashMap contains a value for the given key
+bool HashMapContains(HashMap map, void* key) {
+    return HashMapGet(map, key) != NULL;
+}
+
 // Removes an item from the HashMap, returning whether or not it was successful
 bool HashMapRemove(HashMap map, void* key);
 
 // Prints the map in usual format. printFunc (optional) prints the item correctly)
-void HashMapPrint(HashMap map, void (*printFunc) (void* key, void* value)) {
+void HashMapPrint(HashMap map, bool newline, void (*printFunc) (void* key, void* value)) {
     assert(map != NULL);
 
     if (printFunc == NULL) {
-        printf("NO PRINT FUNCTION SPECIFIED!\n");
+        printf("NO PRINT FUNCTION SPECIFIED!");
+        if (newline) {
+            printf("\n");
+        }
         return;
     }
 
@@ -154,4 +162,7 @@ void HashMapPrint(HashMap map, void (*printFunc) (void* key, void* value)) {
     // Delete the last 2 chars (the last ", ")
     printf("\b\b  \b\b");
     printf("}");
+    if (newline) {
+        printf("\n");
+    }
 }

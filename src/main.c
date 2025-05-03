@@ -39,9 +39,18 @@ int main(int argc, char* argv[]) {
         HashMapPut(hashmap, "tralale", "oe2k 'e210je0qwej");
         HashMapPut(hashmap, "tralale", "oe2e0qwej");
 
-        HashMapPrint(hashmap, print);
+        HashMapPrint(hashmap, true, print);
         
-        // TODO test HashMapGet
+        printf("%s\n", (char*) HashMapGet(hashmap, "bruh"));
+
+        printf("contains bruh: %s\n", HashMapContains(hashmap, "bruh")?"true":"false");
+        printf("contains brh: %s\n", HashMapContains(hashmap, "brh")?"true":"false");
+        printf("contains heehe: %s\n", HashMapContains(hashmap, "heehe")?"true":"false");
+        printf("contains sigma: %s\n", HashMapContains(hashmap, "sigma")?"true":"false");
+        printf("contains tralale: %s\n", HashMapContains(hashmap, "tralale")?"true":"false");
+        printf("contains dnasdlsan: %s\n", HashMapContains(hashmap, "dnasdlsan")?"true":"false");
+        printf("contains dsadasndbruh: %s\n", HashMapContains(hashmap, "dsadasndbruh")?"true":"false");
+        printf("contains dohen2i1nepwaeqw: %s\n", HashMapContains(hashmap, "dohen2i1nepwaeqw")?"true":"false");
 
         HashMapDestroy(&hashmap);
         return EXIT_SUCCESS;
