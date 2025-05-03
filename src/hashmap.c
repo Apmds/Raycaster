@@ -133,7 +133,28 @@ bool HashMapContains(HashMap map, void* key) {
 }
 
 // Removes an item from the HashMap, returning whether or not it was successful
-bool HashMapRemove(HashMap map, void* key);
+bool HashMapRemove(HashMap map, void* key) {
+    assert(map != NULL);
+
+    // Get list index
+    int hash_val = map->hashFunc(key) % map->size;
+    
+    List list = map->values[hash_val];
+    ListMoveToStart(list);
+    int i = 0;
+    while (ListCanOperate(list)) {
+        HashMapElement element = ListGetCurrent(list);
+        if (element->key == key) {
+            ListPop(list, i);
+            return true;
+        }
+
+        i++;
+        ListMoveToNext(list);
+    }
+
+    return false;
+}
 
 // Prints the map in usual format. printFunc (optional) prints the item correctly)
 void HashMapPrint(HashMap map, bool newline, void (*printFunc) (void* key, void* value)) {
