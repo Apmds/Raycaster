@@ -37,6 +37,7 @@ int main(int argc, char* argv[]) {
         HashMapPut(hashmap, "heehe", "kapmdfsad");
         HashMapPut(hashmap, "sigma", "dsapomdwapod,");
         HashMapPut(hashmap, "tralale", "oe2k 'e210je0qwej");
+        HashMapPut(hashmap, "tralale", "oe2e0qwej");
 
         HashMapPrint(hashmap, print);
         

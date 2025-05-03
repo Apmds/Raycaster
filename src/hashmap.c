@@ -69,17 +69,35 @@ void HashMapDestroy(HashMap* mapp) {
 bool HashMapPut(HashMap map, void* key, void* value) {
     assert(map != NULL);
     assert(key != NULL);
-    
+
     // Get list index
     unsigned int hash_val = map->hashFunc(key) % map->size;
+
+    // Update item if exists
+    if (HashMapGet(map, key) != NULL) {
+        List list = map->values[hash_val];
+
+        ListMoveToStart(list);
+        while (ListCanOperate(list)) {
+            HashMapElement element = (HashMapElement) ListGetCurrent(list);
+
+            if (element->key == key) {
+                element->value = value;
+                return true;
+            }
+
+            ListMoveToNext(list);
+        }
+
+    }
 
     HashMapElement element = malloc(sizeof(hashmap_elem));
     assert(element != NULL);
 
     element->key = key;
     element->value = value;
-    // TODO swap element in table if repeated
     ListAppendFirst(map->values[hash_val], (void*) element);
+    return true;
 }
 
 // Returns an item from the HashMap
