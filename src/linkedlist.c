@@ -376,9 +376,9 @@ void ListMoveToStart(List list) {
 bool ListMoveToNext(List list) {
     assert(list != NULL);
 
-    if (list->currentNode->nextNode == NULL) {
-        return false;
-    }
+    //if (list->currentNode->nextNode == NULL) {
+    //    return false;
+    //}
 
     list->currentNode = list->currentNode->nextNode;
     return true;
@@ -405,6 +405,13 @@ bool ListHasNext(List list) {
     assert(list != NULL);
 
     return list->currentNode->nextNode != NULL;
+}
+
+// Returns whether or not its safe to operate in the current list node
+bool ListCanOperate(List list) {
+    assert(list != NULL);
+
+    return list->currentNode != NULL;
 }
 
 

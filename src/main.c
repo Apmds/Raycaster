@@ -10,7 +10,7 @@
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 
 // djb2 hash
-int djb2hash(void* key) {
+unsigned int djb2hash(void* key) {
     char* str = (char*) key;
 
     int hash = 5381;
@@ -22,27 +22,26 @@ int djb2hash(void* key) {
     return hash;
 }
 
+void print(void* key, void* value) {
+    printf("%s: %s", (char*) key, (char*) value);
+}
+
 int main(int argc, char* argv[]) {
     if (argc > 1) {
         printf("Testing mode :]\n");
-        List list = ListCreate(NULL);
-        ListAppendLast(list, "skibidi");
-        ListAppendLast(list, "gayat");
-        ListAppendLast(list, "sussy bakana");
-        ListAppendLast(list, "groot");
-        ListAppendLast(list, "busy");
         
-        ListMoveToStart(list);
-        printf("[");
-        while (ListHasNext(list)) {    
-            char* string = (char*) ListGetCurrent(list);
-            printf("%s,", string);
-            ListMoveToNext(list);
-        }
-        printf("]\n");
-
         HashMap hashmap = HashMapCreate(5, djb2hash);
-        ListDestroy(&list);
+
+        HashMapPut(hashmap, "bruh", "dnosada");
+        HashMapPut(hashmap, "brh", "doisadnoas");
+        HashMapPut(hashmap, "heehe", "kapmdfsad");
+        HashMapPut(hashmap, "sigma", "dsapomdwapod,");
+        HashMapPut(hashmap, "tralale", "oe2k 'e210je0qwej");
+
+        HashMapPrint(hashmap, print);
+        
+        // TODO test HashMapGet
+
         HashMapDestroy(&hashmap);
         return EXIT_SUCCESS;
     }

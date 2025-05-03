@@ -64,6 +64,8 @@ void* ListGetCurrent(List list);
 // Returns whether or not the list has a next element
 bool ListHasNext(List list);
 
+// Returns whether or not its safe to operate in the current list node
+bool ListCanOperate(List list);
 
 // Prints the list in the usual format. printFunc (optional) prints the item correctly)
 void ListPrint(List list, bool newline, void (*printFunc) (void* item));
