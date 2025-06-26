@@ -6,7 +6,7 @@
 typedef struct hashmap* HashMap;
 
 // Creates a HashMap (hashFunc is the function used fir hashing the key)
-HashMap HashMapCreate(int size, unsigned int (*hashFunc) (void* key));
+HashMap HashMapCreate(int size, unsigned int (*hashFunc) (void* key), bool (*compFunc) (void* key1, void* key2));
 
 // Destroys a HashMap
 void HashMapDestroy(HashMap* mapp);

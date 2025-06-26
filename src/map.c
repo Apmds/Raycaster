@@ -21,11 +21,14 @@ static unsigned int djb2hash(void* key) {
     return hash;
 }
 
+static bool hashmapstrcmp(void* key1, void* key2) {
+    return strcmp((char*) key1, (char*) key2) == 0;
+}
+
 struct map {
     int numRows;
     int numCols;
     int tileSize;                       // Size of each tile (pixels)
-    Texture wall_img;                   // TEMPORARY
     HashMap tileMap;
     char** tileNames;
     MapTiles** grid;
@@ -49,20 +52,17 @@ Map MapCreate(int numRows, int numCols, int tileSize) {
     map->numRows = numRows;
     map->tileSize = tileSize;
 
-    // TEMPORARY
-    map->wall_img = LoadTexture("test.png");
+    map->tileNames = (char**) malloc(TOTALTILES*sizeof(char*));
+    map->tileNames[GROUND] = "GROUND";
+    map->tileNames[WALL1] = "WALL1";
+    map->tileNames[WALL2] = "WALL2";
+    map->tileNames[WALL3] = "WALL3";
 
-    map->tileMap = HashMapCreate(5, djb2hash);
+    map->tileMap = HashMapCreate(5, djb2hash, hashmapstrcmp);
     HashMapPut(map->tileMap, "GROUND", TileCreate("GROUND", GROUND, "test.png"));
     HashMapPut(map->tileMap, "WALL1", TileCreate("WALL1", WALL1, "map.png"));
     HashMapPut(map->tileMap, "WALL2", TileCreate("WALL2", WALL2, "map2.png"));
     HashMapPut(map->tileMap, "WALL3", TileCreate("WALL3", WALL3, "wabbit_alpha.png"));
-
-    map->tileNames = (char**) malloc(TOTALTILES*sizeof(char*));
-    map->tileNames[0] = "GROUND";
-    map->tileNames[1] = "WALL1";
-    map->tileNames[2] = "WALL2";
-    map->tileNames[3] = "WALL3";
 
     return map;
 }
@@ -82,9 +82,25 @@ Map MapCreateFromFile(const char* filename) {
     int tileSize = 0;
 
     char line[500];
-    int lineIdx = 0;
+    int lineNumber = 0; // Used for error printing
+    int lineIdx = 0; // Used for getting the index of the current line (only updates after processing a non-empty file)
     
+    map->tileNames = (char**) malloc(TOTALTILES*sizeof(char*));
+    map->tileNames[GROUND] = "GROUND";
+    map->tileNames[WALL1] = "WALL1";
+    map->tileNames[WALL2] = "WALL2";
+    map->tileNames[WALL3] = "WALL3";
+
+    // TEMPORARY (change to add tiles when reading the map data)
+    map->tileMap = HashMapCreate(5, djb2hash, hashmapstrcmp);
+    HashMapPut(map->tileMap, "GROUND", TileCreate("GROUND", GROUND, "test.png"));
+    HashMapPut(map->tileMap, "WALL1", TileCreate("WALL1", WALL1, "map.png"));
+    HashMapPut(map->tileMap, "WALL2", TileCreate("WALL2", WALL2, "map2.png"));
+    HashMapPut(map->tileMap, "WALL3", TileCreate("WALL3", WALL3, "wabbit_alpha.png"));
+
     while (fgets(line, sizeof(line), file) != NULL) {
+        lineNumber++;
+
         // Ignore empty lines
         size_t line_size = strlen(line);
         if (line_size == 0 || line[0] == '\n' || line_size == strspn(line, " \r\n\t")) {
@@ -93,8 +109,8 @@ Map MapCreateFromFile(const char* filename) {
         
         // Format first line
         if (lineIdx == 0) {
-            if (sscanf(line, "%d,%d,%d", &numRows, &numCols, &tileSize) != 3) {
-                printf("Map properties not formatted correctly: the first line must be: <numRows>,<numCols>,<tileSize>");
+            if (sscanf(line, " %d , %d , %d ", &numRows, &numCols, &tileSize) != 3) {
+                printf("Line %d: Map properties not formatted correctly: the first line must be: <numRows>,<numCols>,<tileSize>\n", lineNumber);
                 exit(EXIT_FAILURE);
             }
 
@@ -115,26 +131,30 @@ Map MapCreateFromFile(const char* filename) {
             int tileX = 0;
             int tileY = 0;
             char tileName[50];
-            if (sscanf(line, "%d,%d,%s", &tileX, &tileY, tileName) != 3) {
-                printf("Map properties not formatted correctly: the line must be: <tileX>,<tileY>,<tileName>");
+            if (sscanf(line, " %d , %d , %50s ", &tileX, &tileY, tileName) != 3) {
+                printf("Line %d: Map properties not formatted correctly: the line must be: <tileX>,<tileY>,<tileName>\n", lineNumber);
                 exit(EXIT_FAILURE);
             }
             
             // Set tiles
-            if (strcmp(tileName, "WALL") == 0) {
-                MapSetTile(map, tileX, tileY, WALL1);
+            if (!HashMapContains(map->tileMap, tileName)) {
+                printf("Line %d: Tile \"%s\" does not exist!\n", lineNumber, tileName);
+                exit(EXIT_FAILURE);
             }
-            if (strcmp(tileName, "GROUND") == 0) {
-                MapSetTile(map, tileX, tileY, GROUND);
-            }
+            Tile tile = (Tile) HashMapGet(map->tileMap, tileName);
+            MapSetTile(map, tileX, tileY, TileGetMapTiles(tile));
+
+            //if (strcmp(tileName, "WALL") == 0) {
+            //    MapSetTile(map, tileX, tileY, WALL1);
+            //}
+            //if (strcmp(tileName, "GROUND") == 0) {
+            //    MapSetTile(map, tileX, tileY, GROUND);
+            //}
         }
             
         lineIdx++;
     }
     fclose(file);
-
-    // TEMPORARY
-    map->wall_img = LoadTexture("test.png");
 
     return map;
 }
@@ -150,9 +170,6 @@ void MapDestroy(Map* mp) {
         free(map->grid[i]);
     }
     free(map->grid);
-
-    // TEMPORARY
-    UnloadTexture(map->wall_img);
 
     Tile tile = (Tile) HashMapGet(map->tileMap, "GROUND"); TileDestroy(&tile);
     tile = (Tile) HashMapGet(map->tileMap, "WALL1"); TileDestroy(&tile);

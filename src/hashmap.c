@@ -15,10 +15,11 @@ struct hashmap {
     int size;
     List* values;       // HashMapElement lists
     unsigned int (*hashFunc) (void* key);
+    bool (*compFunc) (void* key1, void* key2);
 };
 
-// Creates a HashMap (hashFunc is the function used fir hashing the key)
-HashMap HashMapCreate(int size, unsigned int (*hashFunc) (void* key)) {
+// Creates a HashMap (hashFunc is the function used fir hashing the key) (compFunc if used for comparing 2 keys)
+HashMap HashMapCreate(int size, unsigned int (*hashFunc) (void* key), bool (*compFunc) (void* key1, void* key2)) {
     assert(hashFunc != NULL);
     assert(size > 0);
 
@@ -26,6 +27,7 @@ HashMap HashMapCreate(int size, unsigned int (*hashFunc) (void* key)) {
     assert(map != NULL);
 
     map->hashFunc = hashFunc;
+    map->compFunc = compFunc;
     map->size = size;
     
     // Create lists
@@ -81,9 +83,16 @@ bool HashMapPut(HashMap map, void* key, void* value) {
         while (ListCanOperate(list)) {
             HashMapElement element = (HashMapElement) ListGetCurrent(list);
 
-            if (element->key == key) {
-                element->value = value;
-                return true;
+            if (map->compFunc != NULL) {
+                if (map->compFunc(element->key, key)) {
+                    element->value = value;
+                    return true;
+                }
+            } else {
+                if (element->key == key) {
+                    element->value = value;
+                    return true;
+                }
             }
 
             ListMoveToNext(list);
@@ -116,10 +125,18 @@ void* HashMapGet(HashMap map, void* key) {
     while (ListCanOperate(list)) {
         HashMapElement element = (HashMapElement) ListGetCurrent(list);
 
-        if (element->key == key) {
-            value = element->value;
-            break;
+        if (map->compFunc != NULL) {
+            if (map->compFunc(element->key, key)) {
+                value = element->value;
+                break;
+            }
+        } else {
+            if (element->key == key) {
+                value = element->value;
+                break;
+            }
         }
+            
 
         ListMoveToNext(list);
     }
@@ -144,9 +161,17 @@ bool HashMapRemove(HashMap map, void* key) {
     int i = 0;
     while (ListCanOperate(list)) {
         HashMapElement element = ListGetCurrent(list);
-        if (element->key == key) {
-            ListPop(list, i);
-            return true;
+        
+        if (map->compFunc != NULL) {
+            if (map->compFunc(element->key, key)) {
+                ListPop(list, i);
+                return true;
+            }
+        } else {
+            if (element->key == key) {
+                ListPop(list, i);
+                return true;
+            }
         }
 
         i++;
