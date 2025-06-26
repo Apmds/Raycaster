@@ -31,7 +31,7 @@ HashMap HashMapCreate(int size, unsigned int (*hashFunc) (void* key), bool (*com
     map->size = size;
     
     // Create lists
-    map->values = malloc(sizeof(List)*5);
+    map->values = malloc(sizeof(List)*size);
     for (int i = 0; i < size; i++) {
         map->values[i] = ListCreate(NULL);
     }

@@ -27,6 +27,8 @@ List ListCreate(void (*printFunc) (void* item)) {
     list->currentNode = NULL;
     list->printFunc = printFunc;
     list->size = 0;
+
+    return list;
 }
 
 // Destroys a List
