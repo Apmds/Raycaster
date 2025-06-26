@@ -140,8 +140,7 @@ void PlayerDraw2D(Player p) {
 
     // Draw MapRays
     for (int i = 0; i < p->numRays; i++) {
-        
-        (p->rays[i]);
+        MapRayDraw2D(p->rays[i]);
     }
 }
 

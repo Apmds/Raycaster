@@ -293,19 +293,17 @@ void MapRayDraw2D(MapRay ray) {
     }
         
     if (ray->is_colliding) {
-        rayCollision lastCollision = getCollision(ray->collisions, ListGetSize(ray->collisions)-1);
+        rayCollision lastCollision = getCollision(ray->collisions, 0);
   
         DrawLine(ray->posX, ray->posY, lastCollision.collisionX, lastCollision.collisionY, color);
-        DrawLine(ray->posX, ray->posY, 0, 0, color);
         
         ListMoveToStart(ray->collisions);
         while (ListCanOperate(ray->collisions)) {
             rayCollision current = *((rayCollision*) ListGetCurrent(ray->collisions));
-            DrawCircle(current.collisionX, current.collisionY, 2, RED);
             ListMoveToNext(ray->collisions);
         }
     } else {
-        DrawLine(ray->posX, ray->posY, ray->posX + MAX_RAY_STEPS*MapGetTileSize(ray->map)*cos(ray->angle + ray->angle_offset), ray->posY + MAX_RAY_STEPS*MapGetTileSize(ray->map)*sin(ray->angle + ray->angle_offset), color);
+        DrawLine(ray->posX, ray->posY, ray->posX + MapRayGetLength(ray)*cos(ray->angle + ray->angle_offset), ray->posY + MapRayGetLength(ray)*sin(ray->angle + ray->angle_offset), color);
     }
 }
 
