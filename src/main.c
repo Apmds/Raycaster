@@ -22,35 +22,11 @@ unsigned int djb2hash(void* key) {
     return hash;
 }
 
-void print(void* key, void* value) {
-    printf("%s: %s", (char*) key, (char*) value);
-}
-
 int main(int argc, char* argv[]) {
     if (argc > 1) {
         printf("Testing mode :]\n");
         
         HashMap hashmap = HashMapCreate(5, djb2hash, NULL);
-
-        HashMapPut(hashmap, "bruh", "dnosada");
-        HashMapPut(hashmap, "brh", "doisadnoas");
-        HashMapPut(hashmap, "heehe", "kapmdfsad");
-        HashMapPut(hashmap, "sigma", "dsapomdwapod,");
-        HashMapPut(hashmap, "tralale", "oe2k 'e210je0qwej");
-        HashMapPut(hashmap, "tralale", "oe2e0qwej");
-
-        HashMapPrint(hashmap, true, print);
-        printf("%d\n",  HashMapContains(hashmap, "tralale"));
-        
-        HashMapRemove(hashmap, "bruh");
-        HashMapPrint(hashmap, true, print);
-
-        HashMapRemove(hashmap, "heehe");
-        HashMapPrint(hashmap, true, print);
-
-        HashMapRemove(hashmap, "tralale");
-        HashMapPrint(hashmap, true, print);
-
 
         HashMapDestroy(&hashmap);
         return EXIT_SUCCESS;
@@ -73,30 +49,6 @@ int main(int argc, char* argv[]) {
     
     // MAP VARS
     Map map = MapCreateFromFile("maptest.map");
-    //Map map = MapCreate(80, 80, 25);
-    //MapSetTile(map, 0, 5, WALL1);
-    //MapSetTile(map, 0, 6, WALL1);
-    //MapSetTile(map, 0, 7, WALL1);
-    //MapSetTile(map, 0, 8, WALL2);
-    //MapSetTile(map, 1, 8, WALL1);
-    //MapSetTile(map, 2, 8, WALL1);
-    //MapSetTile(map, 3, 8, WALL2);
-    //MapSetTile(map, 4, 8, WALL2);
-    //MapSetTile(map, 5, 8, WALL2);
-    //MapSetTile(map, 6, 8, WALL1);
-    //MapSetTile(map, 12, 8, WALL2);
-    //MapSetTile(map, 13, 8, WALL1);
-    //MapSetTile(map, 14, 8, WALL2);
-    //MapSetTile(map, 15, 8, WALL1);
-    //MapSetTile(map, 16, 8, WALL1);
-    //MapSetTile(map, 17, 8, WALL2);
-    //MapSetTile(map, 18, 8, WALL1);
-    //MapSetTile(map, 18, 7, WALL1);
-    //MapSetTile(map, 18, 6, WALL1);
-    //MapSetTile(map, 18, 5, WALL2);
-    //MapSetTile(map, 18, 4, WALL2);
-    //MapSetTile(map, 18, 3, WALL2);
-    //MapSetTile(map, 19, 12, WALL3);
     
     // PLAYER VARS
     Player player = PlayerCreate(10, 10, 0, 1280, map);

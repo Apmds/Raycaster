@@ -29,9 +29,9 @@ struct map {
     int numRows;
     int numCols;
     int tileSize;                       // Size of each tile (pixels)
-    HashMap tileMap;
-    char** tileNames;
-    MapTiles** grid;
+    HashMap tileMap;                    // HashMap that contains the details (texture) for a tile, given its name
+    char** tileNames;                   // Array associating tile indices (MapTiles) to the tile names (char*)
+    MapTiles** grid;                    // The grid of tiles that represents this map
 };
 
 Map MapCreate(int numRows, int numCols, int tileSize) {
@@ -143,13 +143,6 @@ Map MapCreateFromFile(const char* filename) {
             }
             Tile tile = (Tile) HashMapGet(map->tileMap, tileName);
             MapSetTile(map, tileX, tileY, TileGetMapTiles(tile));
-
-            //if (strcmp(tileName, "WALL") == 0) {
-            //    MapSetTile(map, tileX, tileY, WALL1);
-            //}
-            //if (strcmp(tileName, "GROUND") == 0) {
-            //    MapSetTile(map, tileX, tileY, GROUND);
-            //}
         }
             
         lineIdx++;
@@ -171,6 +164,7 @@ void MapDestroy(Map* mp) {
     }
     free(map->grid);
 
+    // Clear tilemap
     Tile tile = (Tile) HashMapGet(map->tileMap, "GROUND"); TileDestroy(&tile);
     tile = (Tile) HashMapGet(map->tileMap, "WALL1"); TileDestroy(&tile);
     tile = (Tile) HashMapGet(map->tileMap, "WALL2"); TileDestroy(&tile);
