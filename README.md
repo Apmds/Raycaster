@@ -4,9 +4,16 @@ This project aims to implement a [Wolfenstein 3D](https://pt.wikipedia.org/wiki/
 
 ## Capabilites
 
-Currently, the engine supports loading a map file and exploring it in a 2D and 3D view, as well as different wall types (currently only ground and wall, but with capabilites to add other types in the future).
+- Loading a map from a map file (see the [map file](#map-files) section).
+- Exploring a map using a 2D or 3D view.
+- Different wall types.
+- Transparent walls.
+- Textured walls.
 
-In the future, I'm planning on adding better movement to the player and texture mapping, as well as a more robust map file structure.
+### Future plans
+- Ground and ceiling/sky textures
+- Transparent tile back drawing
+- More stuff that I can't remember right now.
 
 ## Controls
 
@@ -34,6 +41,7 @@ If there are errors during compilation, womp womp ig.
 
 ### Windows
 I don't know how to compile using Visual Studio and I haven't searched for it, so these instructions apply to those that use [w64devkit](https://github.com/skeeto/w64devkit/releases).
+If you really want to use Visual Studio, you can follow the [quickstart projects](https://github.com/raylib-extras/raylib-quickstart/) instructions for it.
 
 **1. Clone** this repository (```git clone https://github.com/Apmds/raycaster.git```).
 
@@ -71,9 +79,15 @@ The **first** line of the file follows the structure ```<sizeX>,<sizeY>,<tileSiz
 
 ### Tile types
 - GROUND: ground tile (default)
-- WALL: wall tile
+- WALL1: generic wall tile
+- WALL2: generic wall tile
+- WALL_TRANSPARENT: generic wall tile (transparent)
 
-There can be **no empty lines** or **whitespace** at any point in the file.
+## Screenshots
+
+<img src="screenshots/img1.jpg"/>
+<img src="screenshots/img2.jpg"/>
+<img src="screenshots/img3.jpg"/>
 
 ## Credits
 
