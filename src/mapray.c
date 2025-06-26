@@ -172,13 +172,6 @@ MapRayHitSide MapRayGetHitSide(MapRay ray, int idx) {
 }
 
 
-// REMOVE LATER
-//static void printcol(void* item) {
-//    rayCollision col = *((rayCollision*) item);
-//    printf("{X: %f, y: %f, gridx: %d, gridy: %d, tile_name: %s, tile_number: %d}", col.collisionX, col.collisionY, col.collisionGridX, col.collisionGridY, TileGetName(col.tile), TileGetMapTiles(col.tile));
-//}
-
-
 void MapRayCast(MapRay ray) {
     assert(ray != NULL);
 
@@ -192,11 +185,6 @@ void MapRayCast(MapRay ray) {
         free(ListGetCurrent(ray->collisions));
         ListRemoveFirst(ray->collisions);
     }
-    
-    //ray->collisionGridX = 0;
-    //ray->collisionGridY = 0;
-    //ray->collisionX = ray->posX;
-    //ray->collisionY = ray->posY;
 
     // No map behaviour
     if (ray->map == NULL) {
@@ -282,16 +270,6 @@ void MapRayCast(MapRay ray) {
                 .hitSide = hitSide
             };
             ListAppendFirst(ray->collisions, col);
-
-//            ListAppendFirst(ray->collisions, &((rayCollision) {
-//                .collisionX = ray->posX + ray->length*rayDirX,
-//                .collisionY = ray->posY + ray->length*rayDirY,
-//                .collisionGridX = mapX,
-//                .collisionGridY = mapY,
-//                .tile = collidingTile,
-//                .hitSide = hitSide
-//            }));
-
             ray->is_colliding = !TileIsTransparent(collidingTile);
         }
 
@@ -300,9 +278,6 @@ void MapRayCast(MapRay ray) {
         }
         i++;
     }
-
-    //printf("beug: %d\n", ListGetSize(ray->collisions));
-    //ListPrint(ray->collisions, true, printcol);
     
     ray->is_colliding = ListGetSize(ray->collisions) > 0;
 }
