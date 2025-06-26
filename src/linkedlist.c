@@ -451,3 +451,9 @@ void ListPrint(List list, bool newline, void (*printFunc) (void* item)) {
         printf("\n");
     }
 }
+
+int ListGetSize(List list) {
+    assert(list != NULL);
+
+    return list->size;
+}

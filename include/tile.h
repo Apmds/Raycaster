@@ -7,14 +7,14 @@ typedef enum {
     GROUND,
     WALL1,
     WALL2,
-    WALL3,
+    WALL_TRANSPARENT,
     TOTALTILES,
 } MapTiles;
 
 typedef struct maptile* Tile;
 
 // Creates a tile object given its info.
-Tile TileCreate(const char* name, MapTiles maptile, const char* imgname);
+Tile TileCreate(const char* name, MapTiles maptile, const char* imgname, bool is_transparent);
 
 // Destroys a tile object.
 void TileDestroy(Tile* tilep);
@@ -28,5 +28,8 @@ MapTiles TileGetMapTiles(Tile tile);
 
 // The texture associated with this tile.
 Texture TileGetTexture(Tile tile);
+
+// True if the tile is transparent
+bool TileIsTransparent(Tile tile);
 
 #endif

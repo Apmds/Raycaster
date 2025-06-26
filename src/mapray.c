@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include "mapray.h"
 #include "raymath.h"
+#include "list.h"
+
+#define MAX_RAY_STEPS 50
 
 struct mapray {
     double angle;               // Not the true angle (usually the same as the player's angle);  Radians.
@@ -12,11 +15,7 @@ struct mapray {
     int posX;                   // Start position
     int posY;                   //
     bool is_colliding;
-    double collisionX;          // Position of the collision (pixels)
-    double collisionY;          // 
-    int collisionGridX;         // Position in the map grid of the collision
-    int collisionGridY;         // 
-    MapRayHitSide hitSide;      // Side where the the collision occured (for shading)
+    List collisions;
     Map map;                    // Map where this ray is currently in
 };
 
@@ -34,6 +33,11 @@ static bool isColliding(int posX, int posY, Map map) {
     return MapGetTile(map, gridPosX, gridPosY) != GROUND;
 }
 
+// Internal: returns a collision object from MapRay->collisions
+static rayCollision getCollision(List collisions, int idx) {
+    return (*((rayCollision*) ListGet(collisions, idx)));
+}
+
 MapRay MapRayCreate(int posX, int posY, double angle, double angleOffset, Map map) {
     MapRay map_ray = malloc(sizeof(struct mapray));
     assert(map_ray != NULL);
@@ -42,15 +46,11 @@ MapRay MapRayCreate(int posX, int posY, double angle, double angleOffset, Map ma
     map_ray->angle_offset = angleOffset;
     map_ray->max_length = 500;
     map_ray->length = 0;
-    map_ray->collisionGridX = 0;
-    map_ray->collisionGridY = 0;
     map_ray->posX = posX;
     map_ray->posY = posY;
     map_ray->is_colliding = false;
-    map_ray->collisionX = 0;
-    map_ray->collisionY = 0;
-    map_ray->hitSide = NONE;
     map_ray->map = map;
+    map_ray->collisions = ListCreate(NULL);
 
     return map_ray;
 }
@@ -60,6 +60,13 @@ void MapRayDestroy(MapRay* mrp) {
     assert(*mrp != NULL);
 
     MapRay map_ray = *mrp;
+
+    ListMoveToStart(map_ray->collisions);
+    while (ListCanOperate(map_ray->collisions)) {
+        free(ListGetCurrent(map_ray->collisions));
+        ListRemoveFirst(map_ray->collisions);
+    }
+    ListDestroy(&map_ray->collisions);
 
     free(map_ray);
 
@@ -111,20 +118,38 @@ bool MapRayIsColliding(MapRay ray) {
     return ray->is_colliding;
 }
 
-Vector2 MapRayGetCollisionPoint(MapRay ray) {
+int MapRayGetCollisionNumber(MapRay ray) {
     assert(ray != NULL);
-    
-    return (Vector2) {ray->collisionX, ray->collisionY};
+
+    return ListGetSize(ray->collisions);
 }
 
-Vector2 MapRayGetCollisionPointGrid(MapRay ray) {
+List MapRayGetCollisions(MapRay ray)  {
     assert(ray != NULL);
+
+    return ray->collisions;
+}
+
+Vector2 MapRayGetCollisionPoint(MapRay ray, int idx) {
+    assert(ray != NULL);
+    assert(idx >= 0 && idx < MapRayGetCollisionNumber(ray));
+
+    if (ray->map == NULL) {
+        return (Vector2) {0, 0};
+    }
+    
+    return (Vector2) {getCollision(ray->collisions, idx).collisionX, getCollision(ray->collisions, idx).collisionY};
+}
+
+Vector2 MapRayGetCollisionPointGrid(MapRay ray, int idx) {
+    assert(ray != NULL);
+    assert(idx >= 0 && idx < MapRayGetCollisionNumber(ray));
     
     if (ray->map == NULL) {
         return (Vector2) {0, 0};
     }
     
-    return (Vector2) {ray->collisionGridX, ray->collisionGridY};
+    return (Vector2) {getCollision(ray->collisions, idx).collisionGridX, getCollision(ray->collisions, idx).collisionGridY};
 }
 
 int MapRayGetMaxLength(MapRay ray) {
@@ -140,11 +165,18 @@ double MapRayGetLength(MapRay ray) {
 }
 
 
-MapRayHitSide MapRayGetHitSide(MapRay ray) {
+MapRayHitSide MapRayGetHitSide(MapRay ray, int idx) {
     assert(ray != NULL);
 
-    return ray->hitSide;
+    return getCollision(ray->collisions, idx).hitSide;
 }
+
+
+// REMOVE LATER
+//static void printcol(void* item) {
+//    rayCollision col = *((rayCollision*) item);
+//    printf("{X: %f, y: %f, gridx: %d, gridy: %d, tile_name: %s, tile_number: %d}", col.collisionX, col.collisionY, col.collisionGridX, col.collisionGridY, TileGetName(col.tile), TileGetMapTiles(col.tile));
+//}
 
 
 void MapRayCast(MapRay ray) {
@@ -152,19 +184,26 @@ void MapRayCast(MapRay ray) {
 
     // Set start variables
     ray->length = 0;
-    ray->collisionGridX = 0;
-    ray->collisionGridY = 0;
-    ray->collisionX = ray->posX;
-    ray->collisionY = ray->posY;
     ray->is_colliding = false;
-    ray->hitSide = NONE;
+
+    // clear collisions
+    ListMoveToStart(ray->collisions);
+    while (ListCanOperate(ray->collisions)) {
+        free(ListGetCurrent(ray->collisions));
+        ListRemoveFirst(ray->collisions);
+    }
+    
+    //ray->collisionGridX = 0;
+    //ray->collisionGridY = 0;
+    //ray->collisionX = ray->posX;
+    //ray->collisionY = ray->posY;
 
     // No map behaviour
     if (ray->map == NULL) {
         return;
     }
     // If inside wall, do not do anything more.
-    ray->is_colliding = isColliding(ray->collisionX, ray->collisionY, ray->map);
+    ray->is_colliding = isColliding(ray->posX, ray->posY, ray->map);
     if (ray->is_colliding) {
         return;
     }
@@ -214,31 +253,58 @@ void MapRayCast(MapRay ray) {
     
     int i = 0;
     while (!ray->is_colliding) {
+        MapRayHitSide hitSide;
 
         if (sideDistX < sideDistY) {
             sideDistX += deltaDistX;
             mapX += sideX;
             ray->length = sideDistX - deltaDistX;
-            ray->hitSide = X_AXIS;
+            hitSide = X_AXIS;
         } else {
             sideDistY += deltaDistY;
             mapY += sideY;
             ray->length = sideDistY - deltaDistY;
-            ray->hitSide = Y_AXIS;
+            hitSide = Y_AXIS;
         }
         
         ray->is_colliding = MapGetTile(ray->map, mapX, mapY) != GROUND;
 
-        if (i == 50) {
+        // If the colliding tile is transparent, then just continue
+        if (ray->is_colliding) {
+            Tile collidingTile = MapGetTileObject(ray->map, MapGetTile(ray->map, mapX, mapY));
+            rayCollision* col = malloc(sizeof(rayCollision));
+            *col = (rayCollision) {
+                .collisionX = ray->posX + ray->length * rayDirX,
+                .collisionY = ray->posY + ray->length * rayDirY,
+                .collisionGridX = mapX,
+                .collisionGridY = mapY,
+                .tile = collidingTile,
+                .hitSide = hitSide
+            };
+            ListAppendFirst(ray->collisions, col);
+
+//            ListAppendFirst(ray->collisions, &((rayCollision) {
+//                .collisionX = ray->posX + ray->length*rayDirX,
+//                .collisionY = ray->posY + ray->length*rayDirY,
+//                .collisionGridX = mapX,
+//                .collisionGridY = mapY,
+//                .tile = collidingTile,
+//                .hitSide = hitSide
+//            }));
+
+            ray->is_colliding = !TileIsTransparent(collidingTile);
+        }
+
+        if (i == MAX_RAY_STEPS) {
             break;
         }
         i++;
     }
 
-    ray->collisionGridX = mapX;
-    ray->collisionGridY = mapY;
-    ray->collisionX = ray->posX + ray->length*rayDirX;
-    ray->collisionY = ray->posY + ray->length*rayDirY;
+    //printf("beug: %d\n", ListGetSize(ray->collisions));
+    //ListPrint(ray->collisions, true, printcol);
+    
+    ray->is_colliding = ListGetSize(ray->collisions) > 0;
 }
 
 void MapRayDraw2D(MapRay ray) {
@@ -250,9 +316,21 @@ void MapRayDraw2D(MapRay ray) {
     } else {
         color = (Color) {0, 255, 255, 255};
     }
-    DrawLine(ray->posX, ray->posY, ray->collisionX, ray->collisionY, color);
+        
     if (ray->is_colliding) {
-        DrawCircle(ray->collisionX, ray->collisionY, 2, RED);
+        rayCollision lastCollision = getCollision(ray->collisions, ListGetSize(ray->collisions)-1);
+  
+        DrawLine(ray->posX, ray->posY, lastCollision.collisionX, lastCollision.collisionY, color);
+        DrawLine(ray->posX, ray->posY, 0, 0, color);
+        
+        ListMoveToStart(ray->collisions);
+        while (ListCanOperate(ray->collisions)) {
+            rayCollision current = *((rayCollision*) ListGetCurrent(ray->collisions));
+            DrawCircle(current.collisionX, current.collisionY, 2, RED);
+            ListMoveToNext(ray->collisions);
+        }
+    } else {
+        DrawLine(ray->posX, ray->posY, ray->posX + MAX_RAY_STEPS*MapGetTileSize(ray->map)*cos(ray->angle + ray->angle_offset), ray->posY + MAX_RAY_STEPS*MapGetTileSize(ray->map)*sin(ray->angle + ray->angle_offset), color);
     }
 }
 

@@ -70,4 +70,7 @@ bool ListCanOperate(List list);
 // Prints the list in the usual format. printFunc (optional) prints the item correctly)
 void ListPrint(List list, bool newline, void (*printFunc) (void* item));
 
+// Returns the size of the list
+int ListGetSize(List list);
+
 #endif

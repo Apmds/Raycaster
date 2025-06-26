@@ -22,13 +22,26 @@ unsigned int djb2hash(void* key) {
     return hash;
 }
 
+void print(void* a) {
+    printf("%s", (char*) a);
+}
+
 int main(int argc, char* argv[]) {
     if (argc > 1) {
         printf("Testing mode :]\n");
         
-        HashMap hashmap = HashMapCreate(5, djb2hash, NULL);
 
-        HashMapDestroy(&hashmap);
+        List l = ListCreate(print);
+        ListAppendFirst(l, "bruh");
+        ListAppendFirst(l, "ligma");
+        ListAppendFirst(l, "sigma");
+        ListAppendFirst(l, "balls");
+
+        ListMoveToStart(l);
+        while (ListCanOperate(l)) {
+            ListRemoveFirst(l);
+        }
+
         return EXIT_SUCCESS;
     }
 
@@ -62,6 +75,7 @@ int main(int argc, char* argv[]) {
             drawing3D = !drawing3D;
         }
 
+
         // Then draw the texture on screen.
         BeginDrawing();
             // Setup the back buffer for drawing (clear color and depth buffers)
@@ -71,7 +85,7 @@ int main(int argc, char* argv[]) {
                 PlayerDraw3D(player, window_size_x, window_size_y);
             } else {
                 MapDraw2D(map);
-    
+                
                 PlayerDraw2D(player);
             }
 

@@ -140,12 +140,17 @@ void PlayerDraw2D(Player p) {
 
     // Draw MapRays
     for (int i = 0; i < p->numRays; i++) {
-        MapRayDraw2D(p->rays[i]);
+        
+        (p->rays[i]);
     }
 }
 
 void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
     assert(p != NULL);
+
+
+    //printf("Drawing...\n");
+    //fflush(stdout);
 
     int line_width = screenWidth / p->numRays;
 
@@ -157,40 +162,78 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
         
         int rayX = (line_width/2)+i*line_width;
 
-        Vector2 collisionPoint = MapRayGetCollisionPoint(ray);
-        // Distance calculated with fisheye
-        //double distance = (double) MapRayGetMaxLength(ray) / Vector2Distance(collisionPoint, (Vector2) {p->posX, p->posY});
-        //distance *= cos(-((p->FOV/2))*DEG2RAD);
-        //distance *= 50;
+        List collisions = MapRayGetCollisions(ray);
+        ListMoveToStart(collisions);
+        while (ListCanOperate(collisions)) {
+            //printf("Drawing2...\n");
+            //fflush(stdout);
         
-        double distance = (1.5*MapGetTileSize(p->map)*screenHeight) / (MapRayGetLength(ray)*cos(MapRayGetAngleOffsetRad(ray)));
+            rayCollision currentCollision = *((rayCollision*) (ListGetCurrent(collisions)));
 
-        Color drawColor;
-        if (MapRayGetHitSide(ray) == X_AXIS) {
-            drawColor = (Color) {255, 255, 255, 255};
-        } else {
-            drawColor = (Color) {210, 210, 210, 255};
+            Vector2 collisionPoint = (Vector2) {currentCollision.collisionX, currentCollision.collisionY};
+
+            // Distance calculated with fisheye
+            //double distance = (double) MapRayGetMaxLength(ray) / Vector2Distance(collisionPoint, (Vector2) {p->posX, p->posY});
+            //distance *= cos(-((p->FOV/2))*DEG2RAD);
+            //distance *= 50;
+            
+            double distance = (1.5*MapGetTileSize(p->map)*screenHeight) / (MapRayGetLength(ray)*cos(MapRayGetAngleOffsetRad(ray)));
+
+            //printf("Drawing3 (%f, %f, %p)...\n", currentCollision.collisionX, currentCollision.collisionY, currentCollision.tile);
+            //fflush(stdout);
+    
+            Color drawColor;
+            if (currentCollision.hitSide == X_AXIS) {
+                drawColor = (Color) {255, 255, 255, 255};
+            } else {
+                drawColor = (Color) {210, 210, 210, 255};
+            }
+            //DrawRectangle(rayX, (screenHeight/2)-(distance/2), line_width, distance, drawColor);
+
+            Vector2 collisionPointGrid = (Vector2) {currentCollision.collisionGridX, currentCollision.collisionGridY};
+            //Texture tex = MapGetTextureAt(p->map, collisionPointGrid.x, collisionPointGrid.y);
+
+            // MORRE AQUI
+            //printf("Drawing3.5 (%d)...\n", TileGetName(currentCollision.tile) == NULL);
+            //fflush(stdout);
+
+            Texture tex = TileGetTexture(currentCollision.tile);
+
+            //printf("Drawing4...\n");
+            //fflush(stdout);
+
+            int ray_percentage;  // Percentage of tile that ray hit (not really percentage, just number of tile pixels)
+            if (currentCollision.hitSide == X_AXIS) {
+                ray_percentage = (int) (collisionPoint.y) % MapGetTileSize(p->map) + 1;
+            } else {
+                ray_percentage = (int) (collisionPoint.x) % MapGetTileSize(p->map) + 1; 
+            }
+            double texture_offset = ((double) (ray_percentage) / (double) (MapGetTileSize(p->map)))*((double) tex.width);
+            int texture_width = 1;
+
+            //printf("Drawing5...\n");
+            //fflush(stdout);
+
+            DrawTexturePro(tex,
+                (Rectangle) {texture_offset-1, 0, texture_width, tex.height},
+                (Rectangle) {rayX, (screenHeight/2)-(distance/2), line_width, distance},
+                (Vector2) {0, 0}, 0, drawColor);
+
+            //printf("Drawing6...\n");
+            //fflush(stdout);
+            
+            ListMoveToNext(collisions);
+            
+            //printf("Drawing7...\n");
+            //fflush(stdout);
         }
-        //DrawRectangle(rayX, (screenHeight/2)-(distance/2), line_width, distance, drawColor);
 
-        Vector2 collisionPointGrid = MapRayGetCollisionPointGrid(ray);
-        Texture tex = MapGetTextureAt(p->map, collisionPointGrid.x, collisionPointGrid.y);
-        
-        int ray_percentage;  // Percentage of tile that ray hit (not really percentage, just number of tile pixels)
-        if (MapRayGetHitSide(ray) == X_AXIS) {
-            ray_percentage = (int) (collisionPoint.y) % MapGetTileSize(p->map) + 1;
-        } else {
-            ray_percentage = (int) (collisionPoint.x) % MapGetTileSize(p->map) + 1; 
-        }
-        double texture_offset = ((double) (ray_percentage) / (double) (MapGetTileSize(p->map)))*((double) tex.width);
-        int texture_width = 1;
-
-        DrawTexturePro(tex,
-            (Rectangle) {texture_offset-1, 0, texture_width, tex.height},
-            (Rectangle) {rayX, (screenHeight/2)-(distance/2), line_width, distance},
-            (Vector2) {0, 0}, 0, drawColor);
-
+        //printf("\n");
+        //fflush(stdout);
     }
+
+    //printf("\n");
+    //fflush(stdout);
 }
 
 void PlayerInput(Player p) {

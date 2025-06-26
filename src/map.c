@@ -56,13 +56,13 @@ Map MapCreate(int numRows, int numCols, int tileSize) {
     map->tileNames[GROUND] = "GROUND";
     map->tileNames[WALL1] = "WALL1";
     map->tileNames[WALL2] = "WALL2";
-    map->tileNames[WALL3] = "WALL3";
+    map->tileNames[WALL_TRANSPARENT] = "WALL_TRANSPARENT";
 
     map->tileMap = HashMapCreate(5, djb2hash, hashmapstrcmp);
-    HashMapPut(map->tileMap, "GROUND", TileCreate("GROUND", GROUND, "test.png"));
-    HashMapPut(map->tileMap, "WALL1", TileCreate("WALL1", WALL1, "map.png"));
-    HashMapPut(map->tileMap, "WALL2", TileCreate("WALL2", WALL2, "map2.png"));
-    HashMapPut(map->tileMap, "WALL3", TileCreate("WALL3", WALL3, "wabbit_alpha.png"));
+    HashMapPut(map->tileMap, "GROUND", TileCreate("GROUND", GROUND, "test.png", false));
+    HashMapPut(map->tileMap, "WALL1", TileCreate("WALL1", WALL1, "map.png", false));
+    HashMapPut(map->tileMap, "WALL2", TileCreate("WALL2", WALL2, "map2.png", false));
+    HashMapPut(map->tileMap, "WALL_TRANSPARENT", TileCreate("WALL_TRANSPARENT", WALL_TRANSPARENT, "wabbit_alpha.png", true));
 
     return map;
 }
@@ -89,14 +89,14 @@ Map MapCreateFromFile(const char* filename) {
     map->tileNames[GROUND] = "GROUND";
     map->tileNames[WALL1] = "WALL1";
     map->tileNames[WALL2] = "WALL2";
-    map->tileNames[WALL3] = "WALL3";
+    map->tileNames[WALL_TRANSPARENT] = "WALL_TRANSPARENT";
 
     // TEMPORARY (change to add tiles when reading the map data)
     map->tileMap = HashMapCreate(5, djb2hash, hashmapstrcmp);
-    HashMapPut(map->tileMap, "GROUND", TileCreate("GROUND", GROUND, "test.png"));
-    HashMapPut(map->tileMap, "WALL1", TileCreate("WALL1", WALL1, "map.png"));
-    HashMapPut(map->tileMap, "WALL2", TileCreate("WALL2", WALL2, "map2.png"));
-    HashMapPut(map->tileMap, "WALL3", TileCreate("WALL3", WALL3, "wabbit_alpha.png"));
+    HashMapPut(map->tileMap, "GROUND", TileCreate("GROUND", GROUND, "test.png", false));
+    HashMapPut(map->tileMap, "WALL1", TileCreate("WALL1", WALL1, "map.png", false));
+    HashMapPut(map->tileMap, "WALL2", TileCreate("WALL2", WALL2, "map2.png", false));
+    HashMapPut(map->tileMap, "WALL_TRANSPARENT", TileCreate("WALL_TRANSPARENT", WALL_TRANSPARENT, "wabbit_alpha.png", true));
 
     while (fgets(line, sizeof(line), file) != NULL) {
         lineNumber++;
@@ -168,7 +168,7 @@ void MapDestroy(Map* mp) {
     Tile tile = (Tile) HashMapGet(map->tileMap, "GROUND"); TileDestroy(&tile);
     tile = (Tile) HashMapGet(map->tileMap, "WALL1"); TileDestroy(&tile);
     tile = (Tile) HashMapGet(map->tileMap, "WALL2"); TileDestroy(&tile);
-    tile = (Tile) HashMapGet(map->tileMap, "WALL3"); TileDestroy(&tile);
+    tile = (Tile) HashMapGet(map->tileMap, "WALL_TRANSPARENT"); TileDestroy(&tile);
 
     HashMapDestroy(&(map->tileMap));
     free(map->tileNames);
@@ -193,6 +193,11 @@ MapTiles MapGetTile(Map map, int row, int col) {
     }
 
     return map->grid[row][col];
+}
+
+Tile MapGetTileObject(Map map, MapTiles tile) {
+    assert(map != NULL);
+    return HashMapGet(map->tileMap, map->tileNames[tile]);
 }
 
 int MapGetTileSize(Map map) {
