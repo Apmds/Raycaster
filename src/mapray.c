@@ -14,6 +14,8 @@ struct mapray {
     bool is_colliding;
     double collisionX;
     double collisionY;
+    int collisionGridX;
+    int collisionGridY;
     MapRayHitSide hitSide;
     Map map;
 };
@@ -40,6 +42,8 @@ MapRay MapRayCreate(int posX, int posY, double angle, double angleOffset, Map ma
     map_ray->angle_offset = angleOffset;
     map_ray->max_length = 500;
     map_ray->length = 0;
+    map_ray->collisionGridX = 0;
+    map_ray->collisionGridY = 0;
     map_ray->posX = posX;
     map_ray->posY = posY;
     map_ray->is_colliding = false;
@@ -120,7 +124,8 @@ Vector2 MapRayGetCollisionPointGrid(MapRay ray) {
         return (Vector2) {0, 0};
     }
     
-    return (Vector2) {(int) (ray->collisionX / MapGetTileSize(ray->map)), (int) (ray->collisionY / MapGetTileSize(ray->map))};
+    //return (Vector2) {(int) (ray->collisionX / MapGetTileSize(ray->map)), (int) (ray->collisionY / MapGetTileSize(ray->map))};
+    return (Vector2) {ray->collisionGridX, ray->collisionGridY};
 }
 
 int MapRayGetMaxLength(MapRay ray) {
@@ -148,6 +153,8 @@ void MapRayCast(MapRay ray) {
 
     // Set start variables
     ray->length = 0;
+    ray->collisionGridX = 0;
+    ray->collisionGridY = 0;
     ray->collisionX = ray->posX;
     ray->collisionY = ray->posY;
     ray->is_colliding = false;
@@ -166,9 +173,8 @@ void MapRayCast(MapRay ray) {
     int tileSize = MapGetTileSize(ray->map);
 
     // Position of ray in map
-    Vector2 mapPos = MapRayGetCollisionPointGrid(ray);
-    int mapX = (int) mapPos.x;
-    int mapY = (int) mapPos.y;
+    int mapX = (int) ray->posX / MapGetTileSize(ray->map);
+    int mapY = (int) ray->posY / MapGetTileSize(ray->map);
     //printf("init: %d\n", mapX);
 
     // Angle of ray by axis
@@ -231,20 +237,33 @@ void MapRayCast(MapRay ray) {
         //printf("ray->length: %f, max: (%d, %d), rayDir: (%f, %f), sideDist: (%f, %f), deltaDist: (%f, %f)\n", ray->length, mapX, mapY, rayDirX, rayDirY, sideDistX, sideDistY, deltaDistX, deltaDistY);
         
         ray->is_colliding = MapGetTile(ray->map, mapX, mapY) != GROUND;
+        //ray->is_colliding = MapGetTile(
+        //    ray->map,
+        //    (int) ((ray->posX + ray->length*rayDirX)/MapGetTileSize(ray->map)),
+        //    (int) ((ray->posY + ray->length*rayDirY)/MapGetTileSize(ray->map))
+        //) != GROUND;
+
         if (i == 50) {
             break;
         }
         i++;
     }
+
+    ray->collisionGridX = mapX;
+    ray->collisionGridY = mapY;
     ray->collisionX = ray->posX + ray->length*rayDirX;
     ray->collisionY = ray->posY + ray->length*rayDirY;
-    //printf("%d, %d\n", mapX, mapY);
+    
+    //printf("%d, %d, %f, %f, %d, %d\n",
+    //    ray->collisionGridX, ray->collisionGridY,
+    //    ray->collisionX, ray->collisionY,
+    //    (int) (ray->collisionX / MapGetTileSize(ray->map)), (int) (ray->collisionY / MapGetTileSize(ray->map))
+    //);
 }
 
 void MapRayDraw2D(MapRay ray) {
     assert(ray != NULL);
     
-    // TODO: implement
     Color color;
     if (ray->is_colliding) {
         color = (Color) {255, 0, 255, 255};
@@ -252,5 +271,8 @@ void MapRayDraw2D(MapRay ray) {
         color = (Color) {0, 255, 255, 255};
     }
     DrawLine(ray->posX, ray->posY, ray->collisionX, ray->collisionY, color);
+    if (ray->is_colliding) {
+        DrawCircle(ray->collisionX, ray->collisionY, 2, RED);
+    }
 }
 

@@ -1,21 +1,17 @@
 #include "raylib.h"
+#include "tile.h"
 
 #ifndef MAP_H
 #define MAP_H
 
-typedef enum MapTile {
-    GROUND,
-    WALL,
-} MapTile;
-
 typedef struct map* Map;
 
-Map MapCreate(int numRows, int numCols);
+Map MapCreate(int numRows, int numCols, int tileSize);
 Map MapCreateFromFile(const char* filename);
 void MapDestroy(Map* mp);
 
-void MapSetTile(Map map, int row, int col, MapTile tile);
-MapTile MapGetTile(Map map, int row, int col);
+void MapSetTile(Map map, int row, int col, MapTiles tile);
+MapTiles MapGetTile(Map map, int row, int col);
 
 int MapGetTileSize(Map map);
 int MapGetNumRows(Map map);

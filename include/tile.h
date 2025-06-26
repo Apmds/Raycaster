@@ -5,16 +5,19 @@
 
 typedef enum {
     GROUND,
-    WALL,
+    WALL1,
+    WALL2,
+    WALL3,
+    TOTALTILES,
 } MapTiles;
 
 typedef struct maptile* Tile;
 
-Tile TileCreate();
+Tile TileCreate(const char* name, MapTiles maptile, const char* imgname);
 void TileDestroy(Tile* tilep);
 
-void TileGetName(Tile tile);
+const char* TileGetName(Tile tile);
 MapTiles TileGetMapTiles(Tile tile);
-Image TileGetImage(Tile tile);
+Texture TileGetTexture(Tile tile);
 
 #endif

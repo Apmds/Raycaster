@@ -4,35 +4,65 @@
 #include <assert.h>
 #include "map.h"
 #include "raylib.h"
+#include "hashmap.h"
+#include <stdbool.h>
+#include "tile.h"
+
+// djb2 hash
+static unsigned int djb2hash(void* key) {
+    char* str = (char*) key;
+
+    int hash = 5381;
+    int c;
+
+    while (c = *str++)
+       hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+    return hash;
+}
 
 struct map {
     int numRows;
     int numCols;
     int tileSize;                       // Size of each tile (pixels)
     Texture wall_img;                   // TEMPORARY
-    MapTile** grid;
+    HashMap tileMap;
+    char** tileNames;
+    MapTiles** grid;
 };
 
-Map MapCreate(int numRows, int numCols) {
+Map MapCreate(int numRows, int numCols, int tileSize) {
     Map map = malloc(sizeof(struct map));
     assert(map != NULL);
     assert(numRows > 0);
     assert(numCols > 0);
 
     // Initialize grid
-    map->grid = malloc(sizeof(MapTile*)*numRows);
+    map->grid = malloc(sizeof(MapTiles*)*numRows);
     assert(map->grid != NULL);
     for (int i = 0; i < numRows; i++) {
-        map->grid[i] = calloc(numCols, sizeof(MapTile));
+        map->grid[i] = calloc(numCols, sizeof(MapTiles));
         assert(map->grid[i] != NULL);
     }
 
     map->numCols = numCols;
     map->numRows = numRows;
-    map->tileSize = 30;
+    map->tileSize = tileSize;
 
     // TEMPORARY
     map->wall_img = LoadTexture("test.png");
+
+    map->tileMap = HashMapCreate(5, djb2hash);
+    HashMapPut(map->tileMap, "GROUND", TileCreate("GROUND", GROUND, "test.png"));
+    HashMapPut(map->tileMap, "WALL1", TileCreate("WALL1", WALL1, "map.png"));
+    HashMapPut(map->tileMap, "WALL2", TileCreate("WALL2", WALL2, "map2.png"));
+    HashMapPut(map->tileMap, "WALL3", TileCreate("WALL3", WALL3, "wabbit_alpha.png"));
+
+    map->tileNames = (char**) malloc(TOTALTILES*sizeof(char*));
+    map->tileNames[0] = "GROUND";
+    map->tileNames[1] = "WALL1";
+    map->tileNames[2] = "WALL2";
+    map->tileNames[3] = "WALL3";
 
     return map;
 }
@@ -69,10 +99,10 @@ Map MapCreateFromFile(const char* filename) {
             }
 
             // Initialize grid
-            map->grid = malloc(sizeof(MapTile*)*numRows);
+            map->grid = malloc(sizeof(MapTiles*)*numRows);
             assert(map->grid != NULL);
             for (int i = 0; i < numRows; i++) {
-                map->grid[i] = calloc(numCols, sizeof(MapTile));
+                map->grid[i] = calloc(numCols, sizeof(MapTiles));
                 assert(map->grid[i] != NULL);
             }
         
@@ -92,7 +122,7 @@ Map MapCreateFromFile(const char* filename) {
             
             // Set tiles
             if (strcmp(tileName, "WALL") == 0) {
-                MapSetTile(map, tileX, tileY, WALL);
+                MapSetTile(map, tileX, tileY, WALL1);
             }
             if (strcmp(tileName, "GROUND") == 0) {
                 MapSetTile(map, tileX, tileY, GROUND);
@@ -121,14 +151,23 @@ void MapDestroy(Map* mp) {
     }
     free(map->grid);
 
+    // TEMPORARY
     UnloadTexture(map->wall_img);
+
+    Tile tile = (Tile) HashMapGet(map->tileMap, "GROUND"); TileDestroy(&tile);
+    tile = (Tile) HashMapGet(map->tileMap, "WALL1"); TileDestroy(&tile);
+    tile = (Tile) HashMapGet(map->tileMap, "WALL2"); TileDestroy(&tile);
+    tile = (Tile) HashMapGet(map->tileMap, "WALL3"); TileDestroy(&tile);
+
+    HashMapDestroy(&(map->tileMap));
+    free(map->tileNames);
     
     free(map);
 
     *mp = NULL;
 }
 
-void MapSetTile(Map map, int row, int col, MapTile tile) {
+void MapSetTile(Map map, int row, int col, MapTiles tile) {
     assert(map != NULL);
     assert(row >= 0);
     assert(col >= 0);
@@ -136,7 +175,7 @@ void MapSetTile(Map map, int row, int col, MapTile tile) {
     map->grid[row][col] = tile;
 }
 
-MapTile MapGetTile(Map map, int row, int col) {
+MapTiles MapGetTile(Map map, int row, int col) {
     assert(map != NULL);
     if (row >= map->numRows || row < 0 || col >= map->numCols || col < 0) {
         return GROUND;
@@ -166,8 +205,7 @@ int MapGetNumCols(Map map) {
 Texture MapGetTextureAt(Map map, int row, int col) {
     assert(map != NULL);
 
-    // TEMPORARY
-    return map->wall_img;
+    return TileGetTexture((Tile) HashMapGet(map->tileMap, map->tileNames[MapGetTile(map, row, col)]));
 }
 
 
@@ -177,10 +215,10 @@ void MapDraw2D(Map map) {
     for (int row = 0; row < map->numRows; row++) {
         for (int col = 0; col < map->numCols; col++) {
             Color color;
-            if (map->grid[row][col] == WALL) {
-                color = (Color) {255, 255, 255, 255};
-            } else {
+            if (map->grid[row][col] == GROUND) {
                 color = (Color) {0, 0, 0, 255};
+            } else {
+                color = (Color) {255, 255, 255, 255};
             }
             DrawRectangle(row*map->tileSize, col*map->tileSize, map->tileSize, map->tileSize, color);
         }
