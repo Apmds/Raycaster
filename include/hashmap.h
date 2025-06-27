@@ -4,6 +4,8 @@
 #define HASHMAP_H
 
 typedef struct hashmap* HashMap;
+typedef struct hashmapi* HashMapIterator;
+
 
 // Creates a HashMap (hashFunc is the function used fir hashing the key)
 HashMap HashMapCreate(int size, unsigned int (*hashFunc) (void* key), bool (*compFunc) (void* key1, void* key2));
@@ -29,5 +31,23 @@ void* HashMapPop(HashMap map, void* key);
 
 // Prints the map in usual format. printFunc (optional) prints the item correctly)
 void HashMapPrint(HashMap map, bool newline, void (*printFunc) (void* key, void* value));
+
+
+// Iterating functions
+
+// Returns an iterator for this hashmap
+HashMapIterator HashMapGetIterator(HashMap map);
+
+void HashMapIterDestroy(HashMapIterator* iterp);
+
+// Goes to the next element/key in the map (returns false if at the end)
+bool HashMapIterGoToNext(HashMapIterator iter);
+
+// Returns whether or not its safe to operate in the current element
+bool HashMapIterCanOperate(HashMapIterator iter);
+
+// Returns the current element/key the iterator is in
+void* HashMapIterGetCurrent(HashMapIterator iter);
+
 
 #endif

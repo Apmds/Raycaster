@@ -14,8 +14,14 @@ typedef struct hashmap_elem* HashMapElement;
 struct hashmap {
     int size;
     List* values;       // HashMapElement lists
-    unsigned int (*hashFunc) (void* key);
-    bool (*compFunc) (void* key1, void* key2);
+    unsigned int (*hashFunc) (void* key);       // Key hashing function
+    bool (*compFunc) (void* key1, void* key2);  // Key comparing function
+};
+
+struct hashmapi {
+    HashMap map;
+    int currIdxList;    // Index of current list in hashmap
+    int currIdxKey;     // Index of current item in current list
 };
 
 // Creates a HashMap (hashFunc is the function used fir hashing the key) (compFunc if used for comparing 2 keys. If not given, it compares pointers)
@@ -237,10 +243,79 @@ void HashMapPrint(HashMap map, bool newline, void (*printFunc) (void* key, void*
             ListMoveToNext(list);
         }
     }
-    // Delete the last 2 chars (the last ", ")
-    printf("\b\b  \b\b");
+    
+    printf("\b\b  \b\b");   // Deletes the last 2 chars (the last ", ")
     printf("}");
     if (newline) {
         printf("\n");
     }
 }
+
+
+// Iterating functions
+
+// Returns an iterator for this hashmap
+HashMapIterator HashMapGetIterator(HashMap map) {
+    HashMapIterator iter = malloc(sizeof(struct hashmapi));
+    assert(iter != NULL);
+
+    iter->map = map;
+    iter->currIdxKey = -1;
+    iter->currIdxList = 0;
+    HashMapIterGoToNext(iter);  // Move to the first available spot
+
+    return iter;
+}
+
+// Destroys an iterator
+void HashMapIterDestroy(HashMapIterator* iterp) {
+    assert(iterp != NULL);
+    assert(*iterp != NULL);
+
+    HashMapIterator iter = *iterp;
+
+    
+
+    free(iter);
+    *iterp = NULL;
+}
+
+// Goes to the next element/key in the map (returns false if at the end)
+bool HashMapIterGoToNext(HashMapIterator iter) {
+    assert(iter != NULL);
+    assert(iter->map != NULL);
+    
+    // If its past the last list, its at the end
+    if (iter->currIdxList >= iter->map->size) {
+        return false;
+    }
+    
+    List currentList = iter->map->values[iter->currIdxList];
+
+    // If is at end of current list, go to next
+    if (++iter->currIdxKey >= ListGetSize(currentList)) {
+        iter->currIdxKey = -1;
+        iter->currIdxList++;
+        return HashMapIterGoToNext(iter);
+    }
+
+    return true;
+}
+
+// Returns whether or not its safe to operate in the current element
+bool HashMapIterCanOperate(HashMapIterator iter) {
+    assert(iter != NULL);
+    assert(iter->map != NULL);
+
+    // Is in a valid list and with a valid idx inside the current list
+    return iter->currIdxList < iter->map->size && iter->currIdxKey < ListGetSize(iter->map->values[iter->currIdxList]);
+}
+
+// Returns the current element/key the iterator is in
+void* HashMapIterGetCurrent(HashMapIterator iter) {
+    assert(iter != NULL);
+    assert(iter->map != NULL);
+
+    return HashMapIterCanOperate(iter) ? ((HashMapElement) ListGet(iter->map->values[iter->currIdxList], iter->currIdxKey))->key : NULL;
+}
+

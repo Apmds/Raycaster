@@ -6,6 +6,7 @@
 #include "map.h"
 #include "hashmap.h"
 #include "list.h"
+#include <string.h>
 
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 
@@ -20,6 +21,10 @@ unsigned int djb2hash(void* key) {
        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
 
     return hash;
+}
+
+static bool hashmapstrcmp(void* key1, void* key2) {
+    return strcmp((char*) key1, (char*) key2) == 0;
 }
 
 void print(void* a, void* b) {
