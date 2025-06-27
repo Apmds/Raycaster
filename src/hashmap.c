@@ -18,7 +18,7 @@ struct hashmap {
     bool (*compFunc) (void* key1, void* key2);
 };
 
-// Creates a HashMap (hashFunc is the function used fir hashing the key) (compFunc if used for comparing 2 keys)
+// Creates a HashMap (hashFunc is the function used fir hashing the key) (compFunc if used for comparing 2 keys. If not given, it compares pointers)
 HashMap HashMapCreate(int size, unsigned int (*hashFunc) (void* key), bool (*compFunc) (void* key1, void* key2)) {
     assert(hashFunc != NULL);
     assert(size > 0);
@@ -179,6 +179,38 @@ bool HashMapRemove(HashMap map, void* key) {
     }
 
     return false;
+}
+
+// Removes an item from the HashMap, returning it
+void* HashMapPop(HashMap map, void* key) {
+    assert(map != NULL);
+
+    // Get list index
+    int hash_val = map->hashFunc(key) % map->size;
+    
+    List list = map->values[hash_val];
+    ListMoveToStart(list);
+    int i = 0;
+    while (ListCanOperate(list)) {
+        HashMapElement element = ListGetCurrent(list);
+        
+        if (map->compFunc != NULL) {
+            if (map->compFunc(element->key, key)) {
+                void* val = ListPop(list, i);
+                return val;
+            }
+        } else {
+            if (element->key == key) {
+                void* val = ListPop(list, i);
+                return val;
+            }
+        }
+
+        i++;
+        ListMoveToNext(list);
+    }
+
+    return NULL;
 }
 
 // Prints the map in usual format. printFunc (optional) prints the item correctly)

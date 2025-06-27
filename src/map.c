@@ -7,6 +7,7 @@
 #include "hashmap.h"
 #include <stdbool.h>
 #include "tile.h"
+#include "list.h"
 
 // djb2 hash
 static unsigned int djb2hash(void* key) {
@@ -30,10 +31,11 @@ struct map {
     int numCols;
     int tileSize;                       // Size of each tile (pixels)
     HashMap tileMap;                    // HashMap that contains the details (texture) for a tile, given its name
-    char** tileNames;                   // Array associating tile indices (MapTiles) to the tile names (char*)
-    MapTiles** grid;                    // The grid of tiles that represents this map
+    List tileNames;                   // Array associating tile indices (MapTiles) to the tile names (char*)          TODO: change to ArrayList
+    int** grid;                    // The grid of tiles that represents this map
 };
 
+// TODO: alterar para receber um HashMap de cenas para preencher o tileNames e tileMap
 Map MapCreate(int numRows, int numCols, int tileSize) {
     Map map = malloc(sizeof(struct map));
     assert(map != NULL);
@@ -41,10 +43,10 @@ Map MapCreate(int numRows, int numCols, int tileSize) {
     assert(numCols > 0);
 
     // Initialize grid
-    map->grid = malloc(sizeof(MapTiles*)*numRows);
+    map->grid = malloc(sizeof(int*)*numRows);
     assert(map->grid != NULL);
     for (int i = 0; i < numRows; i++) {
-        map->grid[i] = calloc(numCols, sizeof(MapTiles));
+        map->grid[i] = calloc(numCols, sizeof(int));
         assert(map->grid[i] != NULL);
     }
 
@@ -52,19 +54,18 @@ Map MapCreate(int numRows, int numCols, int tileSize) {
     map->numRows = numRows;
     map->tileSize = tileSize;
 
-    map->tileNames = (char**) malloc(TOTALTILES*sizeof(char*));
-    map->tileNames[GROUND] = "GROUND";
-    map->tileNames[WALL1] = "WALL1";
-    map->tileNames[WALL2] = "WALL2";
-    map->tileNames[WALL_TRANSPARENT] = "WALL_TRANSPARENT";
+    map->tileNames = ListCreate(NULL);
+    char* ground = calloc(7, sizeof(char)); ground = strncpy(ground, "GROUND", 6); ListAppendLast(map->tileNames, ground);
 
     map->tileMap = HashMapCreate(5, djb2hash, hashmapstrcmp);
-    HashMapPut(map->tileMap, "GROUND", TileCreate("GROUND", GROUND, "test.png", false));
-    HashMapPut(map->tileMap, "WALL1", TileCreate("WALL1", WALL1, "map.png", false));
-    HashMapPut(map->tileMap, "WALL2", TileCreate("WALL2", WALL2, "map2.png", false));
-    HashMapPut(map->tileMap, "WALL_TRANSPARENT", TileCreate("WALL_TRANSPARENT", WALL_TRANSPARENT, "wabbit_alpha.png", true));
+    HashMapPut(map->tileMap, "GROUND", TileCreate("GROUND", TILE_GROUND, "test.png", false));
 
     return map;
+}
+
+// REMOVE LATER
+static void print(void* a, void* b) {
+    printf("%s: %s", (char*) a, TileGetName((Tile) b));
 }
 
 Map MapCreateFromFile(const char* filename) {
@@ -80,23 +81,18 @@ Map MapCreateFromFile(const char* filename) {
     int numRows = 0;
     int numCols = 0;
     int tileSize = 0;
+    int tileID = 1;     // ID of next tile to be defined
 
     char line[500];
     int lineNumber = 0; // Used for error printing
-    int lineIdx = 0; // Used for getting the index of the current line (only updates after processing a non-empty file)
+    int currentPhase = 0; // 0 - map general settings; 1 - reading tile data; 2 - tile placing
     
-    map->tileNames = (char**) malloc(TOTALTILES*sizeof(char*));
-    map->tileNames[GROUND] = "GROUND";
-    map->tileNames[WALL1] = "WALL1";
-    map->tileNames[WALL2] = "WALL2";
-    map->tileNames[WALL_TRANSPARENT] = "WALL_TRANSPARENT";
+    map->tileNames = ListCreate(NULL);
+    char* ground = calloc(7, sizeof(char)); ground = strncpy(ground, "GROUND", 6); ListAppendLast(map->tileNames, ground);
 
-    // TEMPORARY (change to add tiles when reading the map data)
+    // Default tileMap values
     map->tileMap = HashMapCreate(5, djb2hash, hashmapstrcmp);
-    HashMapPut(map->tileMap, "GROUND", TileCreate("GROUND", GROUND, "test.png", false));
-    HashMapPut(map->tileMap, "WALL1", TileCreate("WALL1", WALL1, "map.png", false));
-    HashMapPut(map->tileMap, "WALL2", TileCreate("WALL2", WALL2, "map2.png", false));
-    HashMapPut(map->tileMap, "WALL_TRANSPARENT", TileCreate("WALL_TRANSPARENT", WALL_TRANSPARENT, "wabbit_alpha.png", true));
+    HashMapPut(map->tileMap, "GROUND", TileCreate("GROUND", TILE_GROUND, "test.png", false));
 
     while (fgets(line, sizeof(line), file) != NULL) {
         lineNumber++;
@@ -108,33 +104,90 @@ Map MapCreateFromFile(const char* filename) {
         }
         
         // Format first line
-        if (lineIdx == 0) {
+        if (currentPhase == 0) {
             if (sscanf(line, " %d , %d , %d ", &numRows, &numCols, &tileSize) != 3) {
                 printf("Line %d: Map properties not formatted correctly: the first line must be: <numRows>,<numCols>,<tileSize>\n", lineNumber);
                 exit(EXIT_FAILURE);
             }
-
+            
             // Initialize grid
-            map->grid = malloc(sizeof(MapTiles*)*numRows);
+            map->grid = malloc(sizeof(int*)*numRows);
             assert(map->grid != NULL);
             for (int i = 0; i < numRows; i++) {
-                map->grid[i] = calloc(numCols, sizeof(MapTiles));
+                map->grid[i] = calloc(numCols, sizeof(int));
                 assert(map->grid[i] != NULL);
             }
-        
+            
             map->numCols = numCols;
             map->numRows = numRows;
             map->tileSize = tileSize;
+            
+            currentPhase++;
+            continue;
+        }
+        
+        // Getting tile data
+        if (currentPhase == 1) {
+            char* tileName = calloc(50, sizeof(char));  // On the heap to be saved later (TODO: free)
+            char fileName[50];
+            char transparent[12];
+            bool isTransparent;
 
-        } else {
+            int nSelected = sscanf(line, " %50s : %50s , %12s ", tileName, fileName, transparent);
+            if (nSelected < 2) { // May be fit for the next phase
+                currentPhase++;
+            } else if (nSelected == 1) { // Only the first was selected (not fit for here and for the next phase) (TODO: change to use regular expressions)
+                printf("Line %d: Tile definition incorrectly formatted (must be: <tileName> : <filename> [ , transparent])\n", lineNumber);
+                exit(EXIT_FAILURE);
+            } else if (nSelected == 2) { // No other options (currently only transparency)
+                isTransparent = false;
+                
+                // TODO: put this inside an internal function to not have repetition
+                // TODO: PRINT ERROR IF CONTAINS free the key
+                if (HashMapContains(map->tileMap, tileName)) {
+                    Tile tile = (Tile) HashMapPop(map->tileMap, tileName);
+                    TileDestroy(&tile);
+                }
+                
+                //printf("%s, %s\n", tileName, fileName);
+
+                HashMapPut(map->tileMap, tileName, TileCreate(tileName, tileID, fileName, isTransparent));
+                ListAppendLast(map->tileNames, tileName);
+
+                tileID++;
+
+            } else if (nSelected == 3) { // Transparent
+                isTransparent = true;
+
+                // TODO: put this inside an internal function to not have repetition
+                // TODO: PRINT ERROR IF CONTAINS free the key
+                if (HashMapContains(map->tileMap, tileName)) {
+                    Tile tile = (Tile) HashMapPop(map->tileMap, tileName);
+                    TileDestroy(&tile);
+                }
+                
+                //printf("%s, %s\n", tileName, fileName);
+
+                HashMapPut(map->tileMap, tileName, TileCreate(tileName, tileID, fileName, isTransparent));
+                ListAppendLast(map->tileNames, tileName);
+
+                tileID++;
+
+            }
+        
+        }
+
+        // Reading tiles
+        if (currentPhase == 2) {
             // Read tiles
             int tileX = 0;
             int tileY = 0;
             char tileName[50];
             if (sscanf(line, " %d , %d , %50s ", &tileX, &tileY, tileName) != 3) {
-                printf("Line %d: Map properties not formatted correctly: the line must be: <tileX>,<tileY>,<tileName>\n", lineNumber);
+                printf("Line %d: Map properties not incorrectly formatted (must be <tileX>,<tileY>,<tileName>)\n", lineNumber);
                 exit(EXIT_FAILURE);
             }
+            
             
             // Set tiles
             if (!HashMapContains(map->tileMap, tileName)) {
@@ -144,8 +197,6 @@ Map MapCreateFromFile(const char* filename) {
             Tile tile = (Tile) HashMapGet(map->tileMap, tileName);
             MapSetTile(map, tileX, tileY, TileGetMapTiles(tile));
         }
-            
-        lineIdx++;
     }
     fclose(file);
 
@@ -164,21 +215,28 @@ void MapDestroy(Map* mp) {
     }
     free(map->grid);
 
-    // Clear tilemap
-    Tile tile = (Tile) HashMapGet(map->tileMap, "GROUND"); TileDestroy(&tile);
-    tile = (Tile) HashMapGet(map->tileMap, "WALL1"); TileDestroy(&tile);
-    tile = (Tile) HashMapGet(map->tileMap, "WALL2"); TileDestroy(&tile);
-    tile = (Tile) HashMapGet(map->tileMap, "WALL_TRANSPARENT"); TileDestroy(&tile);
+    // Clear tilemap (TODO: clear better; free the keys also)
+    Tile tile = (Tile) HashMapPop(map->tileMap, "GROUND"); TileDestroy(&tile);
+    tile = (Tile) HashMapPop(map->tileMap, "WALL1"); TileDestroy(&tile);
+    tile = (Tile) HashMapPop(map->tileMap, "WALL2"); TileDestroy(&tile);
+    tile = (Tile) HashMapPop(map->tileMap, "WALL_TRANSPARENT"); TileDestroy(&tile);
 
     HashMapDestroy(&(map->tileMap));
-    free(map->tileNames);
+
+    // Free strings created in the heap and then destroy tileNames
+    ListMoveToStart(map->tileNames);
+    while (ListCanOperate(map->tileNames)) {
+        char* item = (char*) ListPopFirst(map->tileNames);
+        free(item);
+    }
+    ListDestroy(&(map->tileNames));
     
     free(map);
 
     *mp = NULL;
 }
 
-void MapSetTile(Map map, int row, int col, MapTiles tile) {
+void MapSetTile(Map map, int row, int col, int tile) {
     assert(map != NULL);
     assert(row >= 0);
     assert(col >= 0);
@@ -186,18 +244,18 @@ void MapSetTile(Map map, int row, int col, MapTiles tile) {
     map->grid[row][col] = tile;
 }
 
-MapTiles MapGetTile(Map map, int row, int col) {
+int MapGetTile(Map map, int row, int col) {
     assert(map != NULL);
     if (row >= map->numRows || row < 0 || col >= map->numCols || col < 0) {
-        return GROUND;
+        return TILE_GROUND;
     }
 
     return map->grid[row][col];
 }
 
-Tile MapGetTileObject(Map map, MapTiles tile) {
+Tile MapGetTileObject(Map map, int tile) {
     assert(map != NULL);
-    return HashMapGet(map->tileMap, map->tileNames[tile]);
+    return HashMapGet(map->tileMap, ListGet(map->tileNames, tile));
 }
 
 int MapGetTileSize(Map map) {
@@ -221,7 +279,7 @@ int MapGetNumCols(Map map) {
 Texture MapGetTextureAt(Map map, int row, int col) {
     assert(map != NULL);
 
-    return TileGetTexture((Tile) HashMapGet(map->tileMap, map->tileNames[MapGetTile(map, row, col)]));
+    return TileGetTexture((Tile) HashMapGet(map->tileMap, ListGet(map->tileNames, MapGetTile(map, row, col))));
 }
 
 
@@ -231,7 +289,7 @@ void MapDraw2D(Map map) {
     for (int row = 0; row < map->numRows; row++) {
         for (int col = 0; col < map->numCols; col++) {
             Color color;
-            if (map->grid[row][col] == GROUND) {
+            if (map->grid[row][col] == TILE_GROUND) {
                 color = (Color) {0, 0, 0, 255};
             } else {
                 color = (Color) {255, 255, 255, 255};

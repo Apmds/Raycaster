@@ -30,7 +30,7 @@ static bool isColliding(int posX, int posY, Map map) {
     int gridPosX = (int) (posX) / MapGetTileSize(map);
     int gridPosY = (int) (posY) / MapGetTileSize(map);
 
-    return MapGetTile(map, gridPosX, gridPosY) != GROUND;
+    return MapGetTile(map, gridPosX, gridPosY) != TILE_GROUND;
 }
 
 Player PlayerCreate(int playerX, int playerY, int playerRotationDeg, int numRays, Map map) {

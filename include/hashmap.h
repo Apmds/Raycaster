@@ -24,6 +24,9 @@ bool HashMapContains(HashMap map, void* key);
 // Removes an item from the HashMap, returning whether or not it was successful
 bool HashMapRemove(HashMap map, void* key);
 
+// Removes an item from the HashMap, returning it
+void* HashMapPop(HashMap map, void* key);
+
 // Prints the map in usual format. printFunc (optional) prints the item correctly)
 void HashMapPrint(HashMap map, bool newline, void (*printFunc) (void* key, void* value));
 

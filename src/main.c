@@ -22,25 +22,13 @@ unsigned int djb2hash(void* key) {
     return hash;
 }
 
-void print(void* a) {
-    printf("%s", (char*) a);
+void print(void* a, void* b) {
+    printf("%s: %s", (char*) a, (char*) b);
 }
 
 int main(int argc, char* argv[]) {
     if (argc > 1) {
         printf("Testing mode :]\n");
-        
-
-        List l = ListCreate(print);
-        ListAppendFirst(l, "bruh");
-        ListAppendFirst(l, "ligma");
-        ListAppendFirst(l, "sigma");
-        ListAppendFirst(l, "balls");
-
-        ListMoveToStart(l);
-        while (ListCanOperate(l)) {
-            ListRemoveFirst(l);
-        }
 
         return EXIT_SUCCESS;
     }

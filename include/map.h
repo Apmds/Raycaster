@@ -10,9 +10,9 @@ Map MapCreate(int numRows, int numCols, int tileSize);
 Map MapCreateFromFile(const char* filename);
 void MapDestroy(Map* mp);
 
-void MapSetTile(Map map, int row, int col, MapTiles tile);
-MapTiles MapGetTile(Map map, int row, int col);
-Tile MapGetTileObject(Map map, MapTiles tile);
+void MapSetTile(Map map, int row, int col, int tile);
+int MapGetTile(Map map, int row, int col);
+Tile MapGetTileObject(Map map, int tile);
 
 int MapGetTileSize(Map map);
 int MapGetNumRows(Map map);

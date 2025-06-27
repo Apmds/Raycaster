@@ -6,11 +6,11 @@
 struct maptile {
     const char* name;
     bool is_transparent;
-    MapTiles mapTile;
+    int mapTile;
     Texture texture;
 };
 
-Tile TileCreate(const char* name, MapTiles maptile, const char* imgname, bool is_transparent) {
+Tile TileCreate(const char* name, int maptile, const char* imgname, bool is_transparent) {
     Tile tile = malloc(sizeof(struct maptile));
     assert(tile != NULL);
 
@@ -44,7 +44,7 @@ const char* TileGetName(Tile tile) {
     return tile->name;
 }
 
-MapTiles TileGetMapTiles(Tile tile) {
+int TileGetMapTiles(Tile tile) {
     assert(tile != NULL);
     return tile->mapTile;
 }

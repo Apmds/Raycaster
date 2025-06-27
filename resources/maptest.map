@@ -1,5 +1,7 @@
-
 80, 80, 25
+WALL1 : map.png
+WALL2 : map2.png
+WALL_TRANSPARENT : wabbit_alpha.png , transparent
 0, 5, WALL1
 0, 6, WALL1
 
@@ -11,12 +13,12 @@
 
 2 , 8,  WALL1
 
-3, 8, WALL2
+3, 8, WALL_TRANSPARENT
 
 
-4, 8, WALL2
+4, 8, WALL_TRANSPARENT
 
-5, 8, WALL2
+5, 8, WALL_TRANSPARENT
 
 6, 8, WALL1
 12, 8, WALL2

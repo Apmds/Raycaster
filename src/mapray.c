@@ -30,7 +30,7 @@ static bool isColliding(int posX, int posY, Map map) {
     int gridPosX = (int) (posX) / MapGetTileSize(map);
     int gridPosY = (int) (posY) / MapGetTileSize(map);
 
-    return MapGetTile(map, gridPosX, gridPosY) != GROUND;
+    return MapGetTile(map, gridPosX, gridPosY) != TILE_GROUND;
 }
 
 // Internal: returns a collision object from MapRay->collisions
@@ -255,7 +255,7 @@ void MapRayCast(MapRay ray) {
             hitSide = Y_AXIS;
         }
         
-        ray->is_colliding = MapGetTile(ray->map, mapX, mapY) != GROUND;
+        ray->is_colliding = MapGetTile(ray->map, mapX, mapY) != TILE_GROUND;
 
         // If the colliding tile is transparent, then just continue
         if (ray->is_colliding) {
