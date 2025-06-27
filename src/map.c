@@ -9,6 +9,16 @@
 #include "tile.h"
 #include "list.h"
 
+
+struct map {
+    int numRows;
+    int numCols;
+    int tileSize;                       // Size of each tile (pixels)
+    HashMap tileMap;                    // HashMap that contains the details (texture) for a tile, given its name
+    List tileNames;                   // Array associating tile indices (MapTiles) to the tile names (char*)             TODO: change to ArrayList
+    int** grid;                    // The grid of tiles that represents this map
+};
+
 // djb2 hash
 static unsigned int djb2hash(void* key) {
     char* str = (char*) key;
@@ -26,15 +36,23 @@ static bool hashmapstrcmp(void* key1, void* key2) {
     return strcmp((char*) key1, (char*) key2) == 0;
 }
 
-struct map {
-    int numRows;
-    int numCols;
-    int tileSize;                       // Size of each tile (pixels)
-    HashMap tileMap;                    // HashMap that contains the details (texture) for a tile, given its name
-    List tileNames;                   // Array associating tile indices (MapTiles) to the tile names (char*)          TODO: change to ArrayList
-    int** grid;                    // The grid of tiles that represents this map
-};
+// INTERNAL: registers a new tile type in a map. Returns false on error (if tile with that name already exists)
+static bool registerTileData(Map map, char* tileName, char* fileName, bool isTransparent, int* tileID) {
+    if (HashMapContains(map->tileMap, tileName)) { // Duplicate checking
+        return false;
+    }
+    
+    // Add information in map
+    HashMapPut(map->tileMap, tileName, TileCreate(tileName, *tileID, fileName, isTransparent));
+    ListAppendLast(map->tileNames, tileName);
 
+    // Advances to the next tile
+    (*tileID)++;
+
+    return true;
+}
+
+// DO NOT USE NOW
 // TODO: alterar para receber um HashMap de cenas para preencher o tileNames e tileMap
 Map MapCreate(int numRows, int numCols, int tileSize) {
     Map map = malloc(sizeof(struct map));
@@ -55,18 +73,14 @@ Map MapCreate(int numRows, int numCols, int tileSize) {
     map->tileSize = tileSize;
 
     map->tileNames = ListCreate(NULL);
-    char* ground = calloc(7, sizeof(char)); ground = strncpy(ground, "GROUND", 6); ListAppendLast(map->tileNames, ground);
+    char* ground = calloc(7, sizeof(char)); assert(ground != NULL); ground = strncpy(ground, "GROUND", 6); ListAppendLast(map->tileNames, ground);
 
     map->tileMap = HashMapCreate(5, djb2hash, hashmapstrcmp);
-    HashMapPut(map->tileMap, "GROUND", TileCreate("GROUND", TILE_GROUND, "test.png", false));
+    HashMapPut(map->tileMap, ground, TileCreate(ground, TILE_GROUND, "test.png", false));
 
     return map;
 }
 
-// REMOVE LATER
-static void print(void* a, void* b) {
-    printf("%s: %s", (char*) a, TileGetName((Tile) b));
-}
 
 Map MapCreateFromFile(const char* filename) {
     FILE* file = fopen(filename, "r");
@@ -88,11 +102,11 @@ Map MapCreateFromFile(const char* filename) {
     int currentPhase = 0; // 0 - map general settings; 1 - reading tile data; 2 - tile placing
     
     map->tileNames = ListCreate(NULL);
-    char* ground = calloc(7, sizeof(char)); ground = strncpy(ground, "GROUND", 6); ListAppendLast(map->tileNames, ground);
+    char* ground = calloc(7, sizeof(char)); assert(ground != NULL); ground = strncpy(ground, "GROUND", 6); ListAppendLast(map->tileNames, ground);
 
     // Default tileMap values
     map->tileMap = HashMapCreate(5, djb2hash, hashmapstrcmp);
-    HashMapPut(map->tileMap, "GROUND", TileCreate("GROUND", TILE_GROUND, "test.png", false));
+    HashMapPut(map->tileMap, ground, TileCreate(ground, TILE_GROUND, "test.png", false));
 
     while (fgets(line, sizeof(line), file) != NULL) {
         lineNumber++;
@@ -128,7 +142,7 @@ Map MapCreateFromFile(const char* filename) {
         
         // Getting tile data
         if (currentPhase == 1) {
-            char* tileName = calloc(50, sizeof(char));  // On the heap to be saved later (TODO: free)
+            char* tileName = calloc(50, sizeof(char)); assert(tileName != NULL); // On the heap to be saved later (TODO: free)
             char fileName[50];
             char transparent[12];
             bool isTransparent;
@@ -141,38 +155,16 @@ Map MapCreateFromFile(const char* filename) {
                 exit(EXIT_FAILURE);
             } else if (nSelected == 2) { // No other options (currently only transparency)
                 isTransparent = false;
-                
-                // TODO: put this inside an internal function to not have repetition
-                // TODO: PRINT ERROR IF CONTAINS free the key
-                if (HashMapContains(map->tileMap, tileName)) {
-                    Tile tile = (Tile) HashMapPop(map->tileMap, tileName);
-                    TileDestroy(&tile);
-                }
-                
-                //printf("%s, %s\n", tileName, fileName);
-
-                HashMapPut(map->tileMap, tileName, TileCreate(tileName, tileID, fileName, isTransparent));
-                ListAppendLast(map->tileNames, tileName);
-
-                tileID++;
-
+                registerTileData(map, tileName, fileName, isTransparent, &tileID);
             } else if (nSelected == 3) { // Transparent
-                isTransparent = true;
 
-                // TODO: put this inside an internal function to not have repetition
-                // TODO: PRINT ERROR IF CONTAINS free the key
-                if (HashMapContains(map->tileMap, tileName)) {
-                    Tile tile = (Tile) HashMapPop(map->tileMap, tileName);
-                    TileDestroy(&tile);
+                if (strcmp(transparent, "transparent") != 0) {
+                    printf("Option \"%s\" does not exist!\n", transparent);
+                    exit(EXIT_FAILURE);
                 }
                 
-                //printf("%s, %s\n", tileName, fileName);
-
-                HashMapPut(map->tileMap, tileName, TileCreate(tileName, tileID, fileName, isTransparent));
-                ListAppendLast(map->tileNames, tileName);
-
-                tileID++;
-
+                isTransparent = true;
+                registerTileData(map, tileName, fileName, isTransparent, &tileID);
             }
         
         }
@@ -215,15 +207,20 @@ void MapDestroy(Map* mp) {
     }
     free(map->grid);
 
-    // Clear tilemap (TODO: clear better; free the keys also)
-    Tile tile = (Tile) HashMapPop(map->tileMap, "GROUND"); TileDestroy(&tile);
-    tile = (Tile) HashMapPop(map->tileMap, "WALL1"); TileDestroy(&tile);
-    tile = (Tile) HashMapPop(map->tileMap, "WALL2"); TileDestroy(&tile);
-    tile = (Tile) HashMapPop(map->tileMap, "WALL_TRANSPARENT"); TileDestroy(&tile);
+    // Clear (free) tiles in tilemap
+    HashMapIterator iter = HashMapGetIterator(map->tileMap);
+    while (HashMapIterCanOperate(iter)) {
+        char* str = (char*) HashMapIterGetCurrent(iter);
+        Tile tile = (Tile) HashMapGet(map->tileMap, str);
 
+        TileDestroy(&tile);
+
+        HashMapIterGoToNext(iter);
+    }
+    HashMapIterDestroy(&iter);
     HashMapDestroy(&(map->tileMap));
 
-    // Free strings created in the heap and then destroy tileNames
+    // Destroy tileNames
     ListMoveToStart(map->tileNames);
     while (ListCanOperate(map->tileNames)) {
         char* item = (char*) ListPopFirst(map->tileNames);

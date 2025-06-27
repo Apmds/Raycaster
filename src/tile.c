@@ -20,7 +20,7 @@ Tile TileCreate(const char* name, int maptile, const char* imgname, bool is_tran
     tile->texture = LoadTexture(imgname);
     if (tile->texture.id == 0) {
         // Texture loading failed
-        printf("Failed to load texture!\n");
+        perror("Failed to load texture!\n");
         exit(EXIT_FAILURE);
     }
 
@@ -36,7 +36,7 @@ void TileDestroy(Tile* tilep) {
     UnloadTexture(tile->texture);
     free(tile);
 
-    tilep = NULL;
+    *tilep = NULL;
 }
 
 const char* TileGetName(Tile tile) {
