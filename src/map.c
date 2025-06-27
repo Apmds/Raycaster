@@ -142,22 +142,20 @@ Map MapCreateFromFile(const char* filename) {
         
         // Getting tile data
         if (currentPhase == 1) {
-            char* tileName = calloc(50, sizeof(char)); assert(tileName != NULL); // On the heap to be saved later (TODO: free)
+            char* tileName = calloc(50, sizeof(char)); assert(tileName != NULL); // On the heap to be saved later
             char fileName[50];
             char transparent[12];
             bool isTransparent;
 
             int nSelected = sscanf(line, " %50s : %50s , %12s ", tileName, fileName, transparent);
             if (nSelected < 2) { // May be fit for the next phase
+                free(tileName);
                 currentPhase++;
-            } else if (nSelected == 1) { // Only the first was selected (not fit for here and for the next phase) (TODO: change to use regular expressions)
-                printf("Line %d: Tile definition incorrectly formatted (must be: <tileName> : <filename> [ , transparent])\n", lineNumber);
-                exit(EXIT_FAILURE);
             } else if (nSelected == 2) { // No other options (currently only transparency)
                 isTransparent = false;
                 registerTileData(map, tileName, fileName, isTransparent, &tileID);
             } else if (nSelected == 3) { // Transparent
-
+                
                 if (strcmp(transparent, "transparent") != 0) {
                     printf("Option \"%s\" does not exist!\n", transparent);
                     exit(EXIT_FAILURE);
@@ -165,6 +163,9 @@ Map MapCreateFromFile(const char* filename) {
                 
                 isTransparent = true;
                 registerTileData(map, tileName, fileName, isTransparent, &tileID);
+            } else {    // Not fit for here and for the next phase) (TODO: change to use regular expressions)
+                printf("Line %d: Tile definition incorrectly formatted (must be: <tileName> : <filename> [ , transparent])\n", lineNumber);
+                exit(EXIT_FAILURE);
             }
         
         }
