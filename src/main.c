@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
     Map map = MapCreateFromFile("maptest.map");
     
     // PLAYER VARS
-    Player player = PlayerCreate(10, 10, 0, 1280, map);
+    Player player = PlayerCreate(10, 10, 45, 1280, map);
 
     // game loop
     while (!WindowShouldClose()) {		// run the loop untill the user presses ESCAPE or presses the Close button on the window

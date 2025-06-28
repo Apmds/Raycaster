@@ -40,9 +40,9 @@ Player PlayerCreate(int playerX, int playerY, int playerRotationDeg, int numRays
     pl->posX = playerX;
     pl->posY = playerY;
     pl->size = 10;
-    pl->speed = 10;
+    pl->speed = 250;
     pl->rotation = playerRotationDeg*DEG2RAD;
-    pl->rotationSpeed = 2*DEG2RAD;
+    pl->rotationSpeed = 80*DEG2RAD;
     pl->FOV = 60;
     pl->numRays = numRays;
     pl->map = map;
@@ -202,6 +202,7 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
 void PlayerInput(Player p) {
     assert(p != NULL);
 
+    double deltatime = GetFrameTime();
     double movement_angle = p->rotation;
     bool moving = false;
 
@@ -222,8 +223,8 @@ void PlayerInput(Player p) {
         movement_angle = p->rotation + 90*DEG2RAD;
     }
 
-    double move_amount_x = p->speed*cos(movement_angle);
-    double move_amount_y = p->speed*sin(movement_angle);
+    double move_amount_x = p->speed*cos(movement_angle)*deltatime;
+    double move_amount_y = p->speed*sin(movement_angle)*deltatime;
 
     // Movement with collision
     if (moving) {
@@ -247,10 +248,10 @@ void PlayerInput(Player p) {
     }
 
     if (IsKeyDown(KEY_LEFT)) {
-        p->rotation -= p->rotationSpeed;
+        p->rotation -= p->rotationSpeed*deltatime;
     }
     if (IsKeyDown(KEY_RIGHT)) {
-        p->rotation += p->rotationSpeed;
+        p->rotation += p->rotationSpeed*deltatime;
     }
 
     // Update MapRays
