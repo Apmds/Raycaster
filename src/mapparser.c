@@ -117,7 +117,7 @@ ParserResult MapParserParse(MapParser parser) {
         char table_name[51];
         if (sscanf(line, " [%50[^]]] ", table_name) == 1) {   // New table
             if (HashMapContains(res->tables, table_name)) {
-                printf("Error parsing map file \"%s\" (Line %d): Duplicate table name %s.\n", parser->filename, line, table_name);
+                printf("Error parsing map file \"%s\" (Line %d): Duplicate table name %s.\n", parser->filename, lineNumber, table_name);
                 exit(EXIT_FAILURE);
             }
 
@@ -134,11 +134,11 @@ ParserResult MapParserParse(MapParser parser) {
         char val[201];
         if (sscanf(line, " %50s : %200s ", elem_name, val) == 2) {  // New value
             if (currentTable == NULL) {     // Defined outside of a table
-                printf("Error parsing map file \"%s\" (Line %d): Element defined outside of a table %s.\n", parser->filename, line, table_name);
+                printf("Error parsing map file \"%s\" (Line %d): Element defined outside of a table %s.\n", parser->filename, lineNumber, table_name);
                 exit(EXIT_FAILURE);
             }
             if (HashMapContains(currentTable->elements, elem_name)) {    // Element already defined here
-                printf("Error parsing map file \"%s\" (Line %d): Duplicate element name %s.\n", parser->filename, line, elem_name);
+                printf("Error parsing map file \"%s\" (Line %d): Duplicate element name %s.\n", parser->filename, lineNumber, elem_name);
                 exit(EXIT_FAILURE);
             }
 
