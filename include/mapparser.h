@@ -32,10 +32,10 @@ ParserResult MapParserGetResult(MapParser parser);
 
 
 // Returns the parser table associated with tableName (NULL if invalid or unknown table name).
-ParserTable ParserResultGetTable(char* tableName);
+ParserTable ParserResultGetTable(ParserResult res, char* tableName);
 
-// Returns the elemtn associated with elementName (NULL if invalid or unknown element name).
-ParserElement ParserTableGetElement(char* elementName);
+// Returns the elemnt associated with elementName (NULL if invalid or unknown element name).
+ParserElement ParserTableGetElement(ParserTable table, char* elementName);
 
 // Returns the key of an element.
 char* ParserElementGetKey(ParserElement elem);
