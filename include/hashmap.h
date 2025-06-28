@@ -46,8 +46,11 @@ bool HashMapIterGoToNext(HashMapIterator iter);
 // Returns whether or not its safe to operate in the current element
 bool HashMapIterCanOperate(HashMapIterator iter);
 
-// Returns the current element/key the iterator is in
-void* HashMapIterGetCurrent(HashMapIterator iter);
+// Returns the current key the iterator is in
+void* HashMapIterGetCurrentKey(HashMapIterator iter);
+
+// Returns the current value the iterator is in
+void* HashMapIterGetCurrentValue(HashMapIterator iter);
 
 
 #endif

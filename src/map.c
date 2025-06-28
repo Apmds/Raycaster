@@ -222,7 +222,7 @@ void MapDestroy(Map* mp) {
     // Clear (free) tiles in tilemap
     HashMapIterator iter = HashMapGetIterator(map->tileMap);
     while (HashMapIterCanOperate(iter)) {
-        char* str = (char*) HashMapIterGetCurrent(iter);
+        char* str = (char*) HashMapIterGetCurrentKey(iter);
         Tile tile = (Tile) HashMapGet(map->tileMap, str);
 
         TileDestroy(&tile);

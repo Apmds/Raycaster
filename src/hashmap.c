@@ -311,11 +311,18 @@ bool HashMapIterCanOperate(HashMapIterator iter) {
     return iter->currIdxList < iter->map->size && iter->currIdxKey < ListGetSize(iter->map->values[iter->currIdxList]);
 }
 
-// Returns the current element/key the iterator is in
-void* HashMapIterGetCurrent(HashMapIterator iter) {
+// Returns the current key the iterator is in
+void* HashMapIterGetCurrentKey(HashMapIterator iter) {
     assert(iter != NULL);
     assert(iter->map != NULL);
 
     return HashMapIterCanOperate(iter) ? ((HashMapElement) ListGet(iter->map->values[iter->currIdxList], iter->currIdxKey))->key : NULL;
 }
 
+// Returns the current value the iterator is in
+void* HashMapIterGetCurrentValue(HashMapIterator iter) {
+    assert(iter != NULL);
+    assert(iter->map != NULL);
+
+    return HashMapIterCanOperate(iter) ? ((HashMapElement) ListGet(iter->map->values[iter->currIdxList], iter->currIdxKey))->key : NULL;
+}
