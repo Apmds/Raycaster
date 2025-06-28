@@ -1,0 +1,35 @@
+[MapSettings]
+MapSize : [80, 80]
+TileSize : 25
+
+[TileDefinition]
+WALL1 : {surface: "map.png"}
+WALL2 : {surface: "map2.png"}
+WALL_TRANSPARENT : {surface: "wabbit_alpha.png" , transparent: true}
+
+[TilePlacing]
+Tiles : [
+  [0, 5, "WALL1"],
+  [0, 6, "WALL1"],
+  [0 ,7, "WALL1"],
+  [0, 8, "WALL2"],
+  [1, 8, "WALL1"],
+  [2, 8, "WALL1"],
+  [3, 8, "WALL_TRANSPARENT"],
+  [4, 8, "WALL_TRANSPARENT"],
+  [5, 8, "WALL_TRANSPARENT"],
+  [6, 8, "WALL1"],
+  [12, 8, "WALL2"],
+  [13, 8, "WALL1"],
+  [14, 8, "WALL2"],
+  [15, 8, "WALL1"],
+  [16, 8, "WALL1"],
+  [17, 8, "WALL2"],
+  [18, 8, "WALL1"],
+  [18, 7, "WALL1"],
+  [18, 6, "WALL1"],
+  [18, 5, "WALL2"],
+  [18, 4, "WALL2"],
+  [18, 3, "WALL2"],
+  [19, 12, "WALL_TRANSPARENT"]
+]

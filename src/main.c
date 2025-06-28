@@ -7,6 +7,7 @@
 #include "hashmap.h"
 #include "list.h"
 #include <string.h>
+#include "mapparser.h"
 
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 
@@ -34,6 +35,13 @@ void print(void* a, void* b) {
 int main(int argc, char* argv[]) {
     if (argc > 1) {
         printf("Testing mode :]\n");
+
+        MapParser parser = MapParserCreate("maptest2.map");
+    
+        //ParserResult res = MapParserParse(parser);
+
+        MapParserDestroy(&parser);
+        //ParserResultDestroy(&res);
 
         return EXIT_SUCCESS;
     }
