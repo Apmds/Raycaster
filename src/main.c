@@ -75,6 +75,8 @@ int main(int argc, char* argv[]) {
             ClearBackground(BLACK);
 
             if (drawing3D) {
+                MapDraw3D(map, window_size_x, window_size_y);
+
                 PlayerDraw3D(player, window_size_x, window_size_y);
             } else {
                 MapDraw2D(map);

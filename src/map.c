@@ -16,6 +16,8 @@ struct map {
     int tileSize;                       // Size of each tile (pixels)
     HashMap tileMap;                    // HashMap that contains the details (texture) for a tile, given its name
     List tileNames;                   // Array associating tile indices (MapTiles) to the tile names (char*)             TODO: change to ArrayList
+    Color  groundColor;     // TEMPORARY
+    Color  ceilingColor;    // TEMPORARY
     int** grid;                    // The grid of tiles that represents this map
 };
 
@@ -78,6 +80,11 @@ Map MapCreate(int numRows, int numCols, int tileSize) {
     map->tileMap = HashMapCreate(5, djb2hash, hashmapstrcmp);
     HashMapPut(map->tileMap, ground, TileCreate(ground, TILE_GROUND, "test.png", false));
 
+    // TEMPORARY
+    map->ceilingColor = (Color) {255, 255, 255, 255};
+    map->groundColor = (Color) {128, 100, 20, 255};
+
+
     return map;
 }
 
@@ -107,6 +114,10 @@ Map MapCreateFromFile(const char* filename) {
     // Default tileMap values
     map->tileMap = HashMapCreate(5, djb2hash, hashmapstrcmp);
     HashMapPut(map->tileMap, ground, TileCreate(ground, TILE_GROUND, "test.png", false));
+
+    // TEMPORARY
+    map->ceilingColor = (Color) {255, 255, 255, 255};
+    map->groundColor = (Color) {128, 100, 20, 255};
 
     while (fgets(line, sizeof(line), file) != NULL) {
         lineNumber++;
@@ -295,4 +306,11 @@ void MapDraw2D(Map map) {
             DrawRectangle(row*map->tileSize, col*map->tileSize, map->tileSize, map->tileSize, color);
         }
     }
+}
+
+void MapDraw3D(Map map, int screenWidth, int screenHeight) {
+    assert(map != NULL);
+
+    DrawRectangle(0, 0, screenWidth, screenHeight/2, map->ceilingColor);
+    DrawRectangle(0, screenHeight/2, screenWidth, screenHeight/2, map->groundColor);
 }

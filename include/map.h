@@ -21,5 +21,6 @@ int MapGetNumCols(Map map);
 Texture MapGetTextureAt(Map map, int row, int col);
 
 void MapDraw2D(Map map);
+void MapDraw3D(Map map, int screenWidth, int screenHeight);
 
 #endif
