@@ -3,6 +3,25 @@
 #include "mapparser.h"
 #include "hashmap.h"
 #include "list.h"
+#include <stdio.h>
+#include <string.h>
+
+// djb2 hash
+static unsigned int djb2hash(void* key) {
+    char* str = (char*) key;
+
+    int hash = 5381;
+    int c;
+
+    while (c = *str++)
+       hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+    return hash;
+}
+
+static bool hashmapstrcmp(void* key1, void* key2) {
+    return strcmp((char*) key1, (char*) key2) == 0;
+}
 
 struct mapparser {
     char* filename;
@@ -14,6 +33,7 @@ struct parserresult {
 };
 
 struct parsertable {
+    char* name;         // The name. DO NOT FREE ON DESTROY (destroying parserresult will free this)
     HashMap elements;   // Map that associates element names (char*) to elements
 };
 
@@ -54,10 +74,92 @@ void MapParserDestroy(MapParser* parserp) {
     *parserp = NULL;
 }
 
+// INTERNAL: creates a parser table
+static ParserTable ParserTableCreate(char* name) {
+
+    ParserTable table = malloc(sizeof(struct parsertable));
+    assert(table != NULL);
+
+    table->name = name;
+    table->elements = HashMapCreate(5, djb2hash, hashmapstrcmp);
+
+    return table;
+}
+
+static void ParserTablePutElement(ParserTable table, char* key, void* value, ParserTypes type);
+
 ParserResult MapParserParse(MapParser parser) {
     assert(parser != NULL);
 
-    // TODO: parse
+    FILE* file = fopen(parser->filename, "r");
+    if (file == NULL) {
+        perror("Error opening file!");
+        exit(EXIT_FAILURE);
+    }
+
+    ParserResult res = malloc(sizeof(struct parserresult));
+    assert(res != NULL);
+    res->tables = HashMapCreate(5, djb2hash, hashmapstrcmp);
+    
+    char line[500];
+    int lineNumber = 0;
+    ParserTable currentTable = NULL;
+
+    while (fgets(line, sizeof(line), file) != NULL) {
+        lineNumber++;
+
+        // Ignore empty lines
+        int line_size = strlen(line);
+        if (line_size == 0 || line[0] == '\n' || line_size == strspn(line, " \r\n\t")) {
+            continue;
+        }
+
+        char table_name[51];
+        if (sscanf(line, " [%50[^]]] ", table_name) == 1) {   // New table
+            if (HashMapContains(res->tables, table_name)) {
+                printf("Error parsing map file \"%s\" (Line %d): Duplicate table name %s.\n", parser->filename, line, table_name);
+                exit(EXIT_FAILURE);
+            }
+
+            char* tname = calloc(51, sizeof(char)); assert(tname != NULL);
+            strncpy(tname, table_name, 50);
+
+            ParserTable table = ParserTableCreate(tname);
+            HashMapPut(res->tables, tname, table);
+            currentTable = table;
+            continue;
+        }
+
+        char elem_name[51];
+        char val[201];
+        if (sscanf(line, " %50s : %200s ", elem_name, val) == 2) {  // New value
+            if (currentTable == NULL) {     // Defined outside of a table
+                printf("Error parsing map file \"%s\" (Line %d): Element defined outside of a table %s.\n", parser->filename, line, table_name);
+                exit(EXIT_FAILURE);
+            }
+            if (HashMapContains(currentTable->elements, elem_name)) {    // Element already defined here
+                printf("Error parsing map file \"%s\" (Line %d): Duplicate element name %s.\n", parser->filename, line, elem_name);
+                exit(EXIT_FAILURE);
+            }
+
+            // TODO: parse the value
+
+            char* ename = calloc(51, sizeof(char)); assert(ename != NULL);
+            strncpy(ename, elem_name, 50);
+
+            ParserElement elem = malloc(sizeof(struct parserelement));
+            assert(elem != NULL);
+
+            elem->key = ename;
+            //elem->value =     // TODO: Parse the value
+            //elem->type =      // TODO: Parse the value
+
+            HashMapPut(currentTable->elements, ename, elem);
+            continue;
+        }
+    }
+
+    fclose(file);
 
     return parser->result;
 }
