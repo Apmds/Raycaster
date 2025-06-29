@@ -86,7 +86,60 @@ static ParserTable ParserTableCreate(char* name) {
     return table;
 }
 
-static void ParserTablePutElement(ParserTable table, char* key, void* value, ParserTypes type);
+static ParserElement ParserTableParseValue(MapParser parser, ParserTable table, FILE* file, char* elem_name, char* val, int lineNumber) {
+    void* value;
+    ParserTypes type;
+    
+    char first_char = val[0];
+    char last_char;
+    if (val[strlen(elem_name)-1] == '\n') {
+        last_char = val[strlen(elem_name)-2];
+    } else {
+        last_char = val[strlen(elem_name)-1];
+    }
+
+    int n;
+    double f;
+    if (sscanf(val, "%d", &n) == 1) {            // Is an integer
+        value = malloc(sizeof(int));
+        assert(value != NULL);
+
+        type = INT_TYPE;
+        *(int *)value = n;
+    } else if (sscanf(val, "%f", &f) == 1) {     // Is a float
+        value = malloc(sizeof(double));
+        assert(value != NULL);
+
+        type = FLOAT_TYPE;
+        *(double *)value = f;
+    } else if (strcmp(val, "true") == 0 || strcmp(val, "false") == 0) {     // Is a boolean
+        value = malloc(sizeof(bool));
+        assert(value != NULL);
+
+        type = BOOL_TYPE;
+        *(bool *) value = strcmp(val, "true") == 0 ? true : false;
+    } else if (first_char == '\"') {        // Is a string
+        value = malloc((strlen(val)-2)*sizeof(char));   // TODO: check if this is right
+        assert(value != NULL);
+        
+        type = STRING_TYPE;
+        if (sscanf(val, " \"%[^\"]\" ", value) != 1) {    // Not single line
+            printf("Error parsing map file \"%s\" (Line %d): Strings must be single line only!\n", parser->filename, lineNumber);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+
+    if (first_char == '[') {    // Treat as list
+        
+        
+        // Continue parsing until a ']'
+        char line[500];
+        while (fgets(line, sizeof(line), file) != NULL) {
+            
+        }
+    }
+}
 
 ParserResult MapParserParse(MapParser parser) {
     assert(parser != NULL);
@@ -143,6 +196,11 @@ ParserResult MapParserParse(MapParser parser) {
             }
 
             // TODO: parse the value
+            char first_char = val[0];
+            char last_char = val[strlen(elem_name)-2];
+            if (first_char == '[') {    // Treat as list
+                
+            }
 
             char* ename = calloc(51, sizeof(char)); assert(ename != NULL);
             strncpy(ename, elem_name, 50);
