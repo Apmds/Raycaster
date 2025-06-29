@@ -92,10 +92,10 @@ static ParserElement ParserTableParseValue(MapParser parser, ParserTable table, 
     
     char first_char = val[0];
     char last_char;
-    if (val[strlen(elem_name)-1] == '\n') {
-        last_char = val[strlen(elem_name)-2];
+    if (val[strlen(val)-1] == '\n') {
+        last_char = val[strlen(val)-2];
     } else {
-        last_char = val[strlen(elem_name)-1];
+        last_char = val[strlen(val)-1];
     }
 
     int n;
@@ -106,7 +106,7 @@ static ParserElement ParserTableParseValue(MapParser parser, ParserTable table, 
 
         type = INT_TYPE;
         *(int *)value = n;
-    } else if (sscanf(val, "%f", &f) == 1) {     // Is a float
+    } else if (sscanf(val, "%lf", &f) == 1) {     // Is a float
         value = malloc(sizeof(double));
         assert(value != NULL);
 
@@ -123,21 +123,30 @@ static ParserElement ParserTableParseValue(MapParser parser, ParserTable table, 
         assert(value != NULL);
         
         type = STRING_TYPE;
-        if (sscanf(val, " \"%[^\"]\" ", value) != 1) {    // Not single line
+        if (sscanf(val, " \"%[^\"]\" ", (char*)value) != 1) {    // Not single line
             printf("Error parsing map file \"%s\" (Line %d): Strings must be single line only!\n", parser->filename, lineNumber);
             exit(EXIT_FAILURE);
         }
-    }
+    } else if (first_char == '[') {    // Is a list
+        // TODO: parse the list
 
-
-    if (first_char == '[') {    // Treat as list
+        //char currchar = *(++val);
+        //while (currchar != '\0') {
+        //    
+        //}
+        //
+        //
+        //
+        //if (last_char == ']') {     // Is a single line list
+        //    
+        //} else {
+        //    // Continue parsing until a ']'
+        //    char line[500];
+        //    while (fgets(line, sizeof(line), file) != NULL) {
+        //        
+        //    }
+        //}
         
-        
-        // Continue parsing until a ']'
-        char line[500];
-        while (fgets(line, sizeof(line), file) != NULL) {
-            
-        }
     }
 }
 
@@ -183,8 +192,30 @@ ParserResult MapParserParse(MapParser parser) {
             continue;
         }
 
+        
+        bool inString = false;  // True if currently inside of a string
+        int listNesting = 0;    // Number of list nesting
+        int objNesting = 0;    // Number of object nesting
+        int splitIdx = -1;  // Index in line of key-value separation
+        for (int i = 0; line[i] != '\0'; i++) {
+            char c = line[i];
+            
+            if (c = '\"') { inString = !inString; }
+            if (c == '[') { listNesting++; }
+            if (c == '{') { objNesting++; }
+            if (c == ']') { listNesting--; }
+            if (c == '}') { objNesting--; }
+            
+            if (c == ':'  && listNesting == 0 && objNesting == 0 && !inString) {
+                splitIdx = i;
+                break;
+            }
+        }
+        
+        // TODO: usar o splitIdx para obter as strings do elem_name e val
         char elem_name[51];
         char val[201];
+        
         if (sscanf(line, " %50s : %200s ", elem_name, val) == 2) {  // New value
             if (currentTable == NULL) {     // Defined outside of a table
                 printf("Error parsing map file \"%s\" (Line %d): Element defined outside of a table %s.\n", parser->filename, lineNumber, table_name);
