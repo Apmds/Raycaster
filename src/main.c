@@ -32,6 +32,34 @@ void print(void* a, void* b) {
     printf("%s: %s", (char*) a, (char*) b);
 }
 
+void print2(void* a) {
+    ParserElement p = (ParserElement) a;
+    switch (ParserElementGetType(p))
+    {
+    case BOOL_TYPE:
+        bool val = *(bool*)ParserElementGetValue(p);
+        printf("%s", val ? "true" : "false");
+        break;
+    
+    case STRING_TYPE:
+        printf("%s", (char *)ParserElementGetValue(p));
+        break;
+    case INT_TYPE:
+        printf("%d", *(int*)ParserElementGetValue(p));
+        break;
+    case FLOAT_TYPE:
+        printf("%lf", *(double*)ParserElementGetValue(p));
+        break;
+    case LIST_TYPE:
+        List lst = (List) ParserElementGetValue(p);
+        ListPrint(lst, false, print2);
+        break;
+    default:
+        printf("IDK LMAO");
+        break;
+    }
+}
+
 int main(int argc, char* argv[]) {
     if (argc > 1) {
         printf("Testing mode :]\n");
@@ -42,16 +70,18 @@ int main(int argc, char* argv[]) {
         ParserResult res = MapParserParse(parser);
 
         ParserTable mapSettings = ParserResultGetTable(res, "MapSettings");
-        ParserTable tileDefinition = ParserResultGetTable(res, "TileDefinition");
-        ParserTable tilePlacing = ParserResultGetTable(res, "TilePlacing");
-
-
-        printf("%s, %d, %lf, %d\n",
-            (char*)ParserElementGetValue(ParserTableGetElement(mapSettings, "string1")),
-            *(bool*)ParserElementGetValue(ParserTableGetElement(tileDefinition, "falso")),
-            *(double*)ParserElementGetValue(ParserTableGetElement(tileDefinition, "val2")),
-            *(int*)ParserElementGetValue(ParserTableGetElement(tilePlacing, "val"))
-        );
+        //ParserTable tileDefinition = ParserResultGetTable(res, "TileDefinition");
+        //ParserTable tilePlacing = ParserResultGetTable(res, "TilePlacing");
+//
+//
+        List lst = (List) ParserElementGetValue(ParserTableGetElement(mapSettings, "lista"));
+        ListPrint(lst, true, print2);
+        //printf("%s, %d, %lf, %d\n",
+        //    (char*)ParserElementGetValue(ParserTableGetElement(mapSettings, "string1")),
+        //    *(bool*)ParserElementGetValue(ParserTableGetElement(tileDefinition, "falso")),
+        //    *(double*)ParserElementGetValue(ParserTableGetElement(tileDefinition, "val2")),
+        //    *(int*)ParserElementGetValue(ParserTableGetElement(tilePlacing, "val"))
+        //);
 
         MapParserDestroy(&parser);
         ParserResultDestroy(&res);

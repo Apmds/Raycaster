@@ -46,7 +46,48 @@ struct parserelement {
     void* value;        // Element value
 };
 
-// TODO: use this on the value
+// Helpers
+static bool isInt(char* str) {
+    char* endChar;
+    long i_val = strtol(str, &endChar, 10);
+    if (*endChar == '\0') {
+        return true;
+    }
+    return false;
+}
+
+static bool isFloat(char* str) {
+    char* endChar;
+    double i_val = strtod(str, &endChar);
+    if (*endChar == '\0') {
+        return true;
+    }
+    return false;
+}
+
+static int getSplitIdx(char* line) {
+    bool inString = false;  // True if currently inside of a string
+    int listNesting = 0;    // Number of list nesting
+    int objNesting = 0;    // Number of object nesting
+    int splitIdx = -1;  // Index in line of key-value separation
+    for (int i = 0; line[i] != '\0'; i++) {
+        char c = line[i];
+        
+        if (c == '\"') { inString = !inString; }
+        if (c == '[') { listNesting++; }
+        if (c == '{') { objNesting++; }
+        if (c == ']') { listNesting--; }
+        if (c == '}') { objNesting--; }
+        
+        if (c == ':' && listNesting == 0 && objNesting == 0 && !inString) {
+            splitIdx = i;
+            break;
+        }
+    }
+
+    return splitIdx;
+}
+
 // Returns a char* that is str with leading and trailing whitespace removed
 static char* trim(char* str) {
     // Go forwards while first char is WS
@@ -65,7 +106,7 @@ static char* trim(char* str) {
     while (endChar > str && isspace(*endChar)) {
         endChar--;
     }
-
+    
     *(endChar+1) = '\0';    // Must end in null-terminator
     
     return str;
@@ -95,8 +136,6 @@ void MapParserDestroy(MapParser* parserp) {
 
     MapParser parser = *parserp;
 
-    // TODO: free
-
     free(parser);
 
     *parserp = NULL;
@@ -114,24 +153,6 @@ static ParserTable ParserTableCreate(char* name) {
     return table;
 }
 
-// Helpers
-static bool isInt(char* str) {
-    char* endChar;
-    long i_val = strtol(str, &endChar, 10);
-    if (*endChar == '\0') {
-        return true;
-    }
-    return false;
-}
-
-static bool isFloat(char* str) {
-    char* endChar;
-    double i_val = strtod(str, &endChar);
-    if (*endChar == '\0') {
-        return true;
-    }
-    return false;
-}
 
 static ParserElement ParserTableParseValue(ParserTable table, char* elem_name, char* val, FILE* file, MapParser parser, int* lineNumberp) {
     void* value = NULL;
@@ -178,6 +199,59 @@ static ParserElement ParserTableParseValue(ParserTable table, char* elem_name, c
     } else if (first_char == '[') {    // Is a list
         // TODO: parse the list
 
+        char line[500];
+        strncpy(line, val, strlen(val)+1);  // Line starts with val
+
+        type = LIST_TYPE;
+        value = ListCreate(NULL);
+
+        int nesting = 1;
+        do {
+            char* trimmed_line = trim(line);
+            first_char = trimmed_line[0];
+            last_char = trimmed_line[strlen(trimmed_line)-1];
+            
+            if (last_char == ']') {
+                nesting--;
+            }
+
+            
+            char* c = trimmed_line;
+            while (*c != '\0') {
+                if (*c == '[') {    // There's a list inside (must parse it)
+                    // TODO: maybe change "ListElement" to another name or nah idk
+
+                    char* valstr = c + 1;
+                    char* closeptr = strchr(c, ']');
+                    bool oneLine = closeptr != NULL;
+                    
+                    if (oneLine) {   // List ends this line (valstr is only the part from here to next line)
+                        valstr = malloc( ((int) (closeptr-c+1)) *sizeof(char));
+                        assert(valstr != NULL);
+                        strncpy(valstr, c+1, ((int) (closeptr-c)));
+                        valstr[((int) (closeptr-c))] = '\0';
+                    }
+
+                    printf("DEBUG: %s\n", valstr);
+                    ListAppendLast(value, ParserTableParseValue(table, "ListElement", valstr, file, parser, lineNumberp));
+
+                    if (oneLine) {
+                        c = closeptr+1; // c advances past the sublist
+                        free(valstr);
+                        continue;
+                    } else {
+                        c = trimmed_line+strlen(trimmed_line); // c goes to the end of the line
+                    }
+                }
+
+                
+                c++;
+            }
+            (*lineNumberp)++;
+            
+        } while (fgets(line, sizeof(line), file) != NULL);
+    }
+
         //char currchar = *(++val);
         //while (currchar != '\0') {
         //    
@@ -194,8 +268,7 @@ static ParserElement ParserTableParseValue(ParserTable table, char* elem_name, c
         //        
         //    }
         //}
-        
-    }
+    
     //printf("DEBUG: %p; %d\n", value, type);
 
     char* ename = calloc(51, sizeof(char)); assert(ename != NULL);
@@ -207,8 +280,6 @@ static ParserElement ParserTableParseValue(ParserTable table, char* elem_name, c
     elem->key = ename;
     elem->value = value;     // TODO: Parse the value
     elem->type = type;    // TODO: Parse the value
-
-    HashMapPut(table->elements, ename, elem);
 }
 
 ParserResult MapParserParse(MapParser parser) {
@@ -257,24 +328,7 @@ ParserResult MapParserParse(MapParser parser) {
         }
 
         
-        bool inString = false;  // True if currently inside of a string
-        int listNesting = 0;    // Number of list nesting
-        int objNesting = 0;    // Number of object nesting
-        int splitIdx = -1;  // Index in line of key-value separation
-        for (int i = 0; line[i] != '\0'; i++) {
-            char c = line[i];
-            
-            if (c == '\"') { inString = !inString; }
-            if (c == '[') { listNesting++; }
-            if (c == '{') { objNesting++; }
-            if (c == ']') { listNesting--; }
-            if (c == '}') { objNesting--; }
-            
-            if (c == ':' && listNesting == 0 && objNesting == 0 && !inString) {
-                splitIdx = i;
-                break;
-            }
-        }
+        int splitIdx = getSplitIdx(line);
         
         if (splitIdx <= 0) { // Also works if the first char is :
             fprintf(stderr, ERROR_STR "Wrong file formatting. Must be <key> : <value>\n", parser->filename, lineNumber);
@@ -304,7 +358,9 @@ ParserResult MapParserParse(MapParser parser) {
             exit(EXIT_FAILURE);
         }
 
-        ParserTableParseValue(currentTable, trimmed_name, trimmed_val, file, parser, &lineNumber);
+        ParserElement elem = ParserTableParseValue(currentTable, trimmed_name, trimmed_val, file, parser, &lineNumber);
+        HashMapPut(currentTable->elements, elem->key, elem);
+
     }
 
     fclose(file);
