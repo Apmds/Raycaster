@@ -5,6 +5,9 @@
 #include "list.h"
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
+
+#define ERROR_STR "Error parsing map file \"%s\" (Line %d): "
 
 // djb2 hash
 static unsigned int djb2hash(void* key) {
@@ -42,6 +45,31 @@ struct parserelement {
     char* key;          // Element name
     void* value;        // Element value
 };
+
+// TODO: use this on the value
+// Returns a char* that is str with leading and trailing whitespace removed
+static char* trim(char* str) {
+    // Go forwards while first char is WS
+    while (isspace(*str)) {
+        str++;
+    }
+
+    // If string is only WS, then just return it
+    if (*str == '\0') {
+        return str;
+    }
+
+    // Move endChar backwards until its not WS, then set the char next to it as null-terminator 
+    char* endChar = str + strlen(str) - 1;
+
+    while (endChar > str && isspace(*endChar)) {
+        endChar--;
+    }
+
+    *(endChar+1) = '\0';    // Must end in null-terminator
+    
+    return str;
+}
 
 // INTERNAL: free a ParserTable (not meant to be freed outside of ParserResultDestroy and ParserElementDestroy)
 static void ParserTableDestroy(ParserTable* tablep);
@@ -86,9 +114,29 @@ static ParserTable ParserTableCreate(char* name) {
     return table;
 }
 
-static ParserElement ParserTableParseValue(MapParser parser, ParserTable table, FILE* file, char* elem_name, char* val, int lineNumber) {
-    void* value;
-    ParserTypes type;
+// Helpers
+static bool isInt(char* str) {
+    char* endChar;
+    long i_val = strtol(str, &endChar, 10);
+    if (*endChar == '\0') {
+        return true;
+    }
+    return false;
+}
+
+static bool isFloat(char* str) {
+    char* endChar;
+    double i_val = strtod(str, &endChar);
+    if (*endChar == '\0') {
+        return true;
+    }
+    return false;
+}
+
+static ParserElement ParserTableParseValue(ParserTable table, char* elem_name, char* val, FILE* file, MapParser parser, int* lineNumberp) {
+    void* value = NULL;
+    ParserTypes type = -1;
+    
     
     char first_char = val[0];
     char last_char;
@@ -100,13 +148,13 @@ static ParserElement ParserTableParseValue(MapParser parser, ParserTable table, 
 
     int n;
     double f;
-    if (sscanf(val, "%d", &n) == 1) {            // Is an integer
+    if (isInt(val) && sscanf(val, "%d", &n) == 1) {            // Is an integer
         value = malloc(sizeof(int));
         assert(value != NULL);
 
         type = INT_TYPE;
         *(int *)value = n;
-    } else if (sscanf(val, "%lf", &f) == 1) {     // Is a float
+    } else if (isFloat(val) && sscanf(val, "%lf", &f) == 1) {     // Is a float
         value = malloc(sizeof(double));
         assert(value != NULL);
 
@@ -119,12 +167,12 @@ static ParserElement ParserTableParseValue(MapParser parser, ParserTable table, 
         type = BOOL_TYPE;
         *(bool *) value = strcmp(val, "true") == 0 ? true : false;
     } else if (first_char == '\"') {        // Is a string
-        value = malloc((strlen(val)-2)*sizeof(char));   // TODO: check if this is right
+        value = malloc((strlen(val))*sizeof(char));
         assert(value != NULL);
         
         type = STRING_TYPE;
         if (sscanf(val, " \"%[^\"]\" ", (char*)value) != 1) {    // Not single line
-            printf("Error parsing map file \"%s\" (Line %d): Strings must be single line only!\n", parser->filename, lineNumber);
+            fprintf(stderr, ERROR_STR "Strings must be single line only!\n", parser->filename, *lineNumberp);
             exit(EXIT_FAILURE);
         }
     } else if (first_char == '[') {    // Is a list
@@ -148,6 +196,19 @@ static ParserElement ParserTableParseValue(MapParser parser, ParserTable table, 
         //}
         
     }
+    //printf("DEBUG: %p; %d\n", value, type);
+
+    char* ename = calloc(51, sizeof(char)); assert(ename != NULL);
+    strncpy(ename, elem_name, 50);
+
+    ParserElement elem = malloc(sizeof(struct parserelement));
+    assert(elem != NULL);
+
+    elem->key = ename;
+    elem->value = value;     // TODO: Parse the value
+    elem->type = type;    // TODO: Parse the value
+
+    HashMapPut(table->elements, ename, elem);
 }
 
 ParserResult MapParserParse(MapParser parser) {
@@ -161,6 +222,7 @@ ParserResult MapParserParse(MapParser parser) {
 
     ParserResult res = malloc(sizeof(struct parserresult));
     assert(res != NULL);
+    parser->result = res;
     res->tables = HashMapCreate(5, djb2hash, hashmapstrcmp);
     
     char line[500];
@@ -176,10 +238,11 @@ ParserResult MapParserParse(MapParser parser) {
             continue;
         }
 
+        // TODO: substituir para ler char a char
         char table_name[51];
         if (sscanf(line, " [%50[^]]] ", table_name) == 1) {   // New table
             if (HashMapContains(res->tables, table_name)) {
-                printf("Error parsing map file \"%s\" (Line %d): Duplicate table name %s.\n", parser->filename, lineNumber, table_name);
+                fprintf(stderr, ERROR_STR "Duplicate table name %s.\n", parser->filename, lineNumber, table_name);
                 exit(EXIT_FAILURE);
             }
 
@@ -187,6 +250,7 @@ ParserResult MapParserParse(MapParser parser) {
             strncpy(tname, table_name, 50);
 
             ParserTable table = ParserTableCreate(tname);
+            assert(table != NULL);
             HashMapPut(res->tables, tname, table);
             currentTable = table;
             continue;
@@ -200,52 +264,47 @@ ParserResult MapParserParse(MapParser parser) {
         for (int i = 0; line[i] != '\0'; i++) {
             char c = line[i];
             
-            if (c = '\"') { inString = !inString; }
+            if (c == '\"') { inString = !inString; }
             if (c == '[') { listNesting++; }
             if (c == '{') { objNesting++; }
             if (c == ']') { listNesting--; }
             if (c == '}') { objNesting--; }
             
-            if (c == ':'  && listNesting == 0 && objNesting == 0 && !inString) {
+            if (c == ':' && listNesting == 0 && objNesting == 0 && !inString) {
                 splitIdx = i;
                 break;
             }
         }
         
-        // TODO: usar o splitIdx para obter as strings do elem_name e val
-        char elem_name[51];
-        char val[201];
-        
-        if (sscanf(line, " %50s : %200s ", elem_name, val) == 2) {  // New value
-            if (currentTable == NULL) {     // Defined outside of a table
-                printf("Error parsing map file \"%s\" (Line %d): Element defined outside of a table %s.\n", parser->filename, lineNumber, table_name);
-                exit(EXIT_FAILURE);
-            }
-            if (HashMapContains(currentTable->elements, elem_name)) {    // Element already defined here
-                printf("Error parsing map file \"%s\" (Line %d): Duplicate element name %s.\n", parser->filename, lineNumber, elem_name);
-                exit(EXIT_FAILURE);
-            }
-
-            // TODO: parse the value
-            char first_char = val[0];
-            char last_char = val[strlen(elem_name)-2];
-            if (first_char == '[') {    // Treat as list
-                
-            }
-
-            char* ename = calloc(51, sizeof(char)); assert(ename != NULL);
-            strncpy(ename, elem_name, 50);
-
-            ParserElement elem = malloc(sizeof(struct parserelement));
-            assert(elem != NULL);
-
-            elem->key = ename;
-            //elem->value =     // TODO: Parse the value
-            //elem->type =      // TODO: Parse the value
-
-            HashMapPut(currentTable->elements, ename, elem);
-            continue;
+        if (splitIdx <= 0) { // Also works if the first char is :
+            fprintf(stderr, ERROR_STR "Wrong file formatting. Must be <key> : <value>\n", parser->filename, lineNumber);
+            exit(EXIT_FAILURE);
         }
+
+        // New key value pair
+
+        // Get name and value strings
+        char elem_name[splitIdx+1];
+        strncpy(elem_name, line, splitIdx);
+        elem_name[splitIdx] = '\0';
+
+        char val[strlen(line)-splitIdx+1];
+        strncpy(val, line+splitIdx+1, strlen(line)-splitIdx);
+        val[strlen(line)-splitIdx] = '\0';
+
+        char* trimmed_name = trim(elem_name);
+        char* trimmed_val = trim(val);
+
+        if (currentTable == NULL) {     // Defined outside of a table
+            fprintf(stderr, ERROR_STR "Element defined outside of a table %s.\n", parser->filename, lineNumber, table_name);
+            exit(EXIT_FAILURE);
+        }
+        if (HashMapContains(currentTable->elements, trimmed_name)) {    // Element already defined here
+            fprintf(stderr, ERROR_STR "Duplicate element name %s.\n", parser->filename, lineNumber, trimmed_name);
+            exit(EXIT_FAILURE);
+        }
+
+        ParserTableParseValue(currentTable, trimmed_name, trimmed_val, file, parser, &lineNumber);
     }
 
     fclose(file);
@@ -311,6 +370,7 @@ static void ParserTableDestroy(ParserTable* tablep) {
     ParserTable table = *tablep;
 
     HashMapIterator iter = HashMapGetIterator(table->elements);
+
     while (HashMapIterCanOperate(iter)) {
         // TODO: Maybe also free the keys idk
         ParserElement element = (ParserElement) HashMapIterGetCurrentValue(iter);
@@ -319,6 +379,7 @@ static void ParserTableDestroy(ParserTable* tablep) {
 
         HashMapIterGoToNext(iter);
     }
+    free(table->name);
     HashMapIterDestroy(&iter);
     HashMapDestroy(&(table->elements));
 

@@ -35,13 +35,26 @@ void print(void* a, void* b) {
 int main(int argc, char* argv[]) {
     if (argc > 1) {
         printf("Testing mode :]\n");
+        SearchAndSetResourceDir("resources");
 
-        MapParser parser = MapParserCreate("maptest2.map");
+        MapParser parser = MapParserCreate("parsertest.map");
     
-        //ParserResult res = MapParserParse(parser);
+        ParserResult res = MapParserParse(parser);
+
+        ParserTable mapSettings = ParserResultGetTable(res, "MapSettings");
+        ParserTable tileDefinition = ParserResultGetTable(res, "TileDefinition");
+        ParserTable tilePlacing = ParserResultGetTable(res, "TilePlacing");
+
+
+        printf("%s, %d, %lf, %d\n",
+            (char*)ParserElementGetValue(ParserTableGetElement(mapSettings, "string1")),
+            *(bool*)ParserElementGetValue(ParserTableGetElement(tileDefinition, "falso")),
+            *(double*)ParserElementGetValue(ParserTableGetElement(tileDefinition, "val2")),
+            *(int*)ParserElementGetValue(ParserTableGetElement(tilePlacing, "val"))
+        );
 
         MapParserDestroy(&parser);
-        //ParserResultDestroy(&res);
+        ParserResultDestroy(&res);
 
         return EXIT_SUCCESS;
     }

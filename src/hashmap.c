@@ -152,6 +152,8 @@ void* HashMapGet(HashMap map, void* key) {
 
 // Returns whether or not the HashMap contains a value for the given key
 bool HashMapContains(HashMap map, void* key) {
+    assert(map != NULL);
+
     return HashMapGet(map, key) != NULL;
 }
 
@@ -256,6 +258,8 @@ void HashMapPrint(HashMap map, bool newline, void (*printFunc) (void* key, void*
 
 // Returns an iterator for this hashmap
 HashMapIterator HashMapGetIterator(HashMap map) {
+    assert(map != NULL);
+
     HashMapIterator iter = malloc(sizeof(struct hashmapi));
     assert(iter != NULL);
 
@@ -324,5 +328,5 @@ void* HashMapIterGetCurrentValue(HashMapIterator iter) {
     assert(iter != NULL);
     assert(iter->map != NULL);
 
-    return HashMapIterCanOperate(iter) ? ((HashMapElement) ListGet(iter->map->values[iter->currIdxList], iter->currIdxKey))->key : NULL;
+    return HashMapIterCanOperate(iter) ? ((HashMapElement) ListGet(iter->map->values[iter->currIdxList], iter->currIdxKey))->value : NULL;
 }
