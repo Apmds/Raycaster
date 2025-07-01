@@ -380,6 +380,7 @@ ParserResult MapParserParse(MapParser parser) {
             continue;
         }
 
+        // If theres a previous value, then try to parse it more
         if (continuousVal != NULL) {
             char* trimmed_line = trim(line);
             continuousVal = realloc(continuousVal, sizeof(char)*(continuousValSize + strlen(trimmed_line)+1));
@@ -389,10 +390,12 @@ ParserResult MapParserParse(MapParser parser) {
             continuousValSize += strlen(trimmed_line);
             continuousVal[continuousValSize] = '\0';
 
+            //printf("continuousVal: %s\n", continuousVal);
+
             if (valueParsable(continuousVal)) {
+                //printf("%s is parsable!\n", continuousVal);
                 ParserElement elem = ParserTableParseValue(currentTable, continuousName, continuousVal, parser, lineNumber);
                 HashMapPut(currentTable->elements, elem->key, elem);
-
                 free(continuousVal);
                 free(continuousName);
                 continuousVal = NULL;
@@ -403,31 +406,76 @@ ParserResult MapParserParse(MapParser parser) {
             // If the value if not parsable, the full line may be, so continue
         }
 
-        // TODO: substituir para ler char a char
-        char table_name[51];
-        if (sscanf(line, " [%50[^]]] ", table_name) == 1) {   // New table
-            if (HashMapContains(res->tables, table_name)) {
-                fprintf(stderr, ERROR_STR "Duplicate table name %s.\n", parser->filename, lineNumber, table_name);
-                exit(EXIT_FAILURE);
+        char* trimmed_line = trim(line);
+        char* table_name;
+        int size = 0;
+        if (*line == '[') { // May be new table
+            char* c = trimmed_line+1;
+            bool outside = false;
+            while (*c != '\0') {
+                if (isspace(*c)) {
+                    fprintf(stderr, ERROR_STR "Invalid table name! (contains spaces)\n", parser->filename, lineNumber);
+                    exit(EXIT_FAILURE);
+                }
+                if (*c == ']' && *(c+1) != '\0') {
+                    fprintf(stderr, ERROR_STR "Invalid table name format. Must be [<name>]\n", parser->filename, lineNumber);
+                    exit(EXIT_FAILURE);
+                }
+
+                if (*c == ']') {
+                    size--;
+                }
+
+                c++;
+                size++;
             }
 
-            // TODO: if continuousVal exists, then its an error
-            char* tname = calloc(51, sizeof(char)); assert(tname != NULL);
-            strncpy(tname, table_name, 50);
-
-            ParserTable table = ParserTableCreate(tname);
+            // Is new table
+            table_name = malloc((size+1) * sizeof(char));
+            assert(table_name != NULL);
+            strncpy(table_name, trimmed_line+1, size);
+            table_name[size] = '\0';
+            //printf("Table_name:%s\n", table_name);
+            ParserTable table = ParserTableCreate(table_name);
             assert(table != NULL);
-            HashMapPut(res->tables, tname, table);
+            HashMapPut(res->tables, table_name, table);
             currentTable = table;
             continue;
         }
 
+        //if (sscanf(line, " [%50[^]]] ", table_name) == 1) {   // New table
+//
+        //    if (continuousVal != NULL) {
+        //        fprintf(stderr, ERROR_STR "Element \"%s\" is invalid!\n", parser->filename, lineNumber, continuousName);
+        //        exit(EXIT_FAILURE);
+        //    }
+//
+        //    if (HashMapContains(res->tables, table_name)) {
+        //        fprintf(stderr, ERROR_STR "Duplicate table name \"%s\".\n", parser->filename, lineNumber, table_name);
+        //        exit(EXIT_FAILURE);
+        //    }
+//
+        //    char* tname = calloc(51, sizeof(char)); assert(tname != NULL);
+        //    strncpy(tname, table_name, 50);
+//
+        //    ParserTable table = ParserTableCreate(tname);
+        //    assert(table != NULL);
+        //    HashMapPut(res->tables, tname, table);
+        //    currentTable = table;
+        //    continue;
+        //}
+
         
         int splitIdx = getSplitIdx(line);
         
-        if (splitIdx <= 0 && continuousVal ==  NULL) { // Also works if the first char is :
-            fprintf(stderr, ERROR_STR "Wrong file formatting. Must be <key> : <value>\n", parser->filename, lineNumber);
-            exit(EXIT_FAILURE);
+        if (splitIdx <= 0) { // Also works if the first char is :
+            if (continuousVal == NULL) { // Line is just wrong
+                fprintf(stderr, ERROR_STR "Invalid line formatting. Must be <key> : <value>\n", parser->filename, lineNumber);
+                exit(EXIT_FAILURE);
+            } else {
+                //printf("2;continuousVal->%s\n", continuousVal);
+                continue; // Line may not be wrong, so just skip next steps
+            }
         }
 
         // New key value pair
@@ -458,7 +506,7 @@ ParserResult MapParserParse(MapParser parser) {
             ParserElement elem = ParserTableParseValue(currentTable, trimmed_name, trimmed_val, parser, lineNumber);
             HashMapPut(currentTable->elements, elem->key, elem);
         } else {
-            printf("Seems %s, %s may be a multiline value.\n", trimmed_name, trimmed_val);
+            //printf("Seems %s, %s may be a multiline value.\n", trimmed_name, trimmed_val);
             if (continuousVal == NULL) { // No previous string
                 continuousVal = malloc(sizeof(char)*(strlen(trimmed_val)+1));
                 assert(continuousVal != NULL);
@@ -480,7 +528,7 @@ ParserResult MapParserParse(MapParser parser) {
                 continuousVal[continuousValSize] = '\0';
                 
             }
-            printf("continuousName = %s continuousValue = %s\n", continuousName, continuousVal);
+            //printf("continuousName = %s continuousValue = %s\n", continuousName, continuousVal);
 
             if (valueParsable(continuousVal)) {
                 ParserElement elem = ParserTableParseValue(currentTable, continuousName, continuousVal, parser, lineNumber);

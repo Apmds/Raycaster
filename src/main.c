@@ -65,16 +65,16 @@ int main(int argc, char* argv[]) {
         printf("Testing mode :]\n");
         SearchAndSetResourceDir("resources");
 
-        MapParser parser = MapParserCreate("parsertest.map");
+        MapParser parser = MapParserCreate("maptest2.map");
     
         ParserResult res = MapParserParse(parser);
 
         ParserTable mapSettings = ParserResultGetTable(res, "MapSettings");
-        //ParserTable tileDefinition = ParserResultGetTable(res, "TileDefinition");
-        //ParserTable tilePlacing = ParserResultGetTable(res, "TilePlacing");
+        ParserTable tileDefinition = ParserResultGetTable(res, "TileDefinition");
+        ParserTable tilePlacing = ParserResultGetTable(res, "TilePlacing");
 //
 //
-        List lst = (List) ParserElementGetValue(ParserTableGetElement(mapSettings, "lista"));
+        List lst = (List) ParserElementGetValue(ParserTableGetElement(tilePlacing, "Tiles"));
         ListPrint(lst, true, print2);
         //printf("%s, %d, %lf, %d\n",
         //    (char*)ParserElementGetValue(ParserTableGetElement(mapSettings, "string1")),
