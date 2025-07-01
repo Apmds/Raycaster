@@ -158,7 +158,7 @@ static ParserElement ParserTableParseValue(ParserTable table, char* elem_name, c
     void* value = NULL;
     ParserTypes type = -1;
     
-    
+    printf("PARSING\n");
     char first_char = val[0];
     char last_char;
     if (val[strlen(val)-1] == '\n') {
@@ -198,58 +198,98 @@ static ParserElement ParserTableParseValue(ParserTable table, char* elem_name, c
         }
     } else if (first_char == '[') {    // Is a list
         // TODO: parse the list
-
+        printf("LIST\n");
         char line[500];
-        strncpy(line, val, strlen(val)+1);  // Line starts with val
+        strncpy(line, val+1, strlen(val)+1);  // Line starts with val
 
         type = LIST_TYPE;
         value = ListCreate(NULL);
-
         int nesting = 1;
+
         do {
             char* trimmed_line = trim(line);
             first_char = trimmed_line[0];
             last_char = trimmed_line[strlen(trimmed_line)-1];
+            char* last_comma = trimmed_line;    // Pointer to last comma
             
-            if (last_char == ']') {
-                nesting--;
-            }
-
-            
+            bool last_element_lst = false;  // True if last element found was a list (next ',' can be ignored)
             char* c = trimmed_line;
             while (*c != '\0') {
-                if (*c == '[') {    // There's a list inside (must parse it)
-                    // TODO: maybe change "ListElement" to another name or nah idk
 
-                    char* valstr = c + 1;
+                if (*c == ',')  {   // New element found
+                    printf("DEBUG: c = %c; last_element_lst = %d\n", *c, last_element_lst);
+                    if (last_element_lst) {
+                        last_element_lst = false;
+                        last_comma = c+1;
+                    } else {
+                        char* valstr = malloc(((int) (c-last_comma+1)) * sizeof(char)); assert(valstr != NULL);
+                        strncpy(valstr, last_comma, ((int) (c-last_comma)));
+                        valstr[((int) (c-last_comma))] = '\0';
+                        printf("DEBUG: c = %c; \'%s\'\n", *c, valstr);
+                        // TODO: maybe change "ListElement" to another name or nah idk
+                        ListAppendLast(value, ParserTableParseValue(table, "ListElement", trim(valstr), file, parser, lineNumberp));                    
+                        free(valstr);
+                        last_comma = c+1;
+                    }
+                }
+
+                if (*c == '[') {    // There's a list inside (must parse it first)
+                    nesting++;
+                    char* valstr = c;
                     char* closeptr = strchr(c, ']');
                     bool oneLine = closeptr != NULL;
                     
                     if (oneLine) {   // List ends this line (valstr is only the part from here to next line)
-                        valstr = malloc( ((int) (closeptr-c+1)) *sizeof(char));
+                        valstr = malloc( ((int) (closeptr-c+2)) * sizeof(char));
                         assert(valstr != NULL);
-                        strncpy(valstr, c+1, ((int) (closeptr-c)));
-                        valstr[((int) (closeptr-c))] = '\0';
+                        strncpy(valstr, c, ((int) (closeptr-c+1)));
+                        valstr[((int) (closeptr-c+1))] = '\0';
+                        nesting--;
                     }
 
-                    printf("DEBUG: %s\n", valstr);
+                    printf("DEBUG: Valstr -> %s\n", valstr);
+                    // TODO: maybe change "ListElement" to another name or nah idk
                     ListAppendLast(value, ParserTableParseValue(table, "ListElement", valstr, file, parser, lineNumberp));
 
                     if (oneLine) {
                         c = closeptr+1; // c advances past the sublist
+                        last_element_lst = true;
                         free(valstr);
+                        printf("DEBUG: c is now %c\n", *c);
                         continue;
                     } else {
                         c = trimmed_line+strlen(trimmed_line); // c goes to the end of the line
+                        printf("DEBUG: c is now %c\n", *c);
+                        continue;
                     }
                 }
+                
+                if (*c == ']') {
+                    nesting--;
+                    
+                    // Parse last list element
+                    char* valstr = malloc(((int) (c-last_comma+1)) * sizeof(char)); assert(valstr != NULL);
+                    strncpy(valstr, last_comma, ((int) (c-last_comma)));
+                    valstr[((int) (c-last_comma))] = '\0';
+                    printf("DEBUG: c = %c; \'%s\'\n", *c, valstr);
+                    // TODO: maybe change "ListElement" to another name or nah idk
+                    ListAppendLast(value, ParserTableParseValue(table, "ListElement", trim(valstr), file, parser, lineNumberp));                    
+                    free(valstr);
+                    last_comma = c+1;
+                    
+                    last_element_lst = true;
 
+                    if (nesting == 0) {
+                        break;
+                    }
+                }
+                printf("DEBUG: nesting=%d\n", nesting);
                 
                 c++;
             }
             (*lineNumberp)++;
             
-        } while (fgets(line, sizeof(line), file) != NULL);
+        } while (nesting != 0 && fgets(line, sizeof(line), file) != NULL);  // TODO: change the condition
     }
 
         //char currchar = *(++val);

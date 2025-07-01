@@ -42,7 +42,7 @@ void print2(void* a) {
         break;
     
     case STRING_TYPE:
-        printf("%s", (char *)ParserElementGetValue(p));
+        printf("\"%s\"", (char *)ParserElementGetValue(p));
         break;
     case INT_TYPE:
         printf("%d", *(int*)ParserElementGetValue(p));
