@@ -153,8 +153,44 @@ static ParserTable ParserTableCreate(char* name) {
     return table;
 }
 
+static bool valueParsable(char* val) {
+    char first_char = val[0];
+    char last_char = val[strlen(val)-1];
+    //printf("last_char: %c\n", last_char);
 
-static ParserElement ParserTableParseValue(ParserTable table, char* elem_name, char* val, FILE* file, MapParser parser, int* lineNumberp) {
+    bool lst_or_obj = false;
+
+    if (first_char == '[') {
+        int nesting = 1;
+        char* c = val+1;
+        while (*c != '\0') {
+            if (*c == '[') {
+                nesting++;
+            }
+            if (*c == ']') {
+                nesting--;
+            }
+
+            c++;
+        }
+        lst_or_obj = nesting == 0;
+    }
+    // TODO: also check if is object here
+    //printf("val = %s : isInt->%d; isFloat->%d; isBool->%d; isString->%d; isListOrObj->%d", val, 
+    //    isInt(val), 
+    //    isFloat(val), 
+    //    (strcmp(val, "true") == 0 || strcmp(val, "false") == 0),
+    //    (first_char == '\"' && last_char == '\"'),
+    //    lst_or_obj);
+
+    return isInt(val)
+        || isFloat(val)
+        || (strcmp(val, "true") == 0 || strcmp(val, "false") == 0)
+        || (first_char == '\"' && last_char == '\"')
+        || lst_or_obj;
+}
+
+static ParserElement ParserTableParseValue(ParserTable table, char* elem_name, char* val, MapParser parser, int lineNumber) {
     void* value = NULL;
     ParserTypes type = -1;
     
@@ -192,121 +228,114 @@ static ParserElement ParserTableParseValue(ParserTable table, char* elem_name, c
         
         type = STRING_TYPE;
         if (sscanf(val, " \"%[^\"]\" ", (char*)value) != 1) {    // Not single line
-            fprintf(stderr, ERROR_STR "Strings must be single line only!\n", parser->filename, *lineNumberp);
+            fprintf(stderr, ERROR_STR "Strings must be single line only!\n", parser->filename, lineNumber);
             exit(EXIT_FAILURE);
         }
     } else if (first_char == '[') {    // Is a list        
-        char line[500];
-        strncpy(line, val+1, strlen(val)+1);  // Line starts with val
+        char* line = trim(val+1);
 
         type = LIST_TYPE;
         value = ListCreate(NULL);
         int nesting = 1;
 
-        do {
-            char* trimmed_line = trim(line);
-            first_char = trimmed_line[0];
-            last_char = trimmed_line[strlen(trimmed_line)-1];
-            char* last_comma = trimmed_line;    // Pointer to last comma
-            
-            bool last_element_lst = false;  // True if last element found was a list (next ',' can be ignored)
-            char* c = trimmed_line;
-            while (*c != '\0') {
-
-                if (*c == ',')  {   // New element found
-                    if (last_element_lst) {
-                        last_element_lst = false;
-                        last_comma = c+1;
-                    } else {
-                        char* valstr = malloc(((int) (c-last_comma+1)) * sizeof(char)); assert(valstr != NULL);
-                        strncpy(valstr, last_comma, ((int) (c-last_comma)));
-                        valstr[((int) (c-last_comma))] = '\0';
-                        // TODO: maybe change "ListElement" to another name or nah idk
-                        ListAppendLast(value, ParserTableParseValue(table, "ListElement", trim(valstr), file, parser, lineNumberp));                    
-                        free(valstr);
-                        last_comma = c+1;
-                    }
+        first_char = line[0];
+        last_char = line[strlen(line)-1];
+        char* last_comma = line;    // Pointer to last comma
+        
+        bool last_element_lst = false;  // True if last element found was a list (next ',' can be ignored)
+        char* c = line;
+        while (*c != '\0') {
+            if (*c == ',')  {   // New element found
+                if (last_element_lst) {
+                    last_element_lst = false;
+                    last_comma = c+1;
+                } else {
+                    char* valstr = malloc(((int) (c-last_comma+1)) * sizeof(char)); assert(valstr != NULL);
+                    strncpy(valstr, last_comma, ((int) (c-last_comma)));
+                    valstr[((int) (c-last_comma))] = '\0';
+                    // TODO: maybe change "ListElement" to another name or nah idk
+                    ListAppendLast(value, ParserTableParseValue(table, "ListElement", trim(valstr), parser, lineNumber));                    
+                    free(valstr);
+                    last_comma = c+1;
                 }
+            }
 
-                if (*c == '[') {    // There's a list inside (must parse it first)
-                    
-                    char* valstr = c;
+            if (*c == '[') {    // There's a list inside (must parse it first)
+                
+                char* valstr = c;
 
-                    // Finds the ']' that correlates with the '[' from *c
-                    char* closeptr = c+1;
-                    int start_nesting = nesting++;
-                    while (start_nesting != nesting && *closeptr != '\0') {
-                        if (*closeptr == '[') {
-                            nesting++;
-                        }
-                        if (*closeptr == ']') {
-                            nesting--;
-                        }
-
-                        closeptr++;
+                // Finds the ']' that correlates with the '[' from *c
+                char* closeptr = c+1;
+                int start_nesting = nesting++;
+                while (start_nesting != nesting && *closeptr != '\0') {
+                    if (*closeptr == '[') {
+                        nesting++;
                     }
-
-                    // The nesting itself should be 1 value larger (the last calculation sets nesting to start_nesting)
-                    nesting++;
-
-                    
-                    bool oneLine = closeptr != NULL;
-                    
-                    if (oneLine) {   // List ends this line (valstr is only the part from here to next line)
-                        valstr = malloc( ((int) (closeptr-c+1)) * sizeof(char));
-                        assert(valstr != NULL);
-                        strncpy(valstr, c, ((int) (closeptr-c)));
-                        valstr[((int) (closeptr-c))] = '\0';
+                    if (*closeptr == ']') {
                         nesting--;
                     }
 
-                    // TODO: maybe change "ListElement" to another name or nah idk
-                    ListAppendLast(value, ParserTableParseValue(table, "ListElement", valstr, file, parser, lineNumberp));
+                    closeptr++;
+                }
 
-                    if (oneLine) {
-                        c = closeptr; // c advances past the sublist
-                        last_element_lst = true;
-                        free(valstr);
-                        continue;
-                    } else {
-                        c = trimmed_line+strlen(trimmed_line); // c goes to the end of the line
-                        continue;
-                    }
-                }
+                // The nesting itself should be 1 value larger (the last calculation sets nesting to start_nesting)
+                nesting++;
+
                 
-                if (*c == ']') {
+                bool oneLine = closeptr != NULL;
+                
+                if (oneLine) {   // List ends this line (valstr is only the part from here to next line)
+                    valstr = malloc( ((int) (closeptr-c+1)) * sizeof(char));
+                    assert(valstr != NULL);
+                    strncpy(valstr, c, ((int) (closeptr-c)));
+                    valstr[((int) (closeptr-c))] = '\0';
                     nesting--;
-                    if (last_element_lst) {
-                        last_element_lst = false;
-                    } else {
-                        // Parse last list element
-                        char* valstr = malloc(((int) (c-last_comma+1)) * sizeof(char)); assert(valstr != NULL);
-                        strncpy(valstr, last_comma, ((int) (c-last_comma)));
-                        valstr[((int) (c-last_comma))] = '\0';
-                        
-                        
-                        // TODO: maybe change "ListElement" to another name or nah idk
-                        ListAppendLast(value, ParserTableParseValue(table, "ListElement", trim(valstr), file, parser, lineNumberp));                    
-                        free(valstr);
-                        last_comma = c+1;
-                        
-                        last_element_lst = true;
-                        
-                    }
-                    if (nesting == 0) {
-                        break;
-                    }
                 }
-                
-                c++;
+
+                // TODO: maybe change "ListElement" to another name or nah idk
+                ListAppendLast(value, ParserTableParseValue(table, "ListElement", valstr, parser, lineNumber));
+
+                if (oneLine) {
+                    c = closeptr; // c advances past the sublist
+                    last_element_lst = true;
+                    free(valstr);
+                    continue;
+                } else {
+                    c = line+strlen(line); // c goes to the end of the line
+                    continue;
+                }
             }
-            (*lineNumberp)++;
             
-        } while (nesting != 0 && fgets(line, sizeof(line), file) != NULL);
+            if (*c == ']') {
+                nesting--;
+                if (last_element_lst) {
+                    last_element_lst = false;
+                } else {
+                    // Parse last list element
+                    char* valstr = malloc(((int) (c-last_comma+1)) * sizeof(char)); assert(valstr != NULL);
+                    strncpy(valstr, last_comma, ((int) (c-last_comma)));
+                    valstr[((int) (c-last_comma))] = '\0';
+                    
+                    
+                    // TODO: maybe change "ListElement" to another name or nah idk
+                    ListAppendLast(value, ParserTableParseValue(table, "ListElement", trim(valstr), parser, lineNumber));                    
+                    free(valstr);
+                    last_comma = c+1;
+                    
+                    last_element_lst = true;
+                    
+                }
+                if (nesting == 0) {
+                    break;
+                }
+            }
+            
+            c++;
+        }
     } // TODO: add here the inline table parsing
     
     else {
-        fprintf(stderr, ERROR_STR "The value \"%s\" is not recognized.\n", parser->filename, *(lineNumberp), val);
+        fprintf(stderr, ERROR_STR "The value \"%s\" is not recognized.\n", parser->filename, lineNumber, val);
         exit(EXIT_FAILURE);
     }
 
@@ -335,6 +364,9 @@ ParserResult MapParserParse(MapParser parser) {
     parser->result = res;
     res->tables = HashMapCreate(5, djb2hash, hashmapstrcmp);
     
+    char* continuousVal = NULL; // This pointer stores a string that is continuously added on to for multiple line values (ex. lists)
+    int continuousValSize = 0;
+    char* continuousName = NULL; // This pointer stores a string that is the name associated to continuousVal
     char line[500];
     int lineNumber = 0;
     ParserTable currentTable = NULL;
@@ -348,6 +380,29 @@ ParserResult MapParserParse(MapParser parser) {
             continue;
         }
 
+        if (continuousVal != NULL) {
+            char* trimmed_line = trim(line);
+            continuousVal = realloc(continuousVal, sizeof(char)*(continuousValSize + strlen(trimmed_line)+1));
+            assert(continuousVal != NULL);
+            
+            strncpy(continuousVal+continuousValSize, trimmed_line, strlen(trimmed_line));
+            continuousValSize += strlen(trimmed_line);
+            continuousVal[continuousValSize] = '\0';
+
+            if (valueParsable(continuousVal)) {
+                ParserElement elem = ParserTableParseValue(currentTable, continuousName, continuousVal, parser, lineNumber);
+                HashMapPut(currentTable->elements, elem->key, elem);
+
+                free(continuousVal);
+                free(continuousName);
+                continuousVal = NULL;
+                continuousValSize = 0;
+                continuousName = NULL;
+                continue;
+            }
+            // If the value if not parsable, the full line may be, so continue
+        }
+
         // TODO: substituir para ler char a char
         char table_name[51];
         if (sscanf(line, " [%50[^]]] ", table_name) == 1) {   // New table
@@ -356,6 +411,7 @@ ParserResult MapParserParse(MapParser parser) {
                 exit(EXIT_FAILURE);
             }
 
+            // TODO: if continuousVal exists, then its an error
             char* tname = calloc(51, sizeof(char)); assert(tname != NULL);
             strncpy(tname, table_name, 50);
 
@@ -369,7 +425,7 @@ ParserResult MapParserParse(MapParser parser) {
         
         int splitIdx = getSplitIdx(line);
         
-        if (splitIdx <= 0) { // Also works if the first char is :
+        if (splitIdx <= 0 && continuousVal ==  NULL) { // Also works if the first char is :
             fprintf(stderr, ERROR_STR "Wrong file formatting. Must be <key> : <value>\n", parser->filename, lineNumber);
             exit(EXIT_FAILURE);
         }
@@ -397,9 +453,51 @@ ParserResult MapParserParse(MapParser parser) {
             exit(EXIT_FAILURE);
         }
 
-        ParserElement elem = ParserTableParseValue(currentTable, trimmed_name, trimmed_val, file, parser, &lineNumber);
-        HashMapPut(currentTable->elements, elem->key, elem);
+        if (valueParsable(trimmed_val)) {
+            // TODO: if continuousval exists, then its a parsing error
+            ParserElement elem = ParserTableParseValue(currentTable, trimmed_name, trimmed_val, parser, lineNumber);
+            HashMapPut(currentTable->elements, elem->key, elem);
+        } else {
+            printf("Seems %s, %s may be a multiline value.\n", trimmed_name, trimmed_val);
+            if (continuousVal == NULL) { // No previous string
+                continuousVal = malloc(sizeof(char)*(strlen(trimmed_val)+1));
+                assert(continuousVal != NULL);
+                
+                strncpy(continuousVal, trimmed_val, strlen(trimmed_val));
+                continuousValSize = strlen(trimmed_val);
+                continuousVal[continuousValSize] = '\0';
+                
+                continuousName = malloc(sizeof(char)*(strlen(trimmed_name)+1));
+                assert(continuousName != NULL);
+                strncpy(continuousName, trimmed_name, strlen(trimmed_name));
+                continuousName[strlen(trimmed_name)] = '\0';
+            } else {
+                continuousVal = realloc(continuousVal, sizeof(char)*(continuousValSize + strlen(trimmed_val)+1));
+                assert(continuousVal != NULL);
+                
+                strncpy(continuousVal+continuousValSize, trimmed_val, strlen(trimmed_val));
+                continuousValSize += strlen(trimmed_val);
+                continuousVal[continuousValSize] = '\0';
+                
+            }
+            printf("continuousName = %s continuousValue = %s\n", continuousName, continuousVal);
 
+            if (valueParsable(continuousVal)) {
+                ParserElement elem = ParserTableParseValue(currentTable, continuousName, continuousVal, parser, lineNumber);
+                HashMapPut(currentTable->elements, elem->key, elem);
+
+                continuousVal = NULL;
+                continuousValSize = 0;
+                continuousName = NULL;
+            }
+        }
+    }
+
+    if (continuousVal != NULL) {
+        free(continuousVal);
+    }
+    if (continuousName != NULL) {
+        free(continuousName);
     }
 
     fclose(file);
