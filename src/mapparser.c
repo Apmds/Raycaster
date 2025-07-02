@@ -156,10 +156,11 @@ static ParserTable ParserTableCreate(char* name) {
 static bool valueParsable(char* val) {
     char first_char = val[0];
     char last_char = val[strlen(val)-1];
-    //printf("last_char: %c\n", last_char);
 
-    bool lst_or_obj = false;
+    bool lst = false;
+    bool obj = false;
 
+    // TODO: do a better obj check maybe
     if (first_char == '[') {
         int nesting = 1;
         char* c = val+1;
@@ -173,24 +174,35 @@ static bool valueParsable(char* val) {
 
             c++;
         }
-        lst_or_obj = nesting == 0;
+        lst = nesting == 0;
     }
-    // TODO: also check if is object here
-    //printf("val = %s : isInt->%d; isFloat->%d; isBool->%d; isString->%d; isListOrObj->%d", val, 
-    //    isInt(val), 
-    //    isFloat(val), 
-    //    (strcmp(val, "true") == 0 || strcmp(val, "false") == 0),
-    //    (first_char == '\"' && last_char == '\"'),
-    //    lst_or_obj);
+    if (first_char == '{') {
+        int nesting = 1;
+        char* c = val+1;
+        while (*c != '\0') {
+            if (*c == '{') {
+                nesting++;
+            }
+            if (*c == '}') {
+                nesting--;
+            }
+
+            c++;
+        }
+        obj = nesting == 0;
+    }
 
     return isInt(val)
         || isFloat(val)
         || (strcmp(val, "true") == 0 || strcmp(val, "false") == 0)
         || (first_char == '\"' && last_char == '\"')
-        || lst_or_obj;
+        || lst
+        || obj;
 }
 
 static ParserElement ParserTableParseValue(ParserTable table, char* elem_name, char* val, MapParser parser, int lineNumber) {
+    //printf("DEBUG: PARSING %s\n", val);
+
     void* value = NULL;
     ParserTypes type = -1;
     
@@ -332,15 +344,185 @@ static ParserElement ParserTableParseValue(ParserTable table, char* elem_name, c
             
             c++;
         }
-    } // TODO: add here the inline table parsing
-    
-    else {
+    } else if (first_char == '{') {     // Is a table
+        char* line = trim(val+1);
+
+        type = TABLE_TYPE;
+
+        char* ename = calloc(51, sizeof(char)); assert(ename != NULL);
+        strncpy(ename, elem_name, 50);
+        value = ParserTableCreate(ename);
+
+        int nesting = 1;
+
+        first_char = line[0];
+        last_char = line[strlen(line)-1];
+        char* last_comma = line;    // Pointer to last comma
+        
+        bool last_element_lst = false;  // True if last element found was a list (next ',' can be ignored)
+        char* c = line;
+        while (*c != '\0') {
+            if (*c == ',')  {   // New element found
+                if (last_element_lst) {
+                    last_element_lst = false;
+                    last_comma = c+1;
+                } else {
+                    // Get the key value pair
+                    char* keyval_pair = malloc(((int) (c-last_comma+1)) * sizeof(char)); assert(keyval_pair != NULL);
+                    strncpy(keyval_pair, last_comma, ((int) (c-last_comma)));
+                    keyval_pair[((int) (c-last_comma))] = '\0';
+                    
+                    int splitIdx = getSplitIdx(keyval_pair);
+                    
+                    if (splitIdx <= 0) { // Also works if the first char is :
+                        fprintf(stderr, ERROR_STR "Invalid table element formatting. Must be <key> : <value>\n", parser->filename, lineNumber);
+                        exit(EXIT_FAILURE);
+                    }
+                    
+                    // New key value pair
+                    
+                    // Get name and value strings
+                    char table_elem_name[splitIdx+1];
+                    strncpy(table_elem_name, line, splitIdx);
+                    table_elem_name[splitIdx] = '\0';
+                    
+                    char table_val[strlen(keyval_pair)-splitIdx+1];
+                    strncpy(table_val, keyval_pair+splitIdx+1, strlen(keyval_pair)-splitIdx);
+                    table_val[strlen(keyval_pair)-splitIdx] = '\0';
+                    
+                    char* trimmed_name = trim(table_elem_name);
+                    char* trimmed_val = trim(table_val);
+                    
+                    ParserElement parserElem = ParserTableParseValue(((ParserTable) value), trimmed_name, trimmed_val, parser, lineNumber);
+                    
+                    HashMapPut(((ParserTable) value)->elements, parserElem->key, parserElem);
+                    
+                    free(keyval_pair);
+                    last_comma = c+1;
+                }
+                
+                //if (last_element_lst) {
+                //    last_element_lst = false;
+                //    last_comma = c+1;
+                //} else {
+                    //    char* valstr = malloc(((int) (c-last_comma+1)) * sizeof(char)); assert(valstr != NULL);
+                    //    strncpy(valstr, last_comma, ((int) (c-last_comma)));
+                    //    valstr[((int) (c-last_comma))] = '\0';
+                    //    // TODO: maybe change "ListElement" to another name or nah idk
+                    //    ListAppendLast(value, ParserTableParseValue(table, "ListElement", trim(valstr), parser, lineNumber));                    
+                    //    free(valstr);
+                    //    last_comma = c+1;
+                    //}
+                //}
+            }
+                
+            if (*c == '{') {    // There's a list inside (must parse it first)
+                    
+                //printf("DEBUG: skibidi\n");
+                //char* valstr = c;
+                //    
+                //// Finds the '}' that correlates with the '{' from *c
+                //char* closeptr = c+1;
+                //int start_nesting = nesting++;
+                //while (start_nesting != nesting && *closeptr != '\0') {
+                //    if (*closeptr == '{') {
+                //        nesting++;
+                //    }
+                //    if (*closeptr == '}') {
+                //        nesting--;
+                //    }
+//
+                //    closeptr++;
+                //}
+//
+                //// The nesting itself should be 1 value larger (the last calculation sets nesting to start_nesting)
+                //nesting++;
+                //
+                //bool oneLine = closeptr != NULL;
+                //
+                //if (oneLine) {   // List ends this line (valstr is only the part from here to next line)
+                //    valstr = malloc( ((int) (closeptr-c+1)) * sizeof(char));
+                //    assert(valstr != NULL);
+                //    strncpy(valstr, c, ((int) (closeptr-c)));
+                //    valstr[((int) (closeptr-c))] = '\0';
+                //    nesting--;
+                //}
+//
+                //ListAppendLast(value, ParserTableParseValue(table, "ListElement", valstr, parser, lineNumber));
+//
+                //if (oneLine) {
+                //    c = closeptr; // c advances past the sublist
+                //    last_element_lst = true;
+                //    free(valstr);
+                //    continue;
+                //} else {
+                //    c = line+strlen(line); // c goes to the end of the line
+                //    continue;
+                //}
+            }
+            
+            if (*c == '}') {
+                nesting--;
+                if (last_element_lst) {
+                    last_element_lst = false;
+                } else {
+                    // Get the key value pair
+                    char* keyval_pair = malloc(((int) (c-last_comma+1)) * sizeof(char)); assert(keyval_pair != NULL);
+                    strncpy(keyval_pair, last_comma, ((int) (c-last_comma)));
+                    keyval_pair[((int) (c-last_comma))] = '\0';
+
+                    int splitIdx = getSplitIdx(keyval_pair);
+                    
+                    if (splitIdx <= 0) { // Also works if the first char is :
+                        fprintf(stderr, ERROR_STR "Invalid table element formatting. Must be <key> : <value>\n", parser->filename, lineNumber);
+                        exit(EXIT_FAILURE);
+                    }
+
+                    // New key value pair
+
+                    // Get name and value strings
+                    char table_elem_name[splitIdx+1];
+                    strncpy(table_elem_name, line, splitIdx);
+                    table_elem_name[splitIdx] = '\0';
+
+                    char table_val[strlen(keyval_pair)-splitIdx+1];
+                    strncpy(table_val, keyval_pair+splitIdx+1, strlen(keyval_pair)-splitIdx);
+                    table_val[strlen(keyval_pair)-splitIdx] = '\0';
+
+                    char* trimmed_name = trim(table_elem_name);
+                    char* trimmed_val = trim(table_val);
+
+                    //printf("trimmed_name: %s, trimmed_val: %s\n", trimmed_name, trimmed_val);
+                    ParserElement parserElem = ParserTableParseValue(((ParserTable) value), trimmed_name, trimmed_val, parser, lineNumber);
+
+                    HashMapPut(((ParserTable) value)->elements, parserElem->key, parserElem);
+
+                    free(keyval_pair);
+                    last_comma = c+1;
+                    
+                    last_element_lst = true;
+                    
+                }
+                if (nesting == 0) {
+                    break;
+                }
+            }
+            
+            c++;
+        }
+
+    } else {
         fprintf(stderr, ERROR_STR "The value \"%s\" is not recognized.\n", parser->filename, lineNumber, val);
         exit(EXIT_FAILURE);
     }
 
-    char* ename = calloc(51, sizeof(char)); assert(ename != NULL);
-    strncpy(ename, elem_name, 50);
+    char* ename;
+    if (type != TABLE_TYPE) {
+        ename = calloc(51, sizeof(char)); assert(ename != NULL);
+        strncpy(ename, elem_name, 50);
+    } else {
+        ename = ((ParserTable) value)->name;
+    }
 
     ParserElement elem = malloc(sizeof(struct parserelement));
     assert(elem != NULL);
@@ -348,6 +530,8 @@ static ParserElement ParserTableParseValue(ParserTable table, char* elem_name, c
     elem->key = ename;
     elem->value = value;     // TODO: Parse the value
     elem->type = type;    // TODO: Parse the value
+
+    return elem;
 }
 
 ParserResult MapParserParse(MapParser parser) {
@@ -370,10 +554,10 @@ ParserResult MapParserParse(MapParser parser) {
     char line[500];
     int lineNumber = 0;
     ParserTable currentTable = NULL;
-
+    
     while (fgets(line, sizeof(line), file) != NULL) {
         lineNumber++;
-
+        
         // Ignore empty lines
         int line_size = strlen(line);
         if (line_size == 0 || line[0] == '\n' || line_size == strspn(line, " \r\n\t")) {
@@ -390,10 +574,8 @@ ParserResult MapParserParse(MapParser parser) {
             continuousValSize += strlen(trimmed_line);
             continuousVal[continuousValSize] = '\0';
 
-            //printf("continuousVal: %s\n", continuousVal);
 
             if (valueParsable(continuousVal)) {
-                //printf("%s is parsable!\n", continuousVal);
                 ParserElement elem = ParserTableParseValue(currentTable, continuousName, continuousVal, parser, lineNumber);
                 HashMapPut(currentTable->elements, elem->key, elem);
                 free(continuousVal);
@@ -435,35 +617,12 @@ ParserResult MapParserParse(MapParser parser) {
             assert(table_name != NULL);
             strncpy(table_name, trimmed_line+1, size);
             table_name[size] = '\0';
-            //printf("Table_name:%s\n", table_name);
             ParserTable table = ParserTableCreate(table_name);
             assert(table != NULL);
             HashMapPut(res->tables, table_name, table);
             currentTable = table;
             continue;
         }
-
-        //if (sscanf(line, " [%50[^]]] ", table_name) == 1) {   // New table
-//
-        //    if (continuousVal != NULL) {
-        //        fprintf(stderr, ERROR_STR "Element \"%s\" is invalid!\n", parser->filename, lineNumber, continuousName);
-        //        exit(EXIT_FAILURE);
-        //    }
-//
-        //    if (HashMapContains(res->tables, table_name)) {
-        //        fprintf(stderr, ERROR_STR "Duplicate table name \"%s\".\n", parser->filename, lineNumber, table_name);
-        //        exit(EXIT_FAILURE);
-        //    }
-//
-        //    char* tname = calloc(51, sizeof(char)); assert(tname != NULL);
-        //    strncpy(tname, table_name, 50);
-//
-        //    ParserTable table = ParserTableCreate(tname);
-        //    assert(table != NULL);
-        //    HashMapPut(res->tables, tname, table);
-        //    currentTable = table;
-        //    continue;
-        //}
 
         
         int splitIdx = getSplitIdx(line);
@@ -473,11 +632,9 @@ ParserResult MapParserParse(MapParser parser) {
                 fprintf(stderr, ERROR_STR "Invalid line formatting. Must be <key> : <value>\n", parser->filename, lineNumber);
                 exit(EXIT_FAILURE);
             } else {
-                //printf("2;continuousVal->%s\n", continuousVal);
                 continue; // Line may not be wrong, so just skip next steps
             }
         }
-
         // New key value pair
 
         // Get name and value strings
@@ -491,6 +648,8 @@ ParserResult MapParserParse(MapParser parser) {
 
         char* trimmed_name = trim(elem_name);
         char* trimmed_val = trim(val);
+
+        //printf("TRIMMED_VAL: \"%s\"\n", trimmed_val);
 
         if (currentTable == NULL) {     // Defined outside of a table
             fprintf(stderr, ERROR_STR "Element defined outside of a table %s.\n", parser->filename, lineNumber, table_name);
@@ -506,7 +665,6 @@ ParserResult MapParserParse(MapParser parser) {
             ParserElement elem = ParserTableParseValue(currentTable, trimmed_name, trimmed_val, parser, lineNumber);
             HashMapPut(currentTable->elements, elem->key, elem);
         } else {
-            //printf("Seems %s, %s may be a multiline value.\n", trimmed_name, trimmed_val);
             if (continuousVal == NULL) { // No previous string
                 continuousVal = malloc(sizeof(char)*(strlen(trimmed_val)+1));
                 assert(continuousVal != NULL);
@@ -528,7 +686,6 @@ ParserResult MapParserParse(MapParser parser) {
                 continuousVal[continuousValSize] = '\0';
                 
             }
-            //printf("continuousName = %s continuousValue = %s\n", continuousName, continuousVal);
 
             if (valueParsable(continuousVal)) {
                 ParserElement elem = ParserTableParseValue(currentTable, continuousName, continuousVal, parser, lineNumber);
@@ -636,7 +793,10 @@ static void ParserElementDestroy(ParserElement* elementp) {
 
     ParserElement element = *elementp;
 
-    free(element->key);
+    // ParserTables free the key in the destroy function, so it should NOT be freed here
+    if (element->type != TABLE_TYPE) {
+        free(element->key);
+    }
 
     // Free the value based on type
     switch (element->type) {
