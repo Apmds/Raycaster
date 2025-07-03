@@ -461,6 +461,10 @@ static ParserElement parseValue(char* elem_name, char* val, MapParser parser, in
                     keyval_pair[((int) (c-last_comma))] = '\0';
                     
                     ParserElement parserElem = parseKVPair(keyval_pair, parser, lineNumber);
+                    if (HashMapContains(((ParserTable) value)->elements, parserElem->key)) {
+                        fprintf(stderr, ERROR_STR "Element with key \"%s\" already exists in this table!\n", parser->filename, lineNumber, parserElem->key);
+                        exit(EXIT_FAILURE);
+                    }
 
                     HashMapPut(((ParserTable) value)->elements, parserElem->key, parserElem);
                     
@@ -506,6 +510,10 @@ static ParserElement parseValue(char* elem_name, char* val, MapParser parser, in
                 }
                 
                 ParserElement parserElem = parseKVPair(keyval_pair, parser, lineNumber);
+                if (HashMapContains(((ParserTable) value)->elements, parserElem->key)) {
+                    fprintf(stderr, ERROR_STR "Element with key \"%s\" already exists in this table!\n", parser->filename, lineNumber, parserElem->key);
+                    exit(EXIT_FAILURE);
+                }
                 HashMapPut(((ParserTable) value)->elements, parserElem->key, parserElem);
 
                 if (oneLine) {
@@ -530,6 +538,10 @@ static ParserElement parseValue(char* elem_name, char* val, MapParser parser, in
                     keyval_pair[((int) (c-last_comma))] = '\0';
 
                     ParserElement parserElem = parseKVPair(keyval_pair, parser, lineNumber);
+                    if (HashMapContains(((ParserTable) value)->elements, parserElem->key)) {
+                        fprintf(stderr, ERROR_STR "Element with key \"%s\" already exists in this table!\n", parser->filename, lineNumber, parserElem->key);
+                        exit(EXIT_FAILURE);
+                    }
 
                     HashMapPut(((ParserTable) value)->elements, parserElem->key, parserElem);
 
@@ -582,6 +594,10 @@ static ParserElement parseValue(char* elem_name, char* val, MapParser parser, in
                 }
 
                 ParserElement parserElem = parseKVPair(keyval_pair, parser, lineNumber);
+                if (HashMapContains(((ParserTable) value)->elements, parserElem->key)) {
+                    fprintf(stderr, ERROR_STR "Element with key \"%s\" already exists in this table!\n", parser->filename, lineNumber, parserElem->key);
+                    exit(EXIT_FAILURE);
+                }
                 HashMapPut(((ParserTable) value)->elements, parserElem->key, parserElem);
 
                 if (oneLine) {
@@ -616,8 +632,8 @@ static ParserElement parseValue(char* elem_name, char* val, MapParser parser, in
     assert(elem != NULL);
 
     elem->key = ename;
-    elem->value = value;     // TODO: Parse the value
-    elem->type = type;    // TODO: Parse the value
+    elem->value = value;
+    elem->type = type;
 
     return elem;
 }
@@ -639,6 +655,7 @@ ParserResult MapParserParse(MapParser parser) {
     char* continuousVal = NULL; // This pointer stores a string that is continuously added on to for multiple line values (ex. lists)
     int continuousValSize = 0;
     char* continuousName = NULL; // This pointer stores a string that is the name associated to continuousVal
+
     char line[500];
     int lineNumber = 0;
     ParserTable currentTable = NULL;
@@ -664,6 +681,8 @@ ParserResult MapParserParse(MapParser parser) {
 
 
             if (valueParsable(continuousVal)) {
+                printf("Parsable!\n");
+                
                 ParserElement elem = parseValue(continuousName, continuousVal, parser, lineNumber);
                 HashMapPut(currentTable->elements, elem->key, elem);
                 free(continuousVal);
@@ -737,8 +756,6 @@ ParserResult MapParserParse(MapParser parser) {
         char* trimmed_name = trim(elem_name);
         char* trimmed_val = trim(val);
 
-        //printf("TRIMMED_VAL: \"%s\"\n", trimmed_val);
-
         if (currentTable == NULL) {     // Defined outside of a table
             fprintf(stderr, ERROR_STR "Element defined outside of a table %s.\n", parser->filename, lineNumber, table_name);
             exit(EXIT_FAILURE);
@@ -748,8 +765,12 @@ ParserResult MapParserParse(MapParser parser) {
             exit(EXIT_FAILURE);
         }
 
-        if (valueParsable(trimmed_val)) {
-            // TODO: if continuousval exists, then its a parsing error
+        if (*trimmed_val != '\0' && valueParsable(trimmed_val)) {
+            if (continuousVal != NULL) {
+                fprintf(stderr, ERROR_STR "The value \"%s\" is not recognized.\n", parser->filename, lineNumber, trimmed_name);
+                exit(EXIT_FAILURE);
+            }
+
             ParserElement elem = parseValue(trimmed_name, trimmed_val, parser, lineNumber);
             HashMapPut(currentTable->elements, elem->key, elem);
         } else {
@@ -865,7 +886,6 @@ static void ParserTableDestroy(ParserTable* tablep) {
     HashMapIterator iter = HashMapGetIterator(table->elements);
 
     while (HashMapIterCanOperate(iter)) {
-        // TODO: Maybe also free the keys idk
         ParserElement element = (ParserElement) HashMapIterGetCurrentValue(iter);
 
         ParserElementDestroy(&element);
@@ -937,10 +957,8 @@ void ParserResultDestroy(ParserResult* resp) {
 
     ParserResult res = *resp;
 
-    // TODO: free
     HashMapIterator iter = HashMapGetIterator(res->tables);
     while (HashMapIterCanOperate(iter)) {
-        // TODO: Maybe also free the keys idk
         ParserTable table = (ParserTable) HashMapIterGetCurrentValue(iter);
 
         ParserTableDestroy(&table);
