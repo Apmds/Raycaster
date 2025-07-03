@@ -379,6 +379,55 @@ static ParserElement parseValue(char* elem_name, char* val, MapParser parser, in
                     break;
                 }
             }
+
+            if (*c == '{') {    // Table inside (parse it first)
+                char* valstr = c;
+                    
+                // Finds the '}' that correlates with the '{' from *c
+                char* closeptr = c+1;
+                int start_nesting = nesting++;
+                while (start_nesting != nesting && *closeptr != '\0') {
+                    if (*closeptr == '{') {
+                        nesting++;
+                    }
+                    if (*closeptr == '}') {
+                        nesting--;
+                    }
+
+                    closeptr++;
+                }
+
+                // The nesting itself should be 1 value larger (the last calculation sets nesting to start_nesting)
+                nesting++;
+                
+                bool oneLine = closeptr != NULL;
+                
+                if (!oneLine) {
+                    fprintf(stderr, ERROR_STR "Invalid value %s.\n", parser->filename, lineNumber, val);
+                    exit(EXIT_FAILURE);
+                }
+
+                if (oneLine) {   // Table ends this line (valstr is only the part from here to next line)
+                    valstr = malloc( ((int) (closeptr-c+1)) * sizeof(char));
+                    assert(valstr != NULL);
+                    strncpy(valstr, c, ((int) (closeptr-c)));
+                    valstr[((int) (closeptr-c))] = '\0';
+                    
+                    nesting--;
+                }
+                
+                ListAppendLast(value, parseValue("ListElement", valstr, parser, lineNumber));
+
+                if (oneLine) {
+                    c = closeptr; // c advances past the subtable
+                    last_element_lst = true;
+                    free(valstr);
+                    continue;
+                } else {
+                    c = line+strlen(line); // c goes to the end of the line
+                    continue;
+                }
+            }
             
             c++;
         }
@@ -492,6 +541,57 @@ static ParserElement parseValue(char* elem_name, char* val, MapParser parser, in
                 }
                 if (nesting == 0) {
                     break;
+                }
+            }
+
+            if (*c == '[') {    // List inside (must parse it first)
+                char* keyval_pair = c;
+
+                // Finds the ']' that correlates with the '[' from *c
+                char* closeptr = c+1;
+                int start_nesting = nesting++;
+                while (start_nesting != nesting && *closeptr != '\0') {
+                    if (*closeptr == '[') {
+                        nesting++;
+                    }
+                    if (*closeptr == ']') {
+                        nesting--;
+                    }
+
+                    closeptr++;
+                }
+
+                // The nesting itself should be 1 value larger (the last calculation sets nesting to start_nesting)
+                nesting++;
+
+                
+                bool oneLine = closeptr != NULL;
+
+                if (!oneLine) {
+                    fprintf(stderr, ERROR_STR "Invalid value %s.\n", parser->filename, lineNumber, val);
+                    exit(EXIT_FAILURE);
+                }
+                
+                if (oneLine) {   // List ends this line (valstr is only the part from here to next line)
+                    keyval_pair = malloc( ((int) (closeptr-last_comma+1)) * sizeof(char));
+                    assert(keyval_pair != NULL);
+                    strncpy(keyval_pair, last_comma, ((int) (closeptr-last_comma)));
+                    keyval_pair[((int) (closeptr-last_comma))] = '\0';
+                    
+                    nesting--;
+                }
+
+                ParserElement parserElem = parseKVPair(keyval_pair, parser, lineNumber);
+                HashMapPut(((ParserTable) value)->elements, parserElem->key, parserElem);
+
+                if (oneLine) {
+                    c = closeptr; // c advances past the sublist
+                    last_element_lst = true;
+                    free(keyval_pair);
+                    continue;
+                } else {
+                    c = line+strlen(line); // c goes to the end of the line
+                    continue;
                 }
             }
             
@@ -714,6 +814,13 @@ ParserTable ParserResultGetTable(ParserResult res, char* tableName) {
     }
 
     return (ParserTable) HashMapGet(res->tables, tableName);
+}
+
+// Returns the name associated with table.
+char* ParserTableGetName(ParserTable table) {
+    assert(table != NULL);
+
+    return table->name;
 }
 
 // Returns the elemnt associated with elementName (NULL if invalid or unknown element name).

@@ -72,13 +72,19 @@ int main(int argc, char* argv[]) {
         ParserTable mapSettings = ParserResultGetTable(res, "MapSettings");
         ParserTable tileDefinition = ParserResultGetTable(res, "TileDefinition");
         ParserTable tilePlacing = ParserResultGetTable(res, "TilePlacing");
-//
-//
+
+
         int tileSize = *(int*) ParserElementGetValue(ParserTableGetElement(mapSettings, "TileSize"));    printf("TileSize is %d.\n", tileSize);
-        ParserTable map = (ParserTable) ParserElementGetValue(ParserTableGetElement(tileDefinition, "WALL1"));
-        ParserElement e = (ParserElement) ParserTableGetElement(map, "surface");
-        printf("%s: %s\n", ParserElementGetKey(e), (char*) ParserElementGetValue(e));
-        //ListPrint(lst, true, print2);
+        ParserTable map = (ParserTable) ParserElementGetValue(ParserTableGetElement(tileDefinition, "WALL_TRANSPARENT"));
+        ParserTable map2 = (ParserTable) ParserElementGetValue((ParserElement) ParserTableGetElement(map, "skibidi"));
+        
+        ListPrint((List) ParserElementGetValue(ParserTableGetElement(map2, "guliganga")), true, print2);
+
+        List tiles = (List) ParserElementGetValue(ParserTableGetElement(tilePlacing, "Tiles"));
+        List tile0 = (List) ParserElementGetValue((ParserElement) ListGet(tiles, 0));
+        ParserTable map3 = (ParserTable) ParserElementGetValue((ParserElement) ListGet(tile0, 1));
+        
+        printf("%s: %s\n", "surfacey", (char*) ParserElementGetValue(ParserTableGetElement(map3, "surfacey")));
         //printf("%s, %d, %lf, %d\n",
         //    (char*)ParserElementGetValue(ParserTableGetElement(mapSettings, "string1")),
         //    *(bool*)ParserElementGetValue(ParserTableGetElement(tileDefinition, "falso")),
