@@ -32,7 +32,10 @@ void print(void* a, void* b) {
     printf("%s: %s", (char*) a, (char*) b);
 }
 
-void print2(void* a) {
+void parserElemPrint(void* a);
+void parserElemPrintTable(void* k, void* v);
+
+void parserElemPrint(void* a) {
     ParserElement p = (ParserElement) a;
     switch (ParserElementGetType(p))
     {
@@ -52,7 +55,45 @@ void print2(void* a) {
         break;
     case LIST_TYPE:
         List lst = (List) ParserElementGetValue(p);
-        ListPrint(lst, false, print2);
+        ListPrint(lst, false, parserElemPrint);
+        break;
+    case TABLE_TYPE:
+        HashMap map = (HashMap) ParserElementGetValue(p);
+        HashMapPrint(map, false, parserElemPrintTable);
+        break;
+    default:
+        printf("IDK LMAO");
+        break;
+    }
+}
+
+void parserElemPrintTable(void* k, void* v) {
+    char* key = (char*) k;
+    ParserElement p = (ParserElement) v;
+    printf("%s: ", key);
+    switch (ParserElementGetType(p))
+    {
+    case BOOL_TYPE:
+        bool val = *(bool*)ParserElementGetValue(p);
+        printf("%s", val ? "true" : "false");
+        break;
+    
+    case STRING_TYPE:
+        printf("\"%s\"", (char *)ParserElementGetValue(p));
+        break;
+    case INT_TYPE:
+        printf("%d", *(int*)ParserElementGetValue(p));
+        break;
+    case FLOAT_TYPE:
+        printf("%lf", *(double*)ParserElementGetValue(p));
+        break;
+    case LIST_TYPE:
+        List lst = (List) ParserElementGetValue(p);
+        ListPrint(lst, false, parserElemPrint);
+        break;
+    case TABLE_TYPE:
+        HashMap map = (HashMap) ParserElementGetValue(p);
+        HashMapPrint(map, false, parserElemPrintTable);
         break;
     default:
         printf("IDK LMAO");
@@ -73,7 +114,7 @@ int main(int argc, char* argv[]) {
         ParserTable tileDefinition = ParserResultGetTable(res, "TileDefinition");
         ParserTable tilePlacing = ParserResultGetTable(res, "TilePlacing");
 
-
+        HashMapPrint((HashMap) ParserElementGetValue(ParserTableGetElement(tileDefinition, "WALL_TRANSPARENT")), true, parserElemPrintTable);
         //int tileSize = *(int*) ParserElementGetValue(ParserTableGetElement(mapSettings, "TileSize"));
         //printf("TileSize is %d.\n", tileSize);
         

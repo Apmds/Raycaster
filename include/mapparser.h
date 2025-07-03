@@ -15,7 +15,7 @@ typedef enum {
     INT_TYPE,           // integers                             --> int
     FLOAT_TYPE,         // floating point values                --> double
     LIST_TYPE,          // [<item1>, <item2>, ...]              --> List (ArrayList)
-    TABLE_TYPE,         // {<key> : <value>, ...}               --> ParserTable
+    TABLE_TYPE,         // {<key> : <value>, ...}               --> HashMap
 } ParserTypes;
 
 // Generates a parser for this file.
