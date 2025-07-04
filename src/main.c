@@ -11,6 +11,10 @@
 
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 
+float min(float v1, float v2) {
+    return v1 < v2 ? v1 : v2;
+}
+
 // djb2 hash
 unsigned int djb2hash(void* key) {
     char* str = (char*) key;
@@ -104,39 +108,6 @@ void parserElemPrintTable(void* k, void* v) {
 int main(int argc, char* argv[]) {
     if (argc > 1) {
         printf("Testing mode :]\n");
-        SearchAndSetResourceDir("resources");
-
-        MapParser parser = MapParserCreate("maptest.map");
-    
-        ParserResult res = MapParserParse(parser);
-
-        ParserTable mapSettings = ParserResultGetTable(res, "MapSettings");
-        ParserTable tileDefinition = ParserResultGetTable(res, "TileDefinition");
-        ParserTable tilePlacing = ParserResultGetTable(res, "TilePlacing");
-
-        HashMapPrint((HashMap) ParserElementGetValue(ParserTableGetElement(tileDefinition, "WALL_TRANSPARENT")), true, parserElemPrintTable);
-        //int tileSize = *(int*) ParserElementGetValue(ParserTableGetElement(mapSettings, "TileSize"));
-        //printf("TileSize is %d.\n", tileSize);
-        
-        //ParserTable map = (ParserTable) ParserElementGetValue(ParserTableGetElement(tileDefinition, "WALL_TRANSPARENT"));
-        //ParserTable map2 = (ParserTable) ParserElementGetValue((ParserElement) ParserTableGetElement(map, "skibidi"));
-        
-        //ListPrint((List) ParserElementGetValue(ParserTableGetElement(map2, "guliganga")), true, print2);
-
-        //List tiles = (List) ParserElementGetValue(ParserTableGetElement(tilePlacing, "Tiles"));
-        //List tile0 = (List) ParserElementGetValue((ParserElement) ListGet(tiles, 0));
-        //ParserTable map3 = (ParserTable) ParserElementGetValue((ParserElement) ListGet(tile0, 1));
-        
-        //printf("%s: %s\n", "surfacey", (char*) ParserElementGetValue(ParserTableGetElement(map3, "surfacey")));
-        //printf("%s, %d, %lf, %d\n",
-        //    (char*)ParserElementGetValue(ParserTableGetElement(mapSettings, "string1")),
-        //    *(bool*)ParserElementGetValue(ParserTableGetElement(tileDefinition, "falso")),
-        //    *(double*)ParserElementGetValue(ParserTableGetElement(tileDefinition, "val2")),
-        //    *(int*)ParserElementGetValue(ParserTableGetElement(tilePlacing, "val"))
-        //);
-
-        MapParserDestroy(&parser);
-        ParserResultDestroy(&res);
 
         return EXIT_SUCCESS;
     }
@@ -155,6 +126,8 @@ int main(int argc, char* argv[]) {
     // Create the window and OpenGL context
     InitWindow(window_size_x, window_size_y, "Raycaster");
     SetTargetFPS(60);
+
+    RenderTexture2D render_texture = LoadRenderTexture(window_size_x, window_size_y);
     
     // MAP VARS
     Map map = MapCreateFromFile("maptest.map");
@@ -163,7 +136,10 @@ int main(int argc, char* argv[]) {
     Player player = PlayerCreate(10, 10, 45, 1280, map);
 
     // game loop
-    while (!WindowShouldClose()) {		// run the loop untill the user presses ESCAPE or presses the Close button on the window
+    while (!WindowShouldClose()) {		// run the loop until the user presses ESCAPE or presses the Close button on the window
+
+        // How much the screen is scaled from the starting size
+        float scale = min((float)GetScreenWidth()/window_size_x, (float)GetScreenHeight()/window_size_y);
 
         // Player control
         PlayerInput(player);
@@ -171,9 +147,7 @@ int main(int argc, char* argv[]) {
             drawing3D = !drawing3D;
         }
 
-
-        // Then draw the texture on screen.
-        BeginDrawing();
+        BeginTextureMode(render_texture);
             // Setup the back buffer for drawing (clear color and depth buffers)
             ClearBackground(BLACK);
 
@@ -188,6 +162,21 @@ int main(int argc, char* argv[]) {
             }
 
             DrawFPS(0, 0);
+
+        EndTextureMode();
+
+        // Then draw the texture on screen.
+        BeginDrawing();
+            // Setup the back buffer for drawing (clear color and depth buffers)
+            ClearBackground(BLACK);
+
+             DrawTexturePro(
+                render_texture.texture, 
+                (Rectangle) { 0.0f, 0.0f, (float) render_texture.texture.width, (float) -render_texture.texture.height },       // Draw flipped because of OpenGL shenanigans
+                (Rectangle) { (GetScreenWidth() - ((float)window_size_x*scale))*0.5f, (GetScreenHeight() - ((float)window_size_y*scale))*0.5f, // Draw at the center of the screen
+                (float)window_size_x*scale, (float)window_size_y*scale }, (Vector2){ 0, 0 }, 0.0f, WHITE);
+
+
         // End the frame and get ready for the next one  (display frame, poll input, etc...)
         EndDrawing();
     }
@@ -196,6 +185,7 @@ int main(int argc, char* argv[]) {
     // Unload the render texture and objects.
     MapDestroy(&map);
     PlayerDestroy(&player);
+    UnloadRenderTexture(render_texture);
 
     // Destroy the window and cleanup the OpenGL context
     CloseWindow();
