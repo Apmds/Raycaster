@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include "tile.h"
 #include "list.h"
-
+#include "mapparser.h"
 
 struct map {
     int numRows;
@@ -99,9 +99,6 @@ Map MapCreateFromFile(const char* filename) {
     Map map = malloc(sizeof(struct map));
     assert(map != NULL);
 
-    int numRows = 0;
-    int numCols = 0;
-    int tileSize = 0;
     int tileID = 1;     // ID of next tile to be defined
 
     char line[500];
@@ -115,94 +112,206 @@ Map MapCreateFromFile(const char* filename) {
     map->tileMap = HashMapCreate(5, djb2hash, hashmapstrcmp);
     HashMapPut(map->tileMap, ground, TileCreate(ground, TILE_GROUND, "test.png", false));
 
-    // TEMPORARY
-    map->ceilingColor = (Color) {255, 255, 255, 255};
-    map->groundColor = (Color) {128, 100, 20, 255};
-
-    while (fgets(line, sizeof(line), file) != NULL) {
-        lineNumber++;
-
-        // Ignore empty lines
-        size_t line_size = strlen(line);
-        if (line_size == 0 || line[0] == '\n' || line_size == strspn(line, " \r\n\t")) {
-            continue;
-        }
-        
-        // Format first line
-        if (currentPhase == 0) {
-            if (sscanf(line, " %d , %d , %d ", &numRows, &numCols, &tileSize) != 3) {
-                printf("Line %d: Map properties not formatted correctly: the first line must be: <numRows>,<numCols>,<tileSize>\n", lineNumber);
-                exit(EXIT_FAILURE);
-            }
-            
-            // Initialize grid
-            map->grid = malloc(sizeof(int*)*numRows);
-            assert(map->grid != NULL);
-            for (int i = 0; i < numRows; i++) {
-                map->grid[i] = calloc(numCols, sizeof(int));
-                assert(map->grid[i] != NULL);
-            }
-            
-            map->numCols = numCols;
-            map->numRows = numRows;
-            map->tileSize = tileSize;
-            
-            currentPhase++;
-            continue;
-        }
-        
-        // Getting tile data
-        if (currentPhase == 1) {
-            char* tileName = calloc(50, sizeof(char)); assert(tileName != NULL); // On the heap to be saved later
-            char fileName[50];
-            char transparent[12];
-            bool isTransparent;
-
-            int nSelected = sscanf(line, " %50s : %50s , %12s ", tileName, fileName, transparent);
-            if (nSelected < 2) { // May be fit for the next phase
-                free(tileName);
-                currentPhase++;
-            } else if (nSelected == 2) { // No other options (currently only transparency)
-                isTransparent = false;
-                registerTileData(map, tileName, fileName, isTransparent, &tileID);
-            } else if (nSelected == 3) { // Transparent
-                
-                if (strcmp(transparent, "transparent") != 0) {
-                    printf("Option \"%s\" does not exist!\n", transparent);
-                    exit(EXIT_FAILURE);
-                }
-                
-                isTransparent = true;
-                registerTileData(map, tileName, fileName, isTransparent, &tileID);
-            } else {    // Not fit for here and for the next phase) (TODO: change to use regular expressions)
-                printf("Line %d: Tile definition incorrectly formatted (must be: <tileName> : <filename> [ , transparent])\n", lineNumber);
-                exit(EXIT_FAILURE);
-            }
-        
-        }
-
-        // Reading tiles
-        if (currentPhase == 2) {
-            // Read tiles
-            int tileX = 0;
-            int tileY = 0;
-            char tileName[50];
-            if (sscanf(line, " %d , %d , %50s ", &tileX, &tileY, tileName) != 3) {
-                printf("Line %d: Map properties not incorrectly formatted (must be <tileX>,<tileY>,<tileName>)\n", lineNumber);
-                exit(EXIT_FAILURE);
-            }
-            
-            
-            // Set tiles
-            if (!HashMapContains(map->tileMap, tileName)) {
-                printf("Line %d: Tile \"%s\" does not exist!\n", lineNumber, tileName);
-                exit(EXIT_FAILURE);
-            }
-            Tile tile = (Tile) HashMapGet(map->tileMap, tileName);
-            MapSetTile(map, tileX, tileY, TileGetMapTiles(tile));
-        }
+    MapParser parser = MapParserCreate(filename);
+    ParserResult res = MapParserParse(parser);
+    
+    ParserTable mapSettings = ParserResultGetTable(res, "MapSettings");
+    ParserTable tileDefinition = ParserResultGetTable(res, "TileDefinition");
+    ParserTable tilePlacing = ParserResultGetTable(res, "TilePlacing");
+    if (mapSettings == NULL) {
+        fprintf(stderr, "Error opening \"%s\": No table named \"MapSettings\".\n", filename);
+        exit(EXIT_FAILURE);
     }
-    fclose(file);
+    if (tileDefinition == NULL) {
+        fprintf(stderr, "Error opening \"%s\": No table named \"TileDefinition\".\n", filename);
+        exit(EXIT_FAILURE);
+    }
+    if (tilePlacing == NULL) {
+        fprintf(stderr, "Error opening \"%s\": No table named \"TilePlacing\".\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    // Map dimensions
+    ParserElement e = ParserTableGetElement(mapSettings, "mapSize");
+    if (e == NULL || ParserElementGetType(e) != LIST_TYPE) {
+        fprintf(stderr, "Error opening \"%s\": MapSettings must have a \"mapSize\" list parameter.\n", filename);
+        exit(EXIT_FAILURE);
+    }
+    List val = ParserElementGetValue(e);
+    if (ListGetSize(val) != 2 || ParserElementGetType(ListGet(val, 0)) != INT_TYPE || ParserElementGetType(ListGet(val, 1)) != INT_TYPE) {
+        fprintf(stderr, "Error opening \"%s\": mapSize must be [sizeX, sizeY] (both positive integers).\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    map->numRows = *(int*) ParserElementGetValue(ListGet(val, 0));
+    map->numCols = *(int*) ParserElementGetValue(ListGet(val, 1));
+    if (map->numRows <= 0 || map->numCols <= 0) {
+        fprintf(stderr, "Error opening \"%s\": mapSize must be [sizeX, sizeY] (both positive integers).\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    // Initialize grid
+    map->grid = malloc(sizeof(int*) * map->numRows);
+    assert(map->grid != NULL);
+    for (int i = 0; i < map->numRows; i++) {
+        map->grid[i] = calloc(map->numCols, sizeof(int));
+        assert(map->grid[i] != NULL);
+    }
+
+    // Tile dimensions
+    e = ParserTableGetElement(mapSettings, "tileSize");
+    if (e == NULL || ParserElementGetType(e) != INT_TYPE) {
+        fprintf(stderr, "Error opening \"%s\": MapSettings must have a \"tileSize\" integer parameter.\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    map->tileSize = *(int*) ParserElementGetValue(e);
+    if (map->tileSize <= 0) {
+        fprintf(stderr, "Error opening \"%s\": MapSettings must have a \"tileSize\" positive integer parameter.\n", filename);
+        exit(EXIT_FAILURE);
+    }
+    
+    // Ceiling color
+    // TODO: Move color parsing to static function (also make alpha be optional)
+    e = ParserTableGetElement(mapSettings, "ceilingColor");
+    if (e == NULL) { // Give default value
+        map->ceilingColor = (Color) {0, 0, 0, 255};
+    } else if (ParserElementGetType(e) != LIST_TYPE) {  // Wrong because it was defined but with wrong type
+        fprintf(stderr, "Error opening \"%s\": ceilingColor must be an array of RGB(A) values (0-255 integers).\n", filename);
+        exit(EXIT_FAILURE);
+    }
+    val = (List) ParserElementGetValue(e);
+    if (ListGetSize(val) != 3 && ListGetSize(val) != 4) {   // Wrong because of color definition
+        fprintf(stderr, "Error opening \"%s\": ceilingColor must be an array of RGB(A) values (0-255 integers).\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    // Type checking
+    ListMoveToStart(val);
+    while (ListCanOperate(val)) {
+        ParserElement elem = ListGetCurrent(val);
+        if (ParserElementGetType(elem) != INT_TYPE || (*(int*) ParserElementGetValue(elem)) < 0 || (*(int*) ParserElementGetValue(elem)) > 255) {
+            fprintf(stderr, "Error opening \"%s\": ceilingColor must be an array of RGB(A) values (0-255 integers).\n", filename);
+            exit(EXIT_FAILURE);
+        }
+        ListMoveToNext(val);
+    }
+    map->ceilingColor = (Color) {*(int*) ParserElementGetValue(ListGet(val, 0)), *(int*) ParserElementGetValue(ListGet(val, 1)), *(int*) ParserElementGetValue(ListGet(val, 2)), *(int*) ParserElementGetValue(ListGet(val, 3))};
+
+    // Ground color
+    e = ParserTableGetElement(mapSettings, "groundColor");
+    if (e == NULL) { // Give default value
+        map->groundColor = (Color) {0, 0, 0, 255};
+    } else if (ParserElementGetType(e) != LIST_TYPE) {  // Wrong because it was defined but with wrong type
+        fprintf(stderr, "Error opening \"%s\": groundColor must be an array of RGB(A) values (0-255 integers).\n", filename);
+        exit(EXIT_FAILURE);
+    }
+    val = (List) ParserElementGetValue(e);
+    if (ListGetSize(val) != 3 && ListGetSize(val) != 4) {   // Wrong because of color definition
+        fprintf(stderr, "Error opening \"%s\": groundColor must be an array of RGB(A) values (0-255 integers).\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    // Type checking
+    ListMoveToStart(val);
+    while (ListCanOperate(val)) {
+        ParserElement elem = ListGetCurrent(val);
+        if (ParserElementGetType(elem) != INT_TYPE || (*(int*) ParserElementGetValue(elem)) < 0 || (*(int*) ParserElementGetValue(elem)) > 255) {
+            fprintf(stderr, "Error opening \"%s\": groundColor must be an array of RGB(A) values (0-255 integers).\n", filename);
+            exit(EXIT_FAILURE);
+        }
+        ListMoveToNext(val);
+    }
+    map->groundColor = (Color) {*(int*) ParserElementGetValue(ListGet(val, 0)), *(int*) ParserElementGetValue(ListGet(val, 1)), *(int*) ParserElementGetValue(ListGet(val, 2)), *(int*) ParserElementGetValue(ListGet(val, 3))};
+
+
+    // Tile definitions
+    HashMap tiledefs = ParserTableGetHashMap(tileDefinition);
+    HashMapIterator iter = HashMapGetIterator(tiledefs);
+    while (HashMapIterCanOperate(iter)) {
+        ParserElement tile = (ParserElement) HashMapIterGetCurrentValue(iter);
+        char* n = ParserElementGetKey(tile);
+        
+        char* tilename = calloc(strlen(n)+1, sizeof(char));
+        assert(tilename != NULL);
+        strncpy(tilename, n, strlen(n));
+        
+        if (ParserElementGetType(tile) != TABLE_TYPE) {
+            fprintf(stderr, "Error opening \"%s\": In TileDefinition, only tiles can be defined ({surface: SURFACE, <options>...}).\n", filename);
+            exit(EXIT_FAILURE);
+        }
+
+        HashMap tilestuff = (HashMap) ParserElementGetValue(tile);
+        if (!HashMapContains(tilestuff, "surface")) {
+            fprintf(stderr, "Error opening \"%s\": Tile \"%s\" has no attribute \"surface\".\n", filename, n);
+            exit(EXIT_FAILURE);
+        }
+        if (ParserElementGetType(HashMapGet(tilestuff, "surface")) != STRING_TYPE) {    // Not the name of a file
+            fprintf(stderr, "Error opening \"%s\": Tile surfaces must be strings! (in tile \"%s\")\n", filename, n);
+            exit(EXIT_FAILURE);
+        }
+
+        char* tileSurfaceName = (char*) ParserElementGetValue(HashMapGet(tilestuff, "surface"));
+
+        // Handle transparency
+        bool isTransparent = false;
+        if (HashMapContains(tilestuff, "transparent")) {
+            ParserElement transparencyelem = HashMapGet(tilestuff, "transparent");
+            if (ParserElementGetType(transparencyelem) != BOOL_TYPE) {
+                fprintf(stderr, "Error opening \"%s\": Tile transparency must be represented by a bool value! (in tile \"%s\")\n", filename, n);
+                exit(EXIT_FAILURE);
+            }
+            isTransparent = *(bool*) ParserElementGetValue(transparencyelem);
+        }
+
+
+        registerTileData(map, tilename, tileSurfaceName, isTransparent, &tileID);
+
+        HashMapIterGoToNext(iter);
+    }
+    
+    HashMapIterDestroy(&iter);
+
+    
+    // Tile placements
+    ParserElement tiles = ParserTableGetElement(tilePlacing, "Tiles");
+    if (tiles != NULL) {
+        if (ParserElementGetType(tiles) != LIST_TYPE) {
+            fprintf(stderr, "Error opening \"%s\": \"Tiles\" parameter must be a list of [int tileX, int tileY, string tileName].\n", filename);
+            exit(EXIT_FAILURE);
+        }
+
+        List tileList = (List) ParserElementGetValue(tiles);
+        ListMoveToStart(tileList);
+        while (ListCanOperate(tileList)) {
+            if (ParserElementGetType(ListGetCurrent(tileList)) != LIST_TYPE) {
+                fprintf(stderr, "Error opening \"%s\": \"Tiles\" parameter must be a list of [int tileX, int tileY, string tileName].\n", filename);
+                exit(EXIT_FAILURE);
+            }
+            
+            // Verify tile placement list semantics
+            List tilePlacement = (List) ParserElementGetValue(ListGetCurrent(tileList));
+            if (ListGetSize(tilePlacement) != 3 || ParserElementGetType(ListGet(tilePlacement, 0)) != INT_TYPE || ParserElementGetType(ListGet(tilePlacement, 1)) != INT_TYPE || ParserElementGetType(ListGet(tilePlacement, 2)) != STRING_TYPE) {
+                fprintf(stderr, "Error opening \"%s\": \"Tiles\" parameter must be a list of [int tileX, int tileY, string tileName].\n", filename);
+                exit(EXIT_FAILURE);
+            }
+
+            Tile tile = (Tile) HashMapGet(map->tileMap, (char*) ParserElementGetValue(ListGet(tilePlacement, 2)));
+            MapSetTile(map,
+                *((int*) ParserElementGetValue(ListGet(tilePlacement, 0))),
+                *((int*) ParserElementGetValue(ListGet(tilePlacement, 1))),
+                TileGetMapTiles(tile));
+
+            ListMoveToNext(tileList);
+        }
+    } else {
+        fprintf(stderr, "Warning opening \"%s\": No parameter \"Tiles\" was given in table \"TilePlacing\", so the map will be blank.\n", filename);
+    }
+
+
+    // Cleanup
+    ParserResultDestroy(&res);
+    MapParserDestroy(&parser);
 
     return map;
 }

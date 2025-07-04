@@ -27,7 +27,7 @@ static bool hashmapstrcmp(void* key1, void* key2) {
 }
 
 struct mapparser {
-    char* filename;
+    const char* filename;
     ParserResult result;
 };
 
@@ -123,7 +123,7 @@ static ParserElement parseKVPair(char* kvpair, MapParser parser, int lineNumber)
 
 static ParserElement parseValue(char* elem_name, char* val, MapParser parser, int lineNumber);
 
-MapParser MapParserCreate(char* filename) {
+MapParser MapParserCreate(const char* filename) {
     assert(filename != NULL);
 
     MapParser parser = malloc(sizeof(struct mapparser));
@@ -148,6 +148,7 @@ void MapParserDestroy(MapParser* parserp) {
 
 // INTERNAL: creates a parser table
 static ParserTable ParserTableCreate(char* name) {
+    assert(name != NULL);
 
     ParserTable table = malloc(sizeof(struct parsertable));
     assert(table != NULL);
@@ -159,6 +160,8 @@ static ParserTable ParserTableCreate(char* name) {
 }
 
 static bool valueParsable(char* val) {
+    assert(val != NULL);
+
     char first_char = val[0];
     char last_char = val[strlen(val)-1];
 
@@ -207,6 +210,9 @@ static bool valueParsable(char* val) {
 
 // Parses a key-value pair
 static ParserElement parseKVPair(char* kvpair, MapParser parser, int lineNumber) {
+    assert(parser != NULL);
+    assert(kvpair != NULL);
+
     int splitIdx = getSplitIdx(kvpair);
                     
     if (splitIdx <= 0) { // Also works if the first char is :
@@ -234,6 +240,10 @@ static ParserElement parseKVPair(char* kvpair, MapParser parser, int lineNumber)
 }
 
 static ParserElement parseValue(char* elem_name, char* val, MapParser parser, int lineNumber) {
+    assert(parser != NULL);
+    assert(val != NULL);
+    assert(elem_name != NULL);
+
     void* value = NULL;
     ParserTypes type = -1;
     
@@ -814,11 +824,20 @@ ParserResult MapParserGetResult(MapParser parser) {
 }
 
 
+// Returns whether the parser table associated with tableName exists or not.
+bool ParserResultHasTable(ParserResult res, char* tableName) {
+    assert(res != NULL);
+    assert(tableName != NULL);
+
+    return HashMapContains(res->tables, tableName);
+}
+
 // Returns the parser table associated with tableName (NULL if invalid or unknown table name).
 ParserTable ParserResultGetTable(ParserResult res, char* tableName) {
     assert(res != NULL);
+    assert(tableName != NULL);
 
-    if (!HashMapContains(res->tables, tableName)) {
+    if (!ParserResultHasTable(res, tableName)) {
         return NULL;
     }
 
@@ -832,15 +851,31 @@ char* ParserTableGetName(ParserTable table) {
     return table->name;
 }
 
+// Returns whether the element associated with elementName exists or not.
+bool ParserTableHasElement(ParserTable table, char* elementName) {
+    assert(table != NULL);
+    assert(elementName != NULL);
+
+    return HashMapContains(table->elements, elementName);
+}
+
 // Returns the elemnt associated with elementName (NULL if invalid or unknown element name).
 ParserElement ParserTableGetElement(ParserTable table, char* elementName) {
     assert(table != NULL);
+    assert(elementName != NULL);
 
-    if (!HashMapContains(table->elements, elementName)) {
+    if (!ParserTableHasElement(table, elementName)) {
         return NULL;
     }
 
     return (ParserElement) HashMapGet(table->elements, elementName);
+}
+
+// Returns a hashmap that associates element names to elements.
+HashMap ParserTableGetHashMap(ParserTable table) {
+    assert(table != NULL);
+
+    return table->elements;
 }
 
 // Returns the key of an element.

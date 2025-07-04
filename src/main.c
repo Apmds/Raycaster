@@ -106,7 +106,7 @@ int main(int argc, char* argv[]) {
         printf("Testing mode :]\n");
         SearchAndSetResourceDir("resources");
 
-        MapParser parser = MapParserCreate("maptest2.map");
+        MapParser parser = MapParserCreate("maptest.map");
     
         ParserResult res = MapParserParse(parser);
 

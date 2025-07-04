@@ -1,3 +1,6 @@
+#include <stdbool.h>
+#include "hashmap.h"
+
 #ifndef MAPPARSER_H
 #define MAPPARSER_H
 
@@ -19,7 +22,7 @@ typedef enum {
 } ParserTypes;
 
 // Generates a parser for this file.
-MapParser MapParserCreate(char* filename);
+MapParser MapParserCreate(const char* filename);
 
 // Destroys a parser
 void MapParserDestroy(MapParser* parserp);
@@ -31,14 +34,23 @@ ParserResult MapParserParse(MapParser parser);
 ParserResult MapParserGetResult(MapParser parser);
 
 
+// Returns whether the parser table associated with tableName exists or not.
+bool ParserResultHasTable(ParserResult res, char* tableName);
+
 // Returns the parser table associated with tableName (NULL if invalid or unknown table name).
 ParserTable ParserResultGetTable(ParserResult res, char* tableName);
 
 // Returns the name associated with table.
 char* ParserTableGetName(ParserTable table);
 
+// Returns whether the element associated with elementName exists or not.
+bool ParserTableHasElement(ParserTable table, char* elementName);
+
 // Returns the element associated with elementName (NULL if invalid or unknown element name).
 ParserElement ParserTableGetElement(ParserTable table, char* elementName);
+
+// Returns a hashmap that associates element names to elements.
+HashMap ParserTableGetHashMap(ParserTable table);
 
 // Returns the key of an element.
 char* ParserElementGetKey(ParserElement elem);
