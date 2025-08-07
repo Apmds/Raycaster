@@ -669,6 +669,47 @@ ParserResult MapParserParse(MapParser parser) {
             continue;
         }
 
+        // Handle comment (substitute that char by \0)
+        int comment_idx = 0;
+        int braces_nesting = 0; // {}
+        int brackets_nesting = 0; // []
+        int quotes_nesting = 0; // ""
+        bool has_comment = false;
+        while (line[comment_idx] != '\0') {
+            char c = line[comment_idx];
+            if (c == '[') {
+                brackets_nesting++;
+            }
+            if (c == ']') {
+                brackets_nesting--;
+            }
+
+            if (c == '{') {
+                braces_nesting++;
+            }
+            if (c == '}') {
+                braces_nesting--;
+            }
+
+            if (c == '"') {
+                if (quotes_nesting == 0) {
+                    quotes_nesting++;
+                } else {
+                    quotes_nesting--;
+                }
+            }
+
+            if (c == '#' && braces_nesting == 0 && brackets_nesting == 0 && quotes_nesting == 0) {
+                has_comment = true;
+                break;
+            }
+
+            comment_idx++;
+        }
+        if (has_comment) {
+            line[comment_idx] = '\0';
+        }
+
         // If theres a previous value, then try to parse it more
         if (continuousVal != NULL) {
             char* trimmed_line = trim(line);
