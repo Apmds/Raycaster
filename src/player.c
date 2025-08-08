@@ -12,7 +12,8 @@ struct player {
     int size;
     int speed;
     double rotation;                // Radians
-    double rotationSpeed;           // Radians
+    double rotationSpeed;           // For rotating with the keys. In radians
+    double sensitivity;             // For the mouse. In radians
     int FOV;                        // Degrees
     int numRays;
     MapRay* rays;
@@ -39,10 +40,11 @@ Player PlayerCreate(int playerX, int playerY, int playerRotationDeg, int numRays
 
     pl->posX = playerX;
     pl->posY = playerY;
-    pl->size = 10;
+    pl->size = 6;
     pl->speed = 250;
     pl->rotation = playerRotationDeg*DEG2RAD;
     pl->rotationSpeed = 80*DEG2RAD;
+    pl->sensitivity = 80*DEG2RAD;
     pl->FOV = 60;
     pl->numRays = numRays;
     pl->map = map;
@@ -89,6 +91,21 @@ void PlayerSetMap(Player p, Map map) {
     }
 }
 
+static void updateRays(Player p) {
+    assert(p != NULL);
+
+    for (int i = 0; i < p->numRays; i++) {
+        MapRaySetAngle(p->rays[i], p->rotation);
+        MapRaySetPosition(p->rays[i], p->posX, p->posY);
+        MapRayCast(p->rays[i]);
+    }
+}
+
+void PlayerRotate(Player p, double rot) { // rot is in radians
+    assert(p != NULL);
+
+    p->rotation += rot;
+}
 
 int PlayerGetX(Player p) {
     assert(p != NULL);
@@ -113,6 +130,13 @@ double PlayerGetRotationRad(Player p) {
     
     return p->rotation;
 }
+
+double PlayerGetCameraSensitivity(Player p) {
+    assert(p != NULL);
+    
+    return p->sensitivity;
+}
+
 
 bool PlayerIsColliding(Player p) {
     assert(p != NULL);
@@ -248,16 +272,11 @@ void PlayerInput(Player p) {
     }
 
     if (IsKeyDown(KEY_LEFT)) {
-        p->rotation -= p->rotationSpeed*deltatime;
+        PlayerRotate(p, -p->rotationSpeed*deltatime);
     }
     if (IsKeyDown(KEY_RIGHT)) {
-        p->rotation += p->rotationSpeed*deltatime;
+        PlayerRotate(p, p->rotationSpeed*deltatime);
     }
 
-    // Update MapRays
-    for (int i = 0; i < p->numRays; i++) {
-        MapRaySetAngle(p->rays[i], p->rotation);
-        MapRaySetPosition(p->rays[i], p->posX, p->posY);
-        MapRayCast(p->rays[i]);
-    }
+    updateRays(p);
 }

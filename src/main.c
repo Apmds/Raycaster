@@ -46,6 +46,7 @@ int main(int argc, char* argv[]) {
 
     int window_size_x = 1280;
     int window_size_y = 720;
+    bool window_focused = false;
 
     bool drawing3D = false;
     
@@ -62,22 +63,41 @@ int main(int argc, char* argv[]) {
     Player player = PlayerCreate(10, 10, 45, 1280, map);
     
     // game loop
+    SetExitKey(KEY_Q);
     while (!WindowShouldClose()) {		// run the loop until the user presses ESCAPE or presses the Close button on the window
 
         // How much the screen is scaled from the starting size
         float scale = min((float)GetScreenWidth()/window_size_x, (float)GetScreenHeight()/window_size_y);
 
         // Player control
-        PlayerInput(player);
         if (IsKeyPressed(KEY_G)) {
             drawing3D = !drawing3D;
         }
         if (IsKeyPressed(KEY_R)) { // Reload map
             MapDestroy(&map);
-            map = MapCreateFromFile("wolf/wolfe1m1.map");
+            map = MapCreateFromFile(map_name);
             PlayerSetMap(player, map);
         }
+        if (IsKeyPressed(KEY_ESCAPE)) { // Unfocus window
+            window_focused = false;
+        }
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) { // Focus window
+            window_focused = true;
+        }
 
+        // Camera movement
+        if (window_focused) {
+            HideCursor();
+            PlayerRotate(player, GetFrameTime()*Clamp(GetMouseDelta().x, -5, 5)*PlayerGetCameraSensitivity(player));
+            
+            // Lock cursor to center
+            SetMousePosition(GetScreenWidth()/2, GetScreenHeight()/2);
+        } else {
+            ShowCursor();
+        }
+
+        PlayerInput(player);
+        
         BeginTextureMode(render_texture);
             // Setup the back buffer for drawing (clear color and depth buffers)
             ClearBackground(BLACK);

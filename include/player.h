@@ -10,10 +10,12 @@ Player PlayerCreate(int playerX, int playerY, int playerRotationDeg, int numRays
 void PlayerDestroy(Player* pp);
 
 void PlayerSetMap(Player p, Map map);
+void PlayerRotate(Player p, double rot); // rot is in radians
 int PlayerGetX(Player p);
 int PlayerGetY(Player p);
 int PlayerGetRotationDeg(Player p);
 double PlayerGetRotationRad(Player p);
+double PlayerGetCameraSensitivity(Player p);
 
 bool PlayerIsColliding(Player p);
 
