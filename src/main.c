@@ -11,105 +11,31 @@
 
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 
+#define USAGE_MESSAGE "Usage: raycaster [-h] mapname\n"
+#define DESCRIPTION_MESSAGE "Runs the raycaster, loading the specified map file.\n"
+
 float min(float v1, float v2) {
     return v1 < v2 ? v1 : v2;
 }
 
-// djb2 hash
-unsigned int djb2hash(void* key) {
-    char* str = (char*) key;
-
-    int hash = 5381;
-    int c;
-
-    while (c = *str++)
-       hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-
-    return hash;
-}
-
-static bool hashmapstrcmp(void* key1, void* key2) {
-    return strcmp((char*) key1, (char*) key2) == 0;
-}
-
-void print(void* a, void* b) {
-    printf("%s: %s", (char*) a, (char*) b);
-}
-
-void parserElemPrint(void* a);
-void parserElemPrintTable(void* k, void* v);
-
-void parserElemPrint(void* a) {
-    ParserElement p = (ParserElement) a;
-    switch (ParserElementGetType(p))
-    {
-    case BOOL_TYPE:
-        bool val = *(bool*)ParserElementGetValue(p);
-        printf("%s", val ? "true" : "false");
-        break;
-    
-    case STRING_TYPE:
-        printf("\"%s\"", (char *)ParserElementGetValue(p));
-        break;
-    case INT_TYPE:
-        printf("%d", *(int*)ParserElementGetValue(p));
-        break;
-    case FLOAT_TYPE:
-        printf("%lf", *(double*)ParserElementGetValue(p));
-        break;
-    case LIST_TYPE:
-        List lst = (List) ParserElementGetValue(p);
-        ListPrint(lst, false, parserElemPrint);
-        break;
-    case TABLE_TYPE:
-        HashMap map = (HashMap) ParserElementGetValue(p);
-        HashMapPrint(map, false, parserElemPrintTable);
-        break;
-    default:
-        printf("IDK LMAO");
-        break;
-    }
-}
-
-void parserElemPrintTable(void* k, void* v) {
-    char* key = (char*) k;
-    ParserElement p = (ParserElement) v;
-    printf("%s: ", key);
-    switch (ParserElementGetType(p))
-    {
-    case BOOL_TYPE:
-        bool val = *(bool*)ParserElementGetValue(p);
-        printf("%s", val ? "true" : "false");
-        break;
-    
-    case STRING_TYPE:
-        printf("\"%s\"", (char *)ParserElementGetValue(p));
-        break;
-    case INT_TYPE:
-        printf("%d", *(int*)ParserElementGetValue(p));
-        break;
-    case FLOAT_TYPE:
-        printf("%lf", *(double*)ParserElementGetValue(p));
-        break;
-    case LIST_TYPE:
-        List lst = (List) ParserElementGetValue(p);
-        ListPrint(lst, false, parserElemPrint);
-        break;
-    case TABLE_TYPE:
-        HashMap map = (HashMap) ParserElementGetValue(p);
-        HashMapPrint(map, false, parserElemPrintTable);
-        break;
-    default:
-        printf("IDK LMAO");
-        break;
-    }
-}
-
 int main(int argc, char* argv[]) {
-    if (argc > 1) {
-        printf("Testing mode :]\n");
+    // Argument handling
+    if (argc <= 1) {
+        fprintf(stderr, USAGE_MESSAGE);
+        fprintf(stderr, "Must specify a map file to load!\n");
 
-        return EXIT_SUCCESS;
+        return EXIT_FAILURE;
+    }
+    
+    char* map_name;
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-h") == 0) {
+            printf(USAGE_MESSAGE);
+            printf(DESCRIPTION_MESSAGE);
+            return EXIT_SUCCESS;
+        } else {
+            map_name = argv[i];
+        }
     }
 
     // Tell the window to use vsync and work on high DPI displays
@@ -130,11 +56,11 @@ int main(int argc, char* argv[]) {
     RenderTexture2D render_texture = LoadRenderTexture(window_size_x, window_size_y);
     
     // MAP VARS
-    Map map = MapCreateFromFile("maptest.map");
+    Map map = MapCreateFromFile(map_name);
     
     // PLAYER VARS
     Player player = PlayerCreate(10, 10, 45, 1280, map);
-
+    
     // game loop
     while (!WindowShouldClose()) {		// run the loop until the user presses ESCAPE or presses the Close button on the window
 
@@ -145,6 +71,11 @@ int main(int argc, char* argv[]) {
         PlayerInput(player);
         if (IsKeyPressed(KEY_G)) {
             drawing3D = !drawing3D;
+        }
+        if (IsKeyPressed(KEY_R)) { // Reload map
+            MapDestroy(&map);
+            map = MapCreateFromFile("wolf/wolfe1m1.map");
+            PlayerSetMap(player, map);
         }
 
         BeginTextureMode(render_texture);

@@ -10,6 +10,8 @@
 #include "list.h"
 #include "mapparser.h"
 
+#include "resource_dir.h"	// utility header for SearchAndSetResourceDir
+
 struct map {
     int numRows;
     int numCols;
@@ -224,6 +226,9 @@ Map MapCreateFromFile(const char* filename) {
     }
     map->groundColor = (Color) {*(int*) ParserElementGetValue(ListGet(val, 0)), *(int*) ParserElementGetValue(ListGet(val, 1)), *(int*) ParserElementGetValue(ListGet(val, 2)), *(int*) ParserElementGetValue(ListGet(val, 3))};
 
+    // Change working resource directory to folder containing map file
+    const char* last_workdir = GetWorkingDirectory();
+    SearchAndSetResourceDir(GetDirectoryPath(filename));
 
     // Tile definitions
     HashMap tiledefs = ParserTableGetHashMap(tileDefinition);
@@ -272,6 +277,8 @@ Map MapCreateFromFile(const char* filename) {
     
     HashMapIterDestroy(&iter);
 
+    // Change working resource directory back
+    ChangeDirectory(last_workdir);
     
     // Tile placements
     ParserElement tiles = ParserTableGetElement(tilePlacing, "Tiles");
