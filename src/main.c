@@ -40,9 +40,6 @@ int main(int argc, char* argv[]) {
 
     // Tell the window to use vsync and work on high DPI displays
     SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
-    
-    // Utility function from resource_dir.h to find the resources folder and set it as the current working directory so we can load from it
-    SearchAndSetResourceDir("resources");
 
     int window_size_x = 1280;
     int window_size_y = 720;

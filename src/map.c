@@ -80,7 +80,7 @@ Map MapCreate(int numRows, int numCols, int tileSize) {
     char* ground = calloc(7, sizeof(char)); assert(ground != NULL); ground = strncpy(ground, "GROUND", 6); ListAppendLast(map->tileNames, ground);
 
     map->tileMap = HashMapCreate(5, djb2hash, hashmapstrcmp);
-    HashMapPut(map->tileMap, ground, TileCreate(ground, TILE_GROUND, "test.png", false));
+    HashMapPut(map->tileMap, ground, TileCreate(ground, TILE_GROUND, "resources/default.png", false));
 
     // TEMPORARY
     map->ceilingColor = (Color) {255, 255, 255, 255};
@@ -112,7 +112,7 @@ Map MapCreateFromFile(const char* filename) {
 
     // Default tileMap values
     map->tileMap = HashMapCreate(5, djb2hash, hashmapstrcmp);
-    HashMapPut(map->tileMap, ground, TileCreate(ground, TILE_GROUND, "test.png", false));
+    HashMapPut(map->tileMap, ground, TileCreate(ground, TILE_GROUND, "resources/default.png", false));
 
     MapParser parser = MapParserCreate(filename);
     ParserResult res = MapParserParse(parser);
