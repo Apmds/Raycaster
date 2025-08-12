@@ -23,7 +23,8 @@ It also features an implementation of linked lists, hashmaps and a *mostly* work
 - **Movement:** WASD.
 - **Rotate camera:** Left and Right arrow keys.
 - **Switch 2D and 3D view:** G.
-- **Quit:** Esc.
+- **Reload map:** R.
+- **Quit:** Q.
 
 ## Building
 There is at least one Linux and Windows build available in the _releases_ tab, but you can follow the guide here for doing it yourself.
