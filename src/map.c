@@ -9,6 +9,7 @@
 #include "tile.h"
 #include "list.h"
 #include "mapparser.h"
+#include <errno.h>
 
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 
@@ -41,19 +42,60 @@ static bool hashmapstrcmp(void* key1, void* key2) {
 }
 
 // INTERNAL: registers a new tile type in a map. Returns false on error (if tile with that name already exists)
-static bool registerTileData(Map map, char* tileName, char* fileName, bool isTransparent, int* tileID) {
+static bool registerTile(Map map, Tile tile, int* tileID) {
+    char* tileName = (char*) TileGetName(tile);
     if (HashMapContains(map->tileMap, tileName)) { // Duplicate checking
         return false;
     }
     
     // Add information in map
-    HashMapPut(map->tileMap, tileName, TileCreate(tileName, *tileID, fileName, isTransparent));
+    HashMapPut(map->tileMap, tileName, tile);
     ListAppendLast(map->tileNames, tileName);
 
     // Advances to the next tile
     (*tileID)++;
 
     return true;
+}
+
+static Color parseColor(ParserElement element, const char* filename) {
+    if (element == NULL) { // Give default value
+        errno = -1;
+        return (Color) {0, 0, 0, 255};
+    } else if (ParserElementGetType(element) != LIST_TYPE) {  // Wrong because it was defined but with wrong type
+        fprintf(stderr, "Error opening \"%s\": %s must be an array of RGB(A) values (0-255 integers).\n", filename, ParserElementGetKey(element));
+        errno = -1;
+        return (Color) {0, 0, 0, 255};
+    }
+    
+    List val = (List) ParserElementGetValue(element);
+    if (ListGetSize(val) != 3 && ListGetSize(val) != 4) {   // Wrong because of color definition
+        fprintf(stderr, "Error opening \"%s\": %s must be an array of RGB(A) values (0-255 integers).\n", filename, ParserElementGetKey(element));
+        errno = -1;
+        return (Color) {0, 0, 0, 255};
+    }
+
+    // Type checking
+    ListMoveToStart(val);
+    while (ListCanOperate(val)) {
+        ParserElement elem = (ParserElement) ListGetCurrent(val);
+
+        if (ParserElementGetType(elem) != INT_TYPE || (*(int*) ParserElementGetValue(elem)) < 0 || (*(int*) ParserElementGetValue(elem)) > 255) {
+            fprintf(stderr, "Error opening \"%s\": %s must be an array of RGB(A) values (0-255 integers).\n", filename, ParserElementGetKey(element));
+            errno = -1;
+            return (Color) {0, 0, 0, 255};
+        }
+        ListMoveToNext(val);
+    }
+    
+    int r = *(int*) ParserElementGetValue(ListGet(val, 0));
+    int g = *(int*) ParserElementGetValue(ListGet(val, 1));
+    int b = *(int*) ParserElementGetValue(ListGet(val, 2));
+    int a = 255;
+    if (ListGetSize(val) == 4) {
+        a = *(int*) ParserElementGetValue(ListGet(val, 3));
+    }
+    return (Color) {r, g, b, a};
 }
 
 // DO NOT USE NOW
@@ -80,7 +122,7 @@ Map MapCreate(int numRows, int numCols, int tileSize) {
     char* ground = calloc(7, sizeof(char)); assert(ground != NULL); ground = strncpy(ground, "GROUND", 6); ListAppendLast(map->tileNames, ground);
 
     map->tileMap = HashMapCreate(5, djb2hash, hashmapstrcmp);
-    HashMapPut(map->tileMap, ground, TileCreate(ground, TILE_GROUND, "resources/default.png", false));
+    HashMapPut(map->tileMap, ground, TileCreateTextured(ground, TILE_GROUND, "resources/default.png", false));
 
     // TEMPORARY
     map->ceilingColor = (Color) {255, 255, 255, 255};
@@ -112,7 +154,7 @@ Map MapCreateFromFile(const char* filename) {
 
     // Default tileMap values
     map->tileMap = HashMapCreate(5, djb2hash, hashmapstrcmp);
-    HashMapPut(map->tileMap, ground, TileCreate(ground, TILE_GROUND, "resources/default.png", false));
+    HashMapPut(map->tileMap, ground, TileCreateTextured(ground, TILE_GROUND, "resources/default.png", false));
 
     MapParser parser = MapParserCreate(filename);
     ParserResult res = MapParserParse(parser);
@@ -174,58 +216,11 @@ Map MapCreateFromFile(const char* filename) {
     }
     
     // Ceiling color
-    // TODO: Move color parsing to static function (also make alpha be optional)
-    e = ParserTableGetElement(mapSettings, "ceilingColor");
-    if (e == NULL) { // Give default value
-        map->ceilingColor = (Color) {0, 0, 0, 255};
-    } else if (ParserElementGetType(e) != LIST_TYPE) {  // Wrong because it was defined but with wrong type
-        fprintf(stderr, "Error opening \"%s\": ceilingColor must be an array of RGB(A) values (0-255 integers).\n", filename);
-        exit(EXIT_FAILURE);
-    }
-    val = (List) ParserElementGetValue(e);
-    if (ListGetSize(val) != 3 && ListGetSize(val) != 4) {   // Wrong because of color definition
-        fprintf(stderr, "Error opening \"%s\": ceilingColor must be an array of RGB(A) values (0-255 integers).\n", filename);
-        exit(EXIT_FAILURE);
-    }
-
-    // Type checking
-    ListMoveToStart(val);
-    while (ListCanOperate(val)) {
-        ParserElement elem = ListGetCurrent(val);
-        if (ParserElementGetType(elem) != INT_TYPE || (*(int*) ParserElementGetValue(elem)) < 0 || (*(int*) ParserElementGetValue(elem)) > 255) {
-            fprintf(stderr, "Error opening \"%s\": ceilingColor must be an array of RGB(A) values (0-255 integers).\n", filename);
-            exit(EXIT_FAILURE);
-        }
-        ListMoveToNext(val);
-    }
-    map->ceilingColor = (Color) {*(int*) ParserElementGetValue(ListGet(val, 0)), *(int*) ParserElementGetValue(ListGet(val, 1)), *(int*) ParserElementGetValue(ListGet(val, 2)), *(int*) ParserElementGetValue(ListGet(val, 3))};
+    map->ceilingColor = parseColor(ParserTableGetElement(mapSettings, "ceilingColor"), filename);
 
     // Ground color
-    e = ParserTableGetElement(mapSettings, "groundColor");
-    if (e == NULL) { // Give default value
-        map->groundColor = (Color) {0, 0, 0, 255};
-    } else if (ParserElementGetType(e) != LIST_TYPE) {  // Wrong because it was defined but with wrong type
-        fprintf(stderr, "Error opening \"%s\": groundColor must be an array of RGB(A) values (0-255 integers).\n", filename);
-        exit(EXIT_FAILURE);
-    }
-    val = (List) ParserElementGetValue(e);
-    if (ListGetSize(val) != 3 && ListGetSize(val) != 4) {   // Wrong because of color definition
-        fprintf(stderr, "Error opening \"%s\": groundColor must be an array of RGB(A) values (0-255 integers).\n", filename);
-        exit(EXIT_FAILURE);
-    }
-
-    // Type checking
-    ListMoveToStart(val);
-    while (ListCanOperate(val)) {
-        ParserElement elem = ListGetCurrent(val);
-        if (ParserElementGetType(elem) != INT_TYPE || (*(int*) ParserElementGetValue(elem)) < 0 || (*(int*) ParserElementGetValue(elem)) > 255) {
-            fprintf(stderr, "Error opening \"%s\": groundColor must be an array of RGB(A) values (0-255 integers).\n", filename);
-            exit(EXIT_FAILURE);
-        }
-        ListMoveToNext(val);
-    }
-    map->groundColor = (Color) {*(int*) ParserElementGetValue(ListGet(val, 0)), *(int*) ParserElementGetValue(ListGet(val, 1)), *(int*) ParserElementGetValue(ListGet(val, 2)), *(int*) ParserElementGetValue(ListGet(val, 3))};
-
+    map->groundColor = parseColor(ParserTableGetElement(mapSettings, "groundColor"), filename);
+    
     // Change working resource directory to folder containing map file
     const char* last_workdir = GetWorkingDirectory();
     SearchAndSetResourceDir(GetDirectoryPath(filename));
@@ -251,26 +246,40 @@ Map MapCreateFromFile(const char* filename) {
             fprintf(stderr, "Error opening \"%s\": Tile \"%s\" has no attribute \"surface\".\n", filename, n);
             exit(EXIT_FAILURE);
         }
-        if (ParserElementGetType(HashMapGet(tilestuff, "surface")) != STRING_TYPE) {    // Not the name of a file
-            fprintf(stderr, "Error opening \"%s\": Tile surfaces must be strings! (in tile \"%s\")\n", filename, n);
-            exit(EXIT_FAILURE);
-        }
 
-        char* tileSurfaceName = (char*) ParserElementGetValue(HashMapGet(tilestuff, "surface"));
+        ParserElement tileSurface = (ParserElement) HashMapGet(tilestuff, "surface");
+        Tile tileobj = NULL;
+        if (ParserElementGetType(tileSurface) == STRING_TYPE) { // Is a file name
+            char* tileSurfaceName = (char*) ParserElementGetValue(HashMapGet(tilestuff, "surface"));
 
-        // Handle transparency
-        bool isTransparent = false;
-        if (HashMapContains(tilestuff, "transparent")) {
-            ParserElement transparencyelem = HashMapGet(tilestuff, "transparent");
-            if (ParserElementGetType(transparencyelem) != BOOL_TYPE) {
-                fprintf(stderr, "Error opening \"%s\": Tile transparency must be represented by a bool value! (in tile \"%s\")\n", filename, n);
+            // Handle transparency
+            bool isTransparent = false;
+            if (HashMapContains(tilestuff, "transparent")) {
+                ParserElement transparencyelem = HashMapGet(tilestuff, "transparent");
+                if (ParserElementGetType(transparencyelem) != BOOL_TYPE) {
+                    fprintf(stderr, "Error opening \"%s\": Tile transparency must be represented by a bool value! (in tile \"%s\")\n", filename, n);
+                    exit(EXIT_FAILURE);
+                }
+                isTransparent = *(bool*) ParserElementGetValue(transparencyelem);
+            }
+
+            tileobj = TileCreateTextured(tilename, tileID, tileSurfaceName, isTransparent);
+
+        } else { // Might be a color
+            errno = 0;
+            Color color = parseColor(tileSurface, filename);
+
+            if (errno != 0) {   // Not a color, so surface is wrong
+                fprintf(stderr, "Error opening \"%s\": Tile surfaces must be either a string file name or a color! (in tile \"%s\")\n", filename, n);
                 exit(EXIT_FAILURE);
             }
-            isTransparent = *(bool*) ParserElementGetValue(transparencyelem);
+
+            tileobj = TileCreateColored(tilename, tileID, color);
         }
 
+        
 
-        registerTileData(map, tilename, tileSurfaceName, isTransparent, &tileID);
+        registerTile(map, tileobj, &tileID);
 
         HashMapIterGoToNext(iter);
     }

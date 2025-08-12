@@ -10,7 +10,7 @@ struct maptile {
     Texture texture;
 };
 
-Tile TileCreate(const char* name, int maptile, const char* imgname, bool is_transparent) {
+Tile TileCreateTextured(const char* name, int maptile, const char* imgname, bool is_transparent) {
     Tile tile = malloc(sizeof(struct maptile));
     assert(tile != NULL);
 
@@ -26,6 +26,21 @@ Tile TileCreate(const char* name, int maptile, const char* imgname, bool is_tran
 
     return tile;
 }
+
+Tile TileCreateColored(const char* name, int maptile, Color color) {
+    Tile tile = malloc(sizeof(struct maptile));
+    assert(tile != NULL);
+
+    tile->name = name;
+    tile->is_transparent = false;
+    tile->mapTile = maptile;
+    Image img = GenImageColor(1, 1, color);
+    tile->texture = LoadTextureFromImage(img);
+    UnloadImage(img);
+
+    return tile;
+}
+
 
 void TileDestroy(Tile* tilep) {
     assert(tilep != NULL);

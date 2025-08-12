@@ -9,6 +9,7 @@ groundColor: [128, 100, 20, 255]
 WALL1 : {surface: "map.png"}
 WALL2 : {surface: "map2.png"}
 WALL_TRANSPARENT : {surface: "wabbit_alpha.png", transparent: true}
+WALL_RED : {surface: [255, 0, 0, 255]}
 
 [TilePlacing]
 Tiles : [
@@ -34,5 +35,10 @@ Tiles : [
   [18, 5, "WALL2"],
   [18, 4, "WALL2"],
   [18, 3, "WALL2"],
-  [19, 12, "WALL_TRANSPARENT"]
+  [19, 12, "WALL_TRANSPARENT"],
+
+  [19, 15, "WALL_RED"],
+  [20, 15, "WALL_RED"],
+  [21, 15, "WALL_RED"],
+  [21, 16, "WALL_RED"]
 ]
