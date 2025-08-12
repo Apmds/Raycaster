@@ -2,18 +2,21 @@
 
 This project aims to implement a [Wolfenstein 3D](https://pt.wikipedia.org/wiki/Wolfenstein_3D)-type raycasting engine. I'm developing it using C, with the [Raylib](https://www.raylib.com/) framework.
 
+It also features an implementation of linked lists, hashmaps and a *mostly* working [TOML](https://toml.io/) parser for the map files.
+
 ## Capabilites
 
 - Loading a map from a map file (see the [map file](#map-files) section).
 - Exploring a map using a 2D or 3D view.
-- Different wall types.
+- Texture-mapped and colored walls.
 - Transparent walls.
-- Textured walls.
+- Custom wall types.
+- Colored floor and ceiling
 
 ### Future plans
 - Ground and ceiling/sky textures
 - Transparent tile back drawing
-- More stuff that I can't remember right now.
+- Arraylist implementation
 
 ## Controls
 
@@ -35,9 +38,8 @@ cd build
 cd ..
 make
 ```
-If there are errors during compilation, womp womp ig.
 
-**3. Run:** the executable file should be in ```bin/Debug/```, named ```raycaster```.
+The executable file is in ```bin/Debug/```, named ```raycaster```.
 
 ### Windows
 I don't know how to compile using Visual Studio and I haven't searched for it, so these instructions apply to those that use [w64devkit](https://github.com/skeeto/w64devkit/releases).
@@ -53,35 +55,57 @@ cd build
 cd ..
 make
 ```
-If there are errors during compilation, refer to the [Linux](#linux) section.
 
-**3. Run:** the executable file should be in ```bin/Debug/```, named ```raycaster```.
+The executable file is in ```bin/Debug/```, named ```raycaster```.
 
 ### MacOS
 **If** I get a build of it using MacOS, I'll detail the process here.
 
+## Running
+
+Execute ```raycaster <mapfile>``` while in the same directory as the [resources](resources/) folder.
+The [resources](resources/) folder contains example maps to test the raycaster.
 
 ## Map files
-I like map files to have a ```.map``` extension, but it can be any. There is an example map file in the **resources** folder.
+The map files have the ```.map``` extension and their syntax is a subset of [TOML](https://toml.io/), so the terminology lines up.
 
-Each map in this (and most) raycasting engines is made up of a **2D grid** of tiles.
+Each map is made up of a **2D grid** of tiles.
 The tile coordinates start at 0 in the **top left** corner, with x growing from **left to right** and y growing **from top to bottom**. By default, each tile is a GROUND tile.
 
 Currently, the map files define:
-- The maximum size (in grid units) of the map in the X and Y axis.
-- The size (in pixels) of each tile.
-- What type a tile has at its coordinates.
+- Map dimensions (grid width and height).
+- Tile size (in pixels).
+- Setting floor and ceiling colors.
+- Defining tile types.
+- What type a tile has at some coordinates.
 
 ### Structure
-The **first** line of the file follows the structure ```<sizeX>,<sizeY>,<tileSize>```, which defines the number of tiles in each axis of the map and the _pixel_ size of the tiles.
+The raycaster looks for the following tables to successfully load a map into memory:
+- **MapSettings**: Where the map variables are set.
+- **TileDefinition**: Where the tile types are defined.
+- **TilePlacing**: Where the tiles are placed in the map.
 
-**Every** line after that has the structure ```<posX>,<posY>,<tileType>```, which defines the type of tile that is at the coordinates.
+Some parameters have a ```color``` type, which is an RGB(A) array.
 
-### Tile types
-- GROUND: ground tile (default)
-- WALL1: generic wall tile
-- WALL2: generic wall tile
-- WALL_TRANSPARENT: generic wall tile (transparent)
+#### MapSettings
+
+- **mapSize**: ```[width : int, height : int]``` map dimensions.
+- **tileSize**: an integer defining the pixel size of each tile.
+- **ceilingColor**: the color of the ceiling.
+- **groundColor**: the color of the ground.
+
+#### TileDefinition
+
+To define a tile, follow this syntax:
+```
+<TILE_NAME> : {surface: <string|color>, transparent (optional): <bool>}
+```
+A tile's surface is either a string with the texture name or a color, in case of a solid color tile.
+If ```transparent``` is set to ```true```, the walls behind this tile will also be rendered.
+
+#### TilePlacing
+
+- **Tiles**: An array containing the tile placement information, which follows this template:```[<tileX : int>, <tileY : int>, <tileName : string>]```
 
 ## Screenshots
 
