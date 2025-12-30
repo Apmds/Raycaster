@@ -14,7 +14,7 @@ WABBIT: {surface: "wabbit_alpha.png"}
 
 [BillboardPlacing]
 Billboards : [
-  [5, 1, "WABBIT"]
+  [200, 82, "WABBIT"]
 ]
 
 [TilePlacing]
@@ -71,7 +71,7 @@ Tiles : [
   [13, 6, "STONE_WALL"],
   [14, 6, "STONE_WALL"],
   [15, 6, "STONE_WALL"],
-  [11, 15, "BLUE_WALL"],
+  # [11, 15, "BLUE_WALL"],
 
 
   # "Mario pipe" room (up left stone room)

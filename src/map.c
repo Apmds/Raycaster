@@ -563,6 +563,15 @@ void MapDraw2D(Map map) {
             DrawRectangle(row*map->tileSize, col*map->tileSize, map->tileSize, map->tileSize, color);
         }
     }
+
+    // Draw billboards
+    ListMoveToStart(map->billboards);
+    while (ListCanOperate(map->billboards)) {
+        Billboard bb = ListGetCurrent(map->billboards);
+        DrawCircle(BillboardGetX(bb), BillboardGetY(bb), 10, (Color) {0, 0, 255, 255});
+
+        ListMoveToNext(map->billboards);
+    }
 }
 
 void MapDraw3D(Map map, int screenWidth, int screenHeight) {
