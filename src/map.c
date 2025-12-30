@@ -9,6 +9,7 @@
 #include "tile.h"
 #include "list.h"
 #include "mapparser.h"
+#include "billboard.h"
 #include <errno.h>
 
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
@@ -19,6 +20,8 @@ struct map {
     int tileSize;                       // Size of each tile (pixels)
     HashMap tileMap;                    // HashMap that contains the details (texture) for a tile, given its name
     List tileNames;                   // Array associating tile indices (MapTiles) to the tile names (char*)             TODO: change to ArrayList
+    HashMap billboardMap;           // HashMap that contains the details (texture) for a billboard, given its name
+    List billboards;                // List of all billboards (enemies, etc.)
     Color  groundColor;     // TEMPORARY
     Color  ceilingColor;    // TEMPORARY
     int** grid;                    // The grid of tiles that represents this map
@@ -144,10 +147,6 @@ Map MapCreateFromFile(const char* filename) {
     assert(map != NULL);
 
     int tileID = 1;     // ID of next tile to be defined
-
-    char line[500];
-    int lineNumber = 0; // Used for error printing
-    int currentPhase = 0; // 0 - map general settings; 1 - reading tile data; 2 - tile placing
     
     map->tileNames = ListCreate(NULL);
     char* ground = calloc(7, sizeof(char)); assert(ground != NULL); ground = strncpy(ground, "GROUND", 6); ListAppendLast(map->tileNames, ground);
@@ -163,6 +162,7 @@ Map MapCreateFromFile(const char* filename) {
     ParserTable tileDefinition = ParserResultGetTable(res, "TileDefinition");
     ParserTable tilePlacing = ParserResultGetTable(res, "TilePlacing");
     ParserTable billboardDefinition = ParserResultGetTable(res, "BillboardDefinition");
+    ParserTable billboardPlacing = ParserResultGetTable(res, "BillboardPlacing");
     if (mapSettings == NULL) {
         fprintf(stderr, "Error opening \"%s\": No table named \"MapSettings\".\n", filename);
         exit(EXIT_FAILURE);
@@ -177,6 +177,10 @@ Map MapCreateFromFile(const char* filename) {
     }
     if (billboardDefinition == NULL) {
         fprintf(stderr, "Error opening \"%s\": No table named \"BillboardDefinition\".\n", filename);
+        exit(EXIT_FAILURE);
+    }
+    if (billboardPlacing == NULL) {
+        fprintf(stderr, "Error opening \"%s\": No table named \"BillboardPlacing\".\n", filename);
         exit(EXIT_FAILURE);
     }
 
@@ -329,6 +333,105 @@ Map MapCreateFromFile(const char* filename) {
         fprintf(stderr, "Warning opening \"%s\": No parameter \"Tiles\" was given in table \"TilePlacing\", so the map will be blank.\n", filename);
     }
 
+    // Change working resource directory to folder containing map file
+    last_workdir = GetWorkingDirectory();
+    SearchAndSetResourceDir(GetDirectoryPath(filename));
+
+    // Billboard definitions
+    map->billboardMap = HashMapCreate(5, djb2hash, hashmapstrcmp);
+    HashMap billboard_defs = ParserTableGetHashMap(billboardDefinition);
+    HashMapIterator billboard_defs_iter = HashMapGetIterator(billboard_defs);
+
+    while (HashMapIterCanOperate(billboard_defs_iter)) {
+        ParserElement def = HashMapIterGetCurrentValue(billboard_defs_iter);
+        char* n = ParserElementGetKey(def);
+
+        char* bbname = calloc(strlen(n)+1, sizeof(char));
+        assert(bbname != NULL);
+        strncpy(bbname, n, strlen(n));
+
+        if (ParserElementGetType(def) != TABLE_TYPE) {
+            fprintf(stderr, "Warning opening \"%s\": In BillboardDefinition, only billboards can be defined ({surface: SURFACE, <options>...}).\n", filename);
+            exit(EXIT_FAILURE);
+        }
+
+        HashMap defMap = ParserElementGetValue(def);
+        if (!HashMapContains(defMap, "surface")) {
+            fprintf(stderr, "Error opening \"%s\": Tile \"%s\" has no attribute \"surface\".\n", filename, n);
+            exit(EXIT_FAILURE);
+        }
+
+        ParserElement surfaceEl = (ParserElement) HashMapGet(defMap, "surface");
+        if (ParserElementGetType(surfaceEl) != STRING_TYPE) { // TODO: this could also MAYBE be a color, since its possible when defining the same attribute in a tile
+            fprintf(stderr, "Error opening \"%s\": Billboard surfaces must be a string file name! (in tile \"%s\")\n", filename, n);
+            exit(EXIT_FAILURE);
+        }
+
+        // TODO: While I don't invent anything else, only a texture will need to be saved, later should probably be a "BillboardData" object or something
+        char* fname = ParserElementGetValue(surfaceEl);
+        Texture* texp = malloc(sizeof(Texture));
+        assert(texp != NULL);
+
+        *texp = LoadTexture(fname);
+
+        // Duplicate checking
+        if (!HashMapContains(map->billboardMap, bbname)) {
+            HashMapPut(map->billboardMap, bbname, texp);
+        } else {
+            UnloadTexture(*texp);
+            free(texp); texp = NULL;
+        }
+
+        HashMapIterGoToNext(billboard_defs_iter);
+    }
+
+    HashMapIterDestroy(&billboard_defs_iter);
+
+    // Change working resource directory back
+    ChangeDirectory(last_workdir);
+    
+    // Billboard placements
+    map->billboards = ListCreate(NULL);
+    if (!ParserTableHasElement(billboardPlacing, "Billboards")) {
+        fprintf(stderr, "Warning opening \"%s\": No parameter \"Billboards\" was given in table \"BillboardPlacing\", so the map will be blank.\n", filename);
+    }
+
+    ParserElement billboardsEl = ParserTableGetElement(billboardPlacing, "Billboards");
+    if (ParserElementGetType(billboardsEl) != LIST_TYPE) {
+        fprintf(stderr, "Error opening \"%s\": \"Billboards\" parameter must be a list of [int bbX, int bbY, string bbName].\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    List billboards = ParserElementGetValue(billboardsEl);
+    ListMoveToStart(billboards);
+    while (ListCanOperate(billboards)) {
+        ParserElement bbEl = ListGetCurrent(billboards);
+
+        if (ParserElementGetType(bbEl) != LIST_TYPE) {
+            fprintf(stderr, "Error opening \"%s\": \"Billboards\" parameter must be a list of [int bbX, int bbY, string bbName].\n", filename);
+            exit(EXIT_FAILURE);
+        }
+
+        // Verify billboard placement list semantics
+        List bbPlacement = (List) ParserElementGetValue(bbEl);
+
+        if (ListGetSize(bbPlacement) != 3 || ParserElementGetType(ListGet(bbPlacement, 0)) != INT_TYPE || ParserElementGetType(ListGet(bbPlacement, 1)) != INT_TYPE || ParserElementGetType(ListGet(bbPlacement, 2)) != STRING_TYPE) {
+            fprintf(stderr, "Error opening \"%s\": \"Billboards\" parameter must be a list of [int tileX, int tileY, string tileName].\n", filename);
+            exit(EXIT_FAILURE);
+        }
+
+        Texture* texp = (Texture*) HashMapGet(map->billboardMap, (char*) ParserElementGetValue(ListGet(bbPlacement, 2)));
+
+        // Create and store the billboard itself
+        Billboard billboard = BillboardCreate(
+            *texp,
+            *((int*) ParserElementGetValue(ListGet(bbPlacement, 0))),
+            *((int*) ParserElementGetValue(ListGet(bbPlacement, 1)))
+        );
+        ListAppendLast(map->billboards, billboard);
+
+        ListMoveToNext(billboards);
+    }
 
     // Cleanup
     ParserResultDestroy(&res);
@@ -369,6 +472,30 @@ void MapDestroy(Map* mp) {
         free(item);
     }
     ListDestroy(&(map->tileNames));
+
+    // Clear (unload) billboard textures in billboardmap
+    iter = HashMapGetIterator(map->billboardMap);
+    while (HashMapIterCanOperate(iter)) {
+        char* str = (char*) HashMapIterGetCurrentKey(iter);
+        Texture* texp = HashMapGet(map->billboardMap, str);
+
+        Texture tex = *texp;
+        UnloadTexture(tex);
+        
+        free(texp);
+
+        HashMapIterGoToNext(iter);
+    }
+    HashMapIterDestroy(&iter);
+    HashMapDestroy(&(map->billboardMap));
+
+
+    // Destroy billboards
+    ListMoveToStart(map->billboards);
+    while (ListCanOperate(map->billboards)) {
+        Billboard billboard = ListPopFirst(map->billboards);
+        BillboardDestroy(&(billboard));
+    }
     
     free(map);
 

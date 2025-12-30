@@ -14,4 +14,7 @@ Texture BillboardGetTexture(Billboard bb);
 int BillboardGetX(Billboard bb);
 int BillboardGetY(Billboard bb);
 
+int BillboardSetX(Billboard bb, int posX);
+int BillboardSetY(Billboard bb, int posY);
+
 #endif

@@ -12,6 +12,11 @@ BLUE_WALL: {surface: "bluestone.png"}
 [BillboardDefinition]
 WABBIT: {surface: "wabbit_alpha.png"}
 
+[BillboardPlacing]
+Billboards : [
+  [5, 1, "WABBIT"]
+]
+
 [TilePlacing]
 Tiles : [
   # Upmost stone room

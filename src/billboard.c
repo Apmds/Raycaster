@@ -49,3 +49,15 @@ int BillboardGetY(Billboard bb) {
 
     return bb->posY;
 }
+
+int BillboardSetX(Billboard bb, int posX) {
+    assert(bb != NULL);
+
+    bb->posX = posX;
+}
+
+int BillboardSetY(Billboard bb, int posY) {
+    assert(bb != NULL);
+
+    bb->posX = posY;
+}
