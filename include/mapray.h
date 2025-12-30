@@ -2,6 +2,7 @@
 #include "raylib.h"
 #include "map.h"
 #include "list.h"
+#include "billboard.h"
 
 #ifndef MAPRAY_H
 #define MAPRAY_H
@@ -9,16 +10,28 @@
 typedef enum MapRayHitSide {
     X_AXIS,
     Y_AXIS,
-    NONE,
 } MapRayHitSide;
+
+typedef enum CollisionType {
+    COLLISION_MAP_TILE,
+    COLLISION_BILLBOARD,
+} CollisionType;
 
 typedef struct rayCollision {
     double collisionX;          // Position of the collision (pixels)
     double collisionY;          //
     int collisionGridX;         // Position in the map grid of the collision
     int collisionGridY;         //
-    MapRayHitSide hitSide;      // Side where the the collision occured (for shading)
-    Tile tile;                  // The tile present in the collision
+    CollisionType collisionType;
+    union {
+        struct { // When COLLISION_MAP_TILE
+            MapRayHitSide hitSide; // Side where the the collision occured (for shading)
+            Tile tile; // The tile present in the collision
+        };
+        struct { // When COLLISION_BILLBOARD
+            Billboard billboard;
+        };
+    };
 } rayCollision;
 
 typedef struct mapray* MapRay;

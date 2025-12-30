@@ -9,6 +9,9 @@ STONE_WALL : {surface: "greystone.png"}
 WOODEN_WALL: {surface: "wood.png"}
 BLUE_WALL: {surface: "bluestone.png"}
 
+[BillboardDefinition]
+WABBIT: {surface: "wabbit_alpha.png"}
+
 [TilePlacing]
 Tiles : [
   # Upmost stone room

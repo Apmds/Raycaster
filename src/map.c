@@ -162,6 +162,7 @@ Map MapCreateFromFile(const char* filename) {
     ParserTable mapSettings = ParserResultGetTable(res, "MapSettings");
     ParserTable tileDefinition = ParserResultGetTable(res, "TileDefinition");
     ParserTable tilePlacing = ParserResultGetTable(res, "TilePlacing");
+    ParserTable billboardDefinition = ParserResultGetTable(res, "BillboardDefinition");
     if (mapSettings == NULL) {
         fprintf(stderr, "Error opening \"%s\": No table named \"MapSettings\".\n", filename);
         exit(EXIT_FAILURE);
@@ -172,6 +173,10 @@ Map MapCreateFromFile(const char* filename) {
     }
     if (tilePlacing == NULL) {
         fprintf(stderr, "Error opening \"%s\": No table named \"TilePlacing\".\n", filename);
+        exit(EXIT_FAILURE);
+    }
+    if (billboardDefinition == NULL) {
+        fprintf(stderr, "Error opening \"%s\": No table named \"BillboardDefinition\".\n", filename);
         exit(EXIT_FAILURE);
     }
 

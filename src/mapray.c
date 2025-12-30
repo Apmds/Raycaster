@@ -266,6 +266,7 @@ void MapRayCast(MapRay ray) {
                 .collisionY = ray->posY + ray->length * rayDirY,
                 .collisionGridX = mapX,
                 .collisionGridY = mapY,
+                .collisionType = COLLISION_MAP_TILE,
                 .tile = collidingTile,
                 .hitSide = hitSide
             };

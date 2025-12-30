@@ -191,34 +191,60 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
             
             double distaux = sqrt(pow(p->posX-collisionPoint.x, 2) + pow(p->posY-collisionPoint.y, 2));
             double distance = (1.5*MapGetTileSize(p->map)*screenHeight) / (distaux*cos(MapRayGetAngleOffsetRad(ray)));
-    
-            Color drawColor;
-            if (currentCollision.hitSide == X_AXIS) {
-                drawColor = (Color) {255, 255, 255, 255};
-            } else {
-                drawColor = (Color) {210, 210, 210, 255};
-            }
-            //DrawRectangle(rayX, (screenHeight/2)-(distance/2), line_width, distance, drawColor);
-
-            Vector2 collisionPointGrid = (Vector2) {currentCollision.collisionGridX, currentCollision.collisionGridY};
-
-            Texture tex = TileGetTexture(currentCollision.tile);
-
-            int ray_percentage;  // Percentage of tile that ray hit (not really percentage, just number of tile pixels)
-            if (currentCollision.hitSide == X_AXIS) {
-                ray_percentage = (int) (collisionPoint.y) % MapGetTileSize(p->map) + 1;
-            } else {
-                ray_percentage = (int) (collisionPoint.x) % MapGetTileSize(p->map) + 1; 
-            }
-            double texture_offset = ((double) (ray_percentage) / (double) (MapGetTileSize(p->map)))*((double) tex.width);
-            int texture_width = 1;
-
-            DrawTexturePro(tex,
-                (Rectangle) {texture_offset-1, 0, texture_width, tex.height},
-                (Rectangle) {rayX, (screenHeight/2)-(distance/2), line_width, distance},
-                (Vector2) {0, 0}, 0, drawColor);
             
-            ListMoveToNext(collisions);
+            if (currentCollision.collisionType == COLLISION_MAP_TILE) {
+                Color drawColor;
+                if (currentCollision.hitSide == X_AXIS) {
+                    drawColor = (Color) {255, 255, 255, 255};
+                } else {
+                    drawColor = (Color) {210, 210, 210, 255};
+                }
+                //DrawRectangle(rayX, (screenHeight/2)-(distance/2), line_width, distance, drawColor);
+    
+                Vector2 collisionPointGrid = (Vector2) {currentCollision.collisionGridX, currentCollision.collisionGridY};
+    
+                Texture tex = TileGetTexture(currentCollision.tile);
+    
+                int ray_percentage;  // Percentage of tile that ray hit (not really percentage, just number of tile pixels)
+                if (currentCollision.hitSide == X_AXIS) {
+                    ray_percentage = (int) (collisionPoint.y) % MapGetTileSize(p->map) + 1;
+                } else {
+                    ray_percentage = (int) (collisionPoint.x) % MapGetTileSize(p->map) + 1; 
+                }
+                double texture_offset = ((double) (ray_percentage) / (double) (MapGetTileSize(p->map)))*((double) tex.width);
+                int texture_width = 1;
+    
+                DrawTexturePro(tex,
+                    (Rectangle) {texture_offset-1, 0, texture_width, tex.height},
+                    (Rectangle) {rayX, (screenHeight/2)-(distance/2), line_width, distance},
+                    (Vector2) {0, 0}, 0, drawColor);
+                
+                ListMoveToNext(collisions);
+            } else if (currentCollision.collisionType == COLLISION_BILLBOARD) {
+                Color drawColor = (Color) {255, 255, 255, 255};
+                //DrawRectangle(rayX, (screenHeight/2)-(distance/2), line_width, distance, drawColor);
+    
+                Vector2 collisionPointGrid = (Vector2) {currentCollision.collisionGridX, currentCollision.collisionGridY};
+    
+                Texture tex = BillboardGetTexture(currentCollision.billboard);
+    
+                // TODO: maybe change this to the billboard width or not idk
+                int ray_percentage;  // Percentage of tile that ray hit (not really percentage, just number of tile pixels)
+                if (currentCollision.hitSide == X_AXIS) {
+                    ray_percentage = (int) (collisionPoint.y) % MapGetTileSize(p->map) + 1;
+                } else {
+                    ray_percentage = (int) (collisionPoint.x) % MapGetTileSize(p->map) + 1; 
+                }
+                double texture_offset = ((double) (ray_percentage) / (double) (MapGetTileSize(p->map)))*((double) tex.width);
+                int texture_width = 1;
+    
+                DrawTexturePro(tex,
+                    (Rectangle) {texture_offset-1, 0, texture_width, tex.height},
+                    (Rectangle) {rayX, (screenHeight/2)-(distance/2), line_width, distance},
+                    (Vector2) {0, 0}, 0, drawColor);
+                
+                ListMoveToNext(collisions);
+            }
         }
     }
 }
