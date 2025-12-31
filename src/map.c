@@ -575,10 +575,6 @@ List MapGetBillboardsAt(Map map, int col, int row) {
         ListMoveToNext(map->billboards);
     }
 
-    if (ListGetSize(ret) > 0) {
-        printf("%d\n", ListGetSize(ret));
-    }
-
     return ret;
 }
 
