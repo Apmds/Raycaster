@@ -119,3 +119,5 @@ If ```transparent``` is set to ```true```, the walls behind this tile will also 
 This project was setup using [this quickstart project](https://github.com/raylib-extras/raylib-quickstart/).
 
 For guidance on development, I've been using the concepts described on [Lode's Computer Graphics Tutorial](https://lodev.org/cgtutor/raycasting.html).
+
+[Circle-Line Intersection](https://mathworld.wolfram.com/Circle-LineIntersection.html).

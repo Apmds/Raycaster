@@ -230,14 +230,13 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
     
                 // TODO: maybe change this to the billboard width or not idk
                 int ray_percentage;  // Percentage of tile that ray hit (not really percentage, just number of tile pixels)
-                if (currentCollision.hitSide == X_AXIS) {
-                    ray_percentage = (int) (collisionPoint.y) % MapGetTileSize(p->map) + 1;
-                } else {
-                    ray_percentage = (int) (collisionPoint.x) % MapGetTileSize(p->map) + 1; 
-                }
-                double texture_offset = ((double) (ray_percentage) / (double) (MapGetTileSize(p->map)))*((double) tex.width);
+                ray_percentage = (int) (collisionPoint.x) % BillboardGetSize(currentCollision.billboard) + 1; 
+                //double texture_offset = ((double) (ray_percentage) / (double) (BillboardGetSize(currentCollision.billboard)))*((double) tex.width);
+                double texture_offset = ((double) (ray_percentage) / (double) (BillboardGetSize(currentCollision.billboard)))*((double) tex.width);
                 int texture_width = 1;
     
+                //printf("\n");
+
                 DrawTexturePro(tex,
                     (Rectangle) {texture_offset-1, 0, texture_width, tex.height},
                     (Rectangle) {rayX, (screenHeight/2)-(distance/2), line_width, distance},

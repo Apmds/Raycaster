@@ -14,7 +14,7 @@ WABBIT: {surface: "wabbit_alpha.png"}
 
 [BillboardPlacing]
 Billboards : [
-  [200, 82, "WABBIT"]
+  [175, 82, "WABBIT"]
 ]
 
 [TilePlacing]

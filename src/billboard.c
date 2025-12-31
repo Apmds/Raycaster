@@ -7,16 +7,18 @@ struct billboard {
     Texture sprite;
     int posX;
     int posY;
+    int size;
 };
 
 
-Billboard BillboardCreate(Texture sprite, int posX, int posY) {
+Billboard BillboardCreate(Texture sprite, int posX, int posY, int size) {
     Billboard bb = malloc(sizeof(struct billboard));
     assert(bb != NULL);
 
     bb->sprite = sprite;
     bb->posX = posX;
     bb->posY = posY;
+    bb->size = size;
 
     return bb;
 }
@@ -48,6 +50,12 @@ int BillboardGetY(Billboard bb) {
     assert(bb != NULL);
 
     return bb->posY;
+}
+
+int BillboardGetSize(Billboard bb) {
+    assert(bb != NULL);
+
+    return bb->size;
 }
 
 int BillboardSetX(Billboard bb, int posX) {

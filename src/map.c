@@ -426,7 +426,8 @@ Map MapCreateFromFile(const char* filename) {
         Billboard billboard = BillboardCreate(
             *texp,
             *((int*) ParserElementGetValue(ListGet(bbPlacement, 0))),
-            *((int*) ParserElementGetValue(ListGet(bbPlacement, 1)))
+            *((int*) ParserElementGetValue(ListGet(bbPlacement, 1))),
+            10
         );
         ListAppendLast(map->billboards, billboard);
 
@@ -542,6 +543,45 @@ int MapGetNumCols(Map map) {
     return map->numCols;
 }
 
+List MapGetBillboardsAt(Map map, int col, int row) {
+    assert(map != NULL);
+
+    const int check_margin = 1; // equates to a 3-by-3 square around the bb
+    
+    List ret = ListCreate(NULL);
+
+    // TODO: this is inneficient, putting all billboards in sectors and only verifying those sectors should help with performance
+    ListMoveToStart(map->billboards);
+    while (ListCanOperate(map->billboards)) {
+        Billboard bb = ListGetCurrent(map->billboards);
+
+        int x = BillboardGetX(bb);
+        int y = BillboardGetY(bb);
+
+        int gridX = x / map->tileSize;
+        int gridY = y / map->tileSize;
+
+        
+        for (int r = -check_margin + gridY; r <= check_margin + gridY; r++) {
+            for (int c = -check_margin + gridX; c <= check_margin + gridX; c++) {
+                //printf("(%d, %d) grid: (%d, %d) (%d, %d)\n", c, r, gridX, gridY, col, row);
+                if (c == col && r == row) {
+                    ListAppendLast(ret, bb);
+                    break;
+                }
+            }
+        }
+
+        ListMoveToNext(map->billboards);
+    }
+
+    if (ListGetSize(ret) > 0) {
+        printf("%d\n", ListGetSize(ret));
+    }
+
+    return ret;
+}
+
 Texture MapGetTextureAt(Map map, int row, int col) {
     assert(map != NULL);
 
@@ -568,7 +608,7 @@ void MapDraw2D(Map map) {
     ListMoveToStart(map->billboards);
     while (ListCanOperate(map->billboards)) {
         Billboard bb = ListGetCurrent(map->billboards);
-        DrawCircle(BillboardGetX(bb), BillboardGetY(bb), 10, (Color) {0, 0, 255, 255});
+        DrawCircle(BillboardGetX(bb), BillboardGetY(bb), BillboardGetSize(bb), (Color) {0, 0, 255, 255});
 
         ListMoveToNext(map->billboards);
     }

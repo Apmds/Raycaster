@@ -1,5 +1,7 @@
 #include "raylib.h"
 #include "tile.h"
+#include "billboard.h"
+#include "list.h"
 
 #ifndef MAP_H
 #define MAP_H
@@ -17,6 +19,8 @@ Tile MapGetTileObject(Map map, int tile);
 int MapGetTileSize(Map map);
 int MapGetNumRows(Map map);
 int MapGetNumCols(Map map);
+
+List MapGetBillboardsAt(Map map, int col, int row);
 
 Texture MapGetTextureAt(Map map, int row, int col);
 
