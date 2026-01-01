@@ -16,8 +16,8 @@ WABBIT: {surface: "wabbit_alpha.png"}
 Billboards : [
   [190, 60, "WABBIT"],
   [190, 190, "WABBIT"],
-  [390, 190, "WABBIT"]
-  [390, 330, "WABBIT"]
+  [390, 190, "WABBIT"],
+  [390, 330, "WABBIT"],
   [190, 330, "WABBIT"]
 ]
 

@@ -270,6 +270,7 @@ void MapRayCast(MapRay ray) {
 
                 // Calculate circle-line intersection
                 double r = BillboardGetSize(bb);
+                // In the original the coordinates of the circle were on (0, 0), so I'm accounting for that
                 double x1 = ray->posX - (double) BillboardGetX(bb);
                 double y1 = ray->posY - (double) BillboardGetY(bb);
                 double x2 = (ray->posX + ray->length * rayDirX) - (double) BillboardGetX(bb);
@@ -290,6 +291,10 @@ void MapRayCast(MapRay ray) {
                 // There can be 2 collision points, but only one is needed
                 double col_x = (det*dy+sgn_dy*dx*sqrt(delta)) / (dr*dr);
                 double col_y = (-det*dx+fabs(dy)*sqrt(delta)) / (dr*dr);
+
+                // Re-account for the actual world coords
+                col_x += (double) BillboardGetX(bb);
+                col_y += (double) BillboardGetY(bb);
 
                 rayCollision* col = malloc(sizeof(rayCollision));
                 *col = (rayCollision) {
