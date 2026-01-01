@@ -233,27 +233,29 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
     
                 Texture tex = BillboardGetTexture(bb);
 
+                // Project collision point to plane
+
+                double bbX = BillboardGetX(bb);
+                double bbY = BillboardGetY(bb);
+
                 // Angle between bb and player
-                double angle_bb_player = atan2(p->posY-BillboardGetY(bb), p->posX-BillboardGetX(bb));
+                double angle_bb_player = atan2(p->posY-bbY, p->posX-bbX);
+
+                // Vector from point in plane to collision point
+                double dx = collisionPoint.x - bbX;
+                double dy = collisionPoint.y - bbY;
+
+                // Plane normal vector
+                double nx = cos(angle_bb_player + PI/2);
+                double ny = sin(angle_bb_player + PI/2);
+
+                double dist = dx*nx + dy*ny;
+
+                double dist_normalized = (dist/(2*BillboardGetSize(bb))) + 0.5;
+
+                double texture_offset = dist_normalized*tex.width;
                 
-                // Offset between ray and the bb
-                double offset_angle = MapRayGetAngleOffsetRad(ray) - angle_bb_player;
-                
-                
-                // TODO: maybe change this to the billboard width or not idk
-                //int ray_percentage;  // Percentage of tile that ray hit (not really percentage, just number of tile pixels)
-                //ray_percentage = (int) (collisionPoint.x) % BillboardGetSize(bb) + 1; 
-                //double texture_offset = ((double) (ray_percentage) / (double) (BillboardGetSize(bb)))*((double) tex.width);
-                
-                //double texture_offset = (offset_angle / (double) (BillboardGetSize(bb)))*((double) tex.width);
-                
-                double distance_to_bb = sqrt((p->posX-BillboardGetX(bb))*(p->posX-BillboardGetX(bb)) + ((p->posY-BillboardGetY(bb))*(p->posY-BillboardGetY(bb))));
-                double distance2 = (distance_to_bb*cos(MapRayGetAngleOffsetRad(ray)));
-                
-                double texture_offset = offset_angle*(distance_to_bb - distance2);/* *((double) tex.width) */
-                int texture_width = 1;
-    
-                printf("texture_offset: %f\n", (distance_to_bb - distance2)*offset_angle);
+                int texture_width = 1;    
 
                 DrawTexturePro(tex,
                     (Rectangle) {texture_offset-1, 0, texture_width, tex.height},
