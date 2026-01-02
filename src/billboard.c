@@ -34,37 +34,37 @@ void BillboardDestroy(Billboard* bbp) {
     *bbp = NULL;
 }
 
-Texture BillboardGetTexture(const Billboard bb) {
+Texture BillboardGetTexture(const struct billboard* bb) {
     assert(bb != NULL);
 
     return bb->sprite;
 }
 
-int BillboardGetX(const Billboard bb) {
+int BillboardGetX(const struct billboard* bb) {
     assert(bb != NULL);
 
     return bb->posX;
 }
 
-int BillboardGetY(const Billboard bb) {
+int BillboardGetY(const struct billboard* bb) {
     assert(bb != NULL);
 
     return bb->posY;
 }
 
-int BillboardGetSize(const Billboard bb) {
+int BillboardGetSize(const struct billboard* bb) {
     assert(bb != NULL);
 
     return bb->size;
 }
 
-int BillboardSetX(Billboard bb, int posX) {
+void BillboardSetX(Billboard bb, int posX) {
     assert(bb != NULL);
 
     bb->posX = posX;
 }
 
-int BillboardSetY(Billboard bb, int posY) {
+void BillboardSetY(Billboard bb, int posY) {
     assert(bb != NULL);
 
     bb->posX = posY;

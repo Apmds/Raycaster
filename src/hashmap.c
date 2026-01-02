@@ -118,7 +118,7 @@ bool HashMapPut(HashMap map, void* key, void* value) {
 }
 
 // Returns an item from the HashMap
-void* HashMapGet(const HashMap map, void* key) {
+void* HashMapGet(const struct hashmap* map, void* key) {
     assert(map != NULL);
     assert(key != NULL);
 
@@ -148,14 +148,14 @@ void* HashMapGet(const HashMap map, void* key) {
 }
 
 // Returns whether or not the HashMap contains a value for the given key
-bool HashMapContains(const HashMap map, void* key) {
+bool HashMapContains(const struct hashmap* map, void* key) {
     assert(map != NULL);
 
     return HashMapGet(map, key) != NULL;
 }
 
 // Removes an item from the HashMap, returning whether or not it was successful
-bool HashMapRemove(const HashMap map, void* key) {
+bool HashMapRemove(const struct hashmap* map, void* key) {
     assert(map != NULL);
 
     // Get list index
@@ -187,7 +187,7 @@ bool HashMapRemove(const HashMap map, void* key) {
 }
 
 // Removes an item from the HashMap, returning it
-void* HashMapPop(const HashMap map, void* key) {
+void* HashMapPop(const struct hashmap* map, void* key) {
     assert(map != NULL);
 
     // Get list index
@@ -219,7 +219,7 @@ void* HashMapPop(const HashMap map, void* key) {
 }
 
 // Prints the map in usual format. printFunc (optional) prints the item correctly)
-void HashMapPrint(const HashMap map, bool newline, void (*printFunc) (void* key, void* value)) {
+void HashMapPrint(const struct hashmap* map, bool newline, void (*printFunc) (void* key, void* value)) {
     assert(map != NULL);
 
     if (printFunc == NULL) {
@@ -304,7 +304,7 @@ bool HashMapIterGoToNext(HashMapIterator iter) {
 }
 
 // Returns whether or not its safe to operate in the current element
-bool HashMapIterCanOperate(const HashMapIterator iter) {
+bool HashMapIterCanOperate(const struct hashmapi* iter) {
     assert(iter != NULL);
     assert(iter->map != NULL);
 

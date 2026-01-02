@@ -9,13 +9,13 @@ typedef struct billboard* Billboard;
 Billboard BillboardCreate(Texture sprite, int posX, int posY, int size);
 void BillboardDestroy(Billboard* bp);
 
-Texture BillboardGetTexture(Billboard bb);
+Texture BillboardGetTexture(const struct billboard* bb);
 
-int BillboardGetX(Billboard bb);
-int BillboardGetY(Billboard bb);
-int BillboardGetSize(Billboard bb);
+int BillboardGetX(const struct billboard* bb);
+int BillboardGetY(const struct billboard* bb);
+int BillboardGetSize(const struct billboard* bb);
 
-int BillboardSetX(Billboard bb, int posX);
-int BillboardSetY(Billboard bb, int posY);
+void BillboardSetX(Billboard bb, int posX);
+void BillboardSetY(Billboard bb, int posY);
 
 #endif
