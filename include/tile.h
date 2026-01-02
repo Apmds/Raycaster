@@ -17,7 +17,7 @@ void TileDestroy(Tile* tilep);
 
 
 // The name of a tile.
-const char* TileGetName(Tile tile);
+char* TileGetName(Tile tile);
 
 // The number (MapTiles) that this tile represents.
 int TileGetMapTiles(Tile tile);

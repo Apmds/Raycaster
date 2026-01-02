@@ -193,24 +193,23 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
                 double distaux = sqrt(pow(p->posX-collisionPoint.x, 2) + pow(p->posY-collisionPoint.y, 2));
                 double distance = (1.5*MapGetTileSize(p->map)*screenHeight) / (distaux*cos(MapRayGetAngleOffsetRad(ray)));
 
-                Color drawColor;
-                if (currentCollision.hitSide == X_AXIS) {
-                    drawColor = (Color) {255, 255, 255, 255};
-                } else {
-                    drawColor = (Color) {210, 210, 210, 255};
-                }
+                Color drawColor = currentCollision.hitSide == X_AXIS ?
+                    (Color) {255, 255, 255, 255}
+                  : (Color) {210, 210, 210, 255};
+                
                 //DrawRectangle(rayX, (screenHeight/2)-(distance/2), line_width, distance, drawColor);
     
                 Vector2 collisionPointGrid = (Vector2) {currentCollision.collisionGridX, currentCollision.collisionGridY};
     
                 Texture tex = TileGetTexture(currentCollision.tile);
-    
-                int ray_percentage;  // Percentage of tile that ray hit (not really percentage, just number of tile pixels)
-                if (currentCollision.hitSide == X_AXIS) {
-                    ray_percentage = (int) (collisionPoint.y) % MapGetTileSize(p->map) + 1;
-                } else {
-                    ray_percentage = (int) (collisionPoint.x) % MapGetTileSize(p->map) + 1; 
-                }
+                
+                int coll_point_axis = currentCollision.hitSide == X_AXIS ?
+                    (int) (collisionPoint.y)
+                  : (int) (collisionPoint.x);
+
+                // Percentage of tile that ray hit (not really percentage, just number of tile pixels)
+                int ray_percentage = coll_point_axis % MapGetTileSize(p->map) + 1;
+                
                 double texture_offset = ((double) (ray_percentage) / (double) (MapGetTileSize(p->map)))*((double) tex.width);
                 int texture_width = 1;
     
@@ -219,8 +218,8 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
                     (Rectangle) {rayX, (screenHeight/2)-(distance/2), line_width, distance},
                     (Vector2) {0, 0}, 0, drawColor);
                 
-                    ListMoveToNext(collisions);
-                } else if (currentCollision.collisionType == COLLISION_BILLBOARD) {
+                ListMoveToNext(collisions);
+            } else if (currentCollision.collisionType == COLLISION_BILLBOARD) {
                 Billboard bb = currentCollision.billboard;
 
                 double distaux = sqrt(pow(p->posX-collisionPoint.x, 2) + pow(p->posY-collisionPoint.y, 2));

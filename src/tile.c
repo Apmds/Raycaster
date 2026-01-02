@@ -54,7 +54,7 @@ void TileDestroy(Tile* tilep) {
     *tilep = NULL;
 }
 
-const char* TileGetName(Tile tile) {
+char* TileGetName(Tile tile) {
     assert(tile != NULL);
     return tile->name;
 }

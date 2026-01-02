@@ -46,7 +46,7 @@ static bool hashmapstrcmp(void* key1, void* key2) {
 
 // INTERNAL: registers a new tile type in a map. Returns false on error (if tile with that name already exists)
 static bool registerTile(Map map, Tile tile, int* tileID) {
-    char* tileName = (char*) TileGetName(tile);
+    char* tileName = TileGetName(tile);
     if (HashMapContains(map->tileMap, tileName)) { // Duplicate checking
         return false;
     }
