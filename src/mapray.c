@@ -171,6 +171,54 @@ MapRayHitSide MapRayGetHitSide(MapRay ray, int idx) {
     return getCollision(ray->collisions, idx).hitSide;
 }
 
+typedef struct bbcollision {
+    bool exists;
+    double col_x;
+    double col_y;
+} bbcollision;
+
+// INTERNAL: checks if ray collides with bb and returns the collision point if it does
+static bbcollision rayCollidesWithBillboard(MapRay ray, Billboard bb) {
+    assert(ray != NULL);
+    assert(bb != NULL);
+
+    // Calculate circle-line intersection
+    double r = BillboardGetSize(bb);
+    // In the original the coordinates of the circle were on (0, 0), so I'm accounting for that
+    double rayDirX = cos(MapRayGetTrueAngleRad(ray));
+    double rayDirY = sin(MapRayGetTrueAngleRad(ray));
+    double x1 = ray->posX - (double) BillboardGetX(bb);
+    double y1 = ray->posY - (double) BillboardGetY(bb);
+    double x2 = (ray->posX + ray->length * rayDirX) - (double) BillboardGetX(bb);
+    double y2 = (ray->posY + ray->length * rayDirY) - (double) BillboardGetY(bb);
+
+    double dx = x2 - x1;
+    double dy = y2 - y1;
+    double dr = sqrt(dx*dx + dy*dy);
+    double det = x1*y2 - x2*y1;
+    double delta = r*r * dr*dr - det*det;
+
+    if (delta < 0) { // No collision
+        return (bbcollision) {
+            .exists = false,
+        };
+    }
+
+    int sgn_dy = dy < 0 ? -1 : 1;
+    // There can be 2 collision points, but only one is needed
+    double col_x = (det*dy+sgn_dy*dx*sqrt(delta)) / (dr*dr);
+    double col_y = (-det*dx+fabs(dy)*sqrt(delta)) / (dr*dr);
+
+    // Re-account for the actual world coords
+    col_x += (double) BillboardGetX(bb);
+    col_y += (double) BillboardGetY(bb);
+
+    return (bbcollision) {
+        .exists = true,
+        .col_x = col_x,
+        .col_y = col_y,
+    };
+}
 
 void MapRayCast(MapRay ray) {
     assert(ray != NULL);
@@ -274,40 +322,19 @@ void MapRayCast(MapRay ray) {
         while (ListCanOperate(billboards)) {
             Billboard bb = ListGetCurrent(billboards);
 
-            // Calculate circle-line intersection
-            double r = BillboardGetSize(bb);
-            // In the original the coordinates of the circle were on (0, 0), so I'm accounting for that
-            double x1 = ray->posX - (double) BillboardGetX(bb);
-            double y1 = ray->posY - (double) BillboardGetY(bb);
-            double x2 = (ray->posX + ray->length * rayDirX) - (double) BillboardGetX(bb);
-            double y2 = (ray->posY + ray->length * rayDirY) - (double) BillboardGetY(bb);
+            bbcollision bbcol = rayCollidesWithBillboard(ray, bb);
 
-            double dx = x2 - x1;
-            double dy = y2 - y1;
-            double dr = sqrt(dx*dx + dy*dy);
-            double det = x1*y2 - x2*y1;
-            double delta = r*r * dr*dr - det*det;
-
-            if (delta < 0) { // No collision
+            if (!bbcol.exists) {
                 ListMoveToNext(billboards);
                 continue;
             }
 
-            int sgn_dy = dy < 0 ? -1 : 1;
-            // There can be 2 collision points, but only one is needed
-            double col_x = (det*dy+sgn_dy*dx*sqrt(delta)) / (dr*dr);
-            double col_y = (-det*dx+fabs(dy)*sqrt(delta)) / (dr*dr);
-
-            // Re-account for the actual world coords
-            col_x += (double) BillboardGetX(bb);
-            col_y += (double) BillboardGetY(bb);
-
             rayCollision* col = malloc(sizeof(rayCollision));
             *col = (rayCollision) {
-                .collisionX = col_x,
-                .collisionY = col_y,
-                .collisionGridX = (int) (col_x) / MapGetTileSize(ray->map),
-                .collisionGridY = (int) (col_y) / MapGetTileSize(ray->map),
+                .collisionX = bbcol.col_x,
+                .collisionY = bbcol.col_y,
+                .collisionGridX = (int) (bbcol.col_x) / MapGetTileSize(ray->map),
+                .collisionGridY = (int) (bbcol.col_y) / MapGetTileSize(ray->map),
                 .collisionType = COLLISION_BILLBOARD,
                 .billboard = bb
             };
