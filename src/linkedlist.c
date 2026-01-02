@@ -38,7 +38,7 @@ void ListDestroy(List* listp) {
 
     List list = *listp;
     ListNode node = list->firstNode;
-    ListNode lastNode = list->firstNode;
+    ListNode lastNode;
 
     // Free all the list nodes
     while (node != NULL) {
@@ -278,12 +278,10 @@ void* ListPopFirst(List list) {
 
     // Free first node and set it to second node
     ListNode first = list->firstNode;
-    //printf("first: %p, list->firstNode: %p, list->firstNode->nextNode: %p\n", first, list->firstNode, list->firstNode->nextNode);
     if (list->currentNode == list->firstNode) {
         list->currentNode = list->firstNode->nextNode;
     }
     list->firstNode = list->firstNode->nextNode;
-    //printf("first: %p (%s), list->firstNode: %p (%s), list->firstNode->nextNode: %p (%s)\n", first, (char*) first->value, list->firstNode, (char*) list->firstNode->value, list->firstNode->nextNode, (char*) list->firstNode->nextNode->value);
 
     void* value = first->value;
     free(first);
@@ -378,9 +376,6 @@ void ListMoveToStart(List list) {
 bool ListMoveToNext(List list) {
     assert(list != NULL);
 
-    //if (list->currentNode->nextNode == NULL) {
-    //    return false;
-    //}
 
     list->currentNode = list->currentNode->nextNode;
     return true;
@@ -403,14 +398,14 @@ void* ListGetCurrent(List list) {
 }
 
 // Returns whether or not the list has a next element
-bool ListHasNext(List list) {
+bool ListHasNext(const List list) {
     assert(list != NULL);
 
     return list->currentNode->nextNode != NULL;
 }
 
 // Returns whether or not its safe to operate in the current list node
-bool ListCanOperate(List list) {
+bool ListCanOperate(const List list) {
     assert(list != NULL);
 
     return list->currentNode != NULL;
@@ -421,7 +416,7 @@ bool ListCanOperate(List list) {
 void ListPrint(List list, bool newline, void (*printFunc) (void* item)) {
     assert(list != NULL);
     
-    void (*usedPrintFunc) (void* item) = list->printFunc;
+    void (*usedPrintFunc) (void* item);
     if (printFunc != NULL) {
         usedPrintFunc = printFunc;
     } else {
@@ -454,7 +449,7 @@ void ListPrint(List list, bool newline, void (*printFunc) (void* item)) {
     }
 }
 
-int ListGetSize(List list) {
+int ListGetSize(const List list) {
     assert(list != NULL);
 
     return list->size;

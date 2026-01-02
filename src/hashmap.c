@@ -81,42 +81,44 @@ bool HashMapPut(HashMap map, void* key, void* value) {
     // Get list index
     unsigned int hash_val = map->hashFunc(key) % map->size;
 
+    // If item does not exist, create new element
+    if (!HashMapContains(map, key)) {
+        HashMapElement element = malloc(sizeof(hashmap_elem));
+        assert(element != NULL);
+    
+        element->key = key;
+        element->value = value;
+        ListAppendFirst(map->values[hash_val], (void*) element);
+        return true;
+    }
+        
     // Update item if exists
-    if (HashMapContains(map, key)) {
-        List list = map->values[hash_val];
+    List list = map->values[hash_val];
 
-        ListMoveToStart(list);
-        while (ListCanOperate(list)) {
-            HashMapElement element = (HashMapElement) ListGetCurrent(list);
+    ListMoveToStart(list);
+    while (ListCanOperate(list)) {
+        HashMapElement element = (HashMapElement) ListGetCurrent(list);
 
-            if (map->compFunc != NULL) {
-                if (map->compFunc(element->key, key)) {
-                    element->value = value;
-                    return true;
-                }
-            } else {
-                if (element->key == key) {
-                    element->value = value;
-                    return true;
-                }
+        if (map->compFunc != NULL) {
+            if (map->compFunc(element->key, key)) {
+                element->value = value;
+                return true;
             }
-
-            ListMoveToNext(list);
+        } else {
+            if (element->key == key) {
+                element->value = value;
+                return true;
+            }
         }
 
+        ListMoveToNext(list);
     }
 
-    HashMapElement element = malloc(sizeof(hashmap_elem));
-    assert(element != NULL);
-
-    element->key = key;
-    element->value = value;
-    ListAppendFirst(map->values[hash_val], (void*) element);
-    return true;
+    return false;
 }
 
 // Returns an item from the HashMap
-void* HashMapGet(HashMap map, void* key) {
+void* HashMapGet(const HashMap map, void* key) {
     assert(map != NULL);
     assert(key != NULL);
 
@@ -131,18 +133,13 @@ void* HashMapGet(HashMap map, void* key) {
     while (ListCanOperate(list)) {
         HashMapElement element = (HashMapElement) ListGetCurrent(list);
 
-        if (map->compFunc != NULL) {
-            if (map->compFunc(element->key, key)) {
-                value = element->value;
-                break;
-            }
-        } else {
-            if (element->key == key) {
-                value = element->value;
-                break;
-            }
+        bool compVal = (map->compFunc != NULL) ? 
+            map->compFunc(element->key, key) : element->key == key;
+
+        if (compVal) {
+            value = element->value;
+            break;
         }
-            
 
         ListMoveToNext(list);
     }
@@ -151,14 +148,14 @@ void* HashMapGet(HashMap map, void* key) {
 }
 
 // Returns whether or not the HashMap contains a value for the given key
-bool HashMapContains(HashMap map, void* key) {
+bool HashMapContains(const HashMap map, void* key) {
     assert(map != NULL);
 
     return HashMapGet(map, key) != NULL;
 }
 
 // Removes an item from the HashMap, returning whether or not it was successful
-bool HashMapRemove(HashMap map, void* key) {
+bool HashMapRemove(const HashMap map, void* key) {
     assert(map != NULL);
 
     // Get list index
@@ -190,7 +187,7 @@ bool HashMapRemove(HashMap map, void* key) {
 }
 
 // Removes an item from the HashMap, returning it
-void* HashMapPop(HashMap map, void* key) {
+void* HashMapPop(const HashMap map, void* key) {
     assert(map != NULL);
 
     // Get list index
@@ -222,7 +219,7 @@ void* HashMapPop(HashMap map, void* key) {
 }
 
 // Prints the map in usual format. printFunc (optional) prints the item correctly)
-void HashMapPrint(HashMap map, bool newline, void (*printFunc) (void* key, void* value)) {
+void HashMapPrint(const HashMap map, bool newline, void (*printFunc) (void* key, void* value)) {
     assert(map != NULL);
 
     if (printFunc == NULL) {
@@ -307,7 +304,7 @@ bool HashMapIterGoToNext(HashMapIterator iter) {
 }
 
 // Returns whether or not its safe to operate in the current element
-bool HashMapIterCanOperate(HashMapIterator iter) {
+bool HashMapIterCanOperate(const HashMapIterator iter) {
     assert(iter != NULL);
     assert(iter->map != NULL);
 

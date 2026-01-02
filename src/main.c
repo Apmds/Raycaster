@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
     
-    char* map_name;
+    const char* map_name;
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-h") == 0) {
             printf(USAGE_MESSAGE);
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
     while (!WindowShouldClose()) {		// run the loop until the user presses ESCAPE or presses the Close button on the window
 
         // How much the screen is scaled from the starting size
-        float scale = min((float)GetScreenWidth()/window_size_x, (float)GetScreenHeight()/window_size_y);
+        float scale = min((float)GetScreenWidth()/(float)window_size_x, (float)GetScreenHeight()/(float)window_size_y);
 
         // Player control
         if (IsKeyPressed(KEY_G)) {
@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
              DrawTexturePro(
                 render_texture.texture, 
                 (Rectangle) { 0.0f, 0.0f, (float) render_texture.texture.width, (float) -render_texture.texture.height },       // Draw flipped because of OpenGL shenanigans
-                (Rectangle) { (GetScreenWidth() - ((float)window_size_x*scale))*0.5f, (GetScreenHeight() - ((float)window_size_y*scale))*0.5f, // Draw at the center of the screen
+                (Rectangle) { ((float)GetScreenWidth() - ((float)window_size_x*scale))*0.5f, ((float)GetScreenHeight() - ((float)window_size_y*scale))*0.5f, // Draw at the center of the screen
                 (float)window_size_x*scale, (float)window_size_y*scale }, (Vector2){ 0, 0 }, 0.0f, WHITE);
 
 
