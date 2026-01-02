@@ -255,17 +255,17 @@ Map MapCreateFromFile(const char* filename) {
         if (ParserElementGetType(tileSurface) == STRING_TYPE) { // Is a file name
             char* tileSurfaceName = (char*) ParserElementGetValue(HashMapGet(tilestuff, "surface"));
 
-            // Handle transparency
+            // Handle transparency (TODO: change this to be less ugly)
             bool isTransparent = false;
-            if (HashMapContains(tilestuff, "transparent")) {
-                ParserElement transparencyelem = HashMapGet(tilestuff, "transparent");
-                if (ParserElementGetType(transparencyelem) != BOOL_TYPE) {
-                    fprintf(stderr, "Error opening \"%s\": Tile transparency must be represented by a bool value! (in tile \"%s\")\n", filename, n);
-                    exit(EXIT_FAILURE);
-                }
+            ParserElement transparencyelem = HashMapGet(tilestuff, "transparent");
+            if (transparencyelem != NULL && ParserElementGetType(transparencyelem) != BOOL_TYPE) {
+                fprintf(stderr, "Error opening \"%s\": Tile transparency must be represented by a bool value! (in tile \"%s\")\n", filename, n);
+                exit(EXIT_FAILURE);
+            } else if (transparencyelem != NULL) {
                 isTransparent = *(bool*) ParserElementGetValue(transparencyelem);
             }
-
+            
+            
             tileobj = TileCreateTextured(tilename, tileID, tileSurfaceName, isTransparent);
 
         } else { // Might be a color

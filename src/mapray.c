@@ -242,7 +242,7 @@ void MapRayCast(MapRay ray) {
     int i = 0;
     while (!ray->is_colliding) {
         MapRayHitSide hitSide;
-
+        
         if (sideDistX < sideDistY) {
             sideDistX += deltaDistX;
             mapX += sideX;
@@ -256,8 +256,15 @@ void MapRayCast(MapRay ray) {
         }
         
         ray->is_colliding = MapGetTile(ray->map, mapX, mapY) != TILE_GROUND;
+        
+        if (!ray->is_colliding) {
+            if (i == MAX_RAY_STEPS) {
+                break;
+            }
+            i++;
+            continue;
+        }
 
-        // If the colliding tile is transparent, then just continue
         if (ray->is_colliding) {
             // Calculate billboard collisions first because they are before the wall
             // Get possible Billboard collisions
@@ -312,7 +319,6 @@ void MapRayCast(MapRay ray) {
 
             ListDestroy(&billboards);
 
-
             Tile collidingTile = MapGetTileObject(ray->map, MapGetTile(ray->map, mapX, mapY));
             rayCollision* col = malloc(sizeof(rayCollision));
             *col = (rayCollision) {
@@ -325,8 +331,8 @@ void MapRayCast(MapRay ray) {
                 .hitSide = hitSide
             };
             ListAppendFirst(ray->collisions, col);
+            // If the colliding tile is transparent, then just continue
             ray->is_colliding = !TileIsTransparent(collidingTile);
-
         }
 
         if (i == MAX_RAY_STEPS) {
