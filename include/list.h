@@ -62,15 +62,15 @@ void ListMoveToEnd(List list);
 void* ListGetCurrent(List list);
 
 // Returns whether or not the list has a next element
-bool ListHasNext(List list);
+bool ListHasNext(const struct list* list);
 
 // Returns whether or not its safe to operate in the current list node
-bool ListCanOperate(List list);
+bool ListCanOperate(const struct list* list);
 
 // Prints the list in the usual format. printFunc (optional) prints the item correctly)
 void ListPrint(List list, bool newline, void (*printFunc) (void* item));
 
 // Returns the size of the list
-int ListGetSize(List list);
+int ListGetSize(const struct list* list);
 
 #endif
