@@ -5,6 +5,7 @@
 
 // List type. Pointers stored inside the list are not freed when removing them or destroying the list.
 typedef struct list* List;
+typedef const struct list* CList;
 
 // Creates a List. printFunc (optional) prints an item from the list)
 List ListCreate(void (*printFunc) (void* item));
@@ -62,15 +63,15 @@ void ListMoveToEnd(List list);
 void* ListGetCurrent(List list);
 
 // Returns whether or not the list has a next element
-bool ListHasNext(const struct list* list);
+bool ListHasNext(CList list);
 
 // Returns whether or not its safe to operate in the current list node
-bool ListCanOperate(const struct list* list);
+bool ListCanOperate(CList list);
 
 // Prints the list in the usual format. printFunc (optional) prints the item correctly)
 void ListPrint(List list, bool newline, void (*printFunc) (void* item));
 
 // Returns the size of the list
-int ListGetSize(const struct list* list);
+int ListGetSize(CList list);
 
 #endif

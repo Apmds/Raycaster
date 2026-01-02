@@ -5,15 +5,16 @@
 #include "raylib.h"
 
 typedef struct billboard* Billboard;
+typedef const struct billboard* CBillboard;
 
 Billboard BillboardCreate(Texture sprite, int posX, int posY, int size);
 void BillboardDestroy(Billboard* bp);
 
-Texture BillboardGetTexture(const struct billboard* bb);
+Texture BillboardGetTexture(CBillboard bb);
 
-int BillboardGetX(const struct billboard* bb);
-int BillboardGetY(const struct billboard* bb);
-int BillboardGetSize(const struct billboard* bb);
+int BillboardGetX(CBillboard bb);
+int BillboardGetY(CBillboard bb);
+int BillboardGetSize(CBillboard bb);
 
 void BillboardSetX(Billboard bb, int posX);
 void BillboardSetY(Billboard bb, int posY);

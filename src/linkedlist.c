@@ -398,14 +398,14 @@ void* ListGetCurrent(List list) {
 }
 
 // Returns whether or not the list has a next element
-bool ListHasNext(const struct list* list) {
+bool ListHasNext(CList list) {
     assert(list != NULL);
 
     return list->currentNode->nextNode != NULL;
 }
 
 // Returns whether or not its safe to operate in the current list node
-bool ListCanOperate(const struct list* list) {
+bool ListCanOperate(CList list) {
     assert(list != NULL);
 
     return list->currentNode != NULL;
@@ -449,7 +449,7 @@ void ListPrint(List list, bool newline, void (*printFunc) (void* item)) {
     }
 }
 
-int ListGetSize(const struct list* list) {
+int ListGetSize(CList list) {
     assert(list != NULL);
 
     return list->size;
