@@ -4,13 +4,13 @@
 #include <stdio.h>
 
 struct maptile {
-    const char* name;
+    char* name;
     bool is_transparent;
     int mapTile;
     Texture texture;
 };
 
-Tile TileCreateTextured(const char* name, int maptile, const char* imgname, bool is_transparent) {
+Tile TileCreateTextured(char* name, int maptile, const char* imgname, bool is_transparent) {
     Tile tile = malloc(sizeof(struct maptile));
     assert(tile != NULL);
 
@@ -27,7 +27,7 @@ Tile TileCreateTextured(const char* name, int maptile, const char* imgname, bool
     return tile;
 }
 
-Tile TileCreateColored(const char* name, int maptile, Color color) {
+Tile TileCreateColored(char* name, int maptile, Color color) {
     Tile tile = malloc(sizeof(struct maptile));
     assert(tile != NULL);
 

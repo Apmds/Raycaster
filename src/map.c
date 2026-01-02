@@ -137,12 +137,6 @@ Map MapCreate(int numRows, int numCols, int tileSize) {
 
 
 Map MapCreateFromFile(const char* filename) {
-    FILE* file = fopen(filename, "r");
-    if (file == NULL) {
-        perror("Error opening file!");
-        exit(EXIT_FAILURE);
-    }
-    
     Map map = malloc(sizeof(struct map));
     assert(map != NULL);
 
@@ -483,6 +477,7 @@ void MapDestroy(Map* mp) {
         Texture tex = *texp;
         UnloadTexture(tex);
         
+        free(str);
         free(texp);
 
         HashMapIterGoToNext(iter);
@@ -497,6 +492,7 @@ void MapDestroy(Map* mp) {
         Billboard billboard = ListPopFirst(map->billboards);
         BillboardDestroy(&(billboard));
     }
+    ListDestroy(&map->billboards);
     
     free(map);
 

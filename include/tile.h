@@ -9,8 +9,8 @@
 typedef struct maptile* Tile;
 
 // Creates a tile object given its info.
-Tile TileCreateTextured(const char* name, int maptile, const char* imgname, bool is_transparent);
-Tile TileCreateColored(const char* name, int maptile, Color color);
+Tile TileCreateTextured(char* name, int maptile, const char* imgname, bool is_transparent);
+Tile TileCreateColored(char* name, int maptile, Color color);
 
 // Destroys a tile object.
 void TileDestroy(Tile* tilep);
