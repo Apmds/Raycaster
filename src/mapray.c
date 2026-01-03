@@ -138,7 +138,7 @@ Vector2 MapRayGetCollisionPoint(MapRay ray, int idx) {
         return (Vector2) {0, 0};
     }
     
-    return (Vector2) {getCollision(ray->collisions, idx).collisionX, getCollision(ray->collisions, idx).collisionY};
+    return (Vector2) {(float) getCollision(ray->collisions, idx).collisionX, (float) getCollision(ray->collisions, idx).collisionY};
 }
 
 Vector2 MapRayGetCollisionPointGrid(MapRay ray, int idx) {
@@ -149,7 +149,7 @@ Vector2 MapRayGetCollisionPointGrid(MapRay ray, int idx) {
         return (Vector2) {0, 0};
     }
     
-    return (Vector2) {getCollision(ray->collisions, idx).collisionGridX, getCollision(ray->collisions, idx).collisionGridY};
+    return (Vector2) {(float) getCollision(ray->collisions, idx).collisionGridX, (float) getCollision(ray->collisions, idx).collisionGridY};
 }
 
 int MapRayGetMaxLength(MapRay ray) {
@@ -306,11 +306,7 @@ void MapRayCast(MapRay ray) {
         ray->is_colliding = MapGetTile(ray->map, mapX, mapY) != TILE_GROUND;
         
         if (!ray->is_colliding) {
-            if (i == MAX_RAY_STEPS) {
-                break;
-            }
-            i++;
-            continue;
+            goto loop_continue;
         }
 
         // Calculate billboard collisions first because they are before the wall
@@ -360,6 +356,7 @@ void MapRayCast(MapRay ray) {
         // If the colliding tile is transparent, then just continue
         ray->is_colliding = !TileIsTransparent(collidingTile);
 
+    loop_continue:
         if (i == MAX_RAY_STEPS) {
             break;
         }
@@ -382,15 +379,9 @@ void MapRayDraw2D(MapRay ray) {
     if (ray->is_colliding) {
         rayCollision lastCollision = getCollision(ray->collisions, 0);
   
-        DrawLine(ray->posX, ray->posY, lastCollision.collisionX, lastCollision.collisionY, color);
-        
-        ListMoveToStart(ray->collisions);
-        while (ListCanOperate(ray->collisions)) {
-            rayCollision current = *((rayCollision*) ListGetCurrent(ray->collisions));
-            ListMoveToNext(ray->collisions);
-        }
+        DrawLine(ray->posX, ray->posY, (int) lastCollision.collisionX, (int) lastCollision.collisionY, color);
     } else {
-        DrawLine(ray->posX, ray->posY, ray->posX + MapRayGetLength(ray)*cos(ray->angle + ray->angle_offset), ray->posY + MapRayGetLength(ray)*sin(ray->angle + ray->angle_offset), color);
+        DrawLine(ray->posX, ray->posY, (int) (ray->posX + MapRayGetLength(ray)*cos(ray->angle + ray->angle_offset)), (int) (ray->posY + MapRayGetLength(ray)*sin(ray->angle + ray->angle_offset)), color);
     }
 }
 

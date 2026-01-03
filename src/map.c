@@ -98,7 +98,7 @@ static Color parseColor(ParserElement element, const char* filename) {
     if (ListGetSize(val) == 4) {
         a = *(int*) ParserElementGetValue(ListGet(val, 3));
     }
-    return (Color) {r, g, b, a};
+    return (Color) {(unsigned char) r, (unsigned char) g, (unsigned char) b, (unsigned char) a};
 }
 
 // DO NOT USE NOW
@@ -490,7 +490,7 @@ void MapDestroy(Map* mp) {
     ListMoveToStart(map->billboards);
     while (ListCanOperate(map->billboards)) {
         Billboard billboard = ListPopFirst(map->billboards);
-        BillboardDestroy(&(billboard));
+        BillboardDestroy(&billboard);
     }
     ListDestroy(&map->billboards);
     
@@ -560,7 +560,6 @@ List MapGetBillboardsAt(Map map, int col, int row) {
         
         for (int r = -check_margin + gridY; r <= check_margin + gridY; r++) {
             for (int c = -check_margin + gridX; c <= check_margin + gridX; c++) {
-                //printf("(%d, %d) grid: (%d, %d) (%d, %d)\n", c, r, gridX, gridY, col, row);
                 if (c == col && r == row) {
                     ListAppendLast(ret, bb);
                     break;
@@ -600,7 +599,7 @@ void MapDraw2D(Map map) {
     ListMoveToStart(map->billboards);
     while (ListCanOperate(map->billboards)) {
         Billboard bb = ListGetCurrent(map->billboards);
-        DrawCircle(BillboardGetX(bb), BillboardGetY(bb), BillboardGetSize(bb), (Color) {0, 0, 255, 255});
+        DrawCircle(BillboardGetX(bb), BillboardGetY(bb), (float) BillboardGetSize(bb), (Color) {0, 0, 255, 255});
 
         ListMoveToNext(map->billboards);
     }
