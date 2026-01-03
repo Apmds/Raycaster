@@ -42,7 +42,7 @@ Player PlayerCreate(int playerX, int playerY, int playerRotationDeg, int numRays
     pl->posY = playerY;
     pl->size = 6;
     pl->speed = 250;
-    pl->rotation = playerRotationDeg*DEG2RAD;
+    pl->rotation = (double) playerRotationDeg*DEG2RAD;
     pl->rotationSpeed = 80*DEG2RAD;
     pl->sensitivity = 80*DEG2RAD;
     pl->FOV = 60;
@@ -54,11 +54,11 @@ Player PlayerCreate(int playerX, int playerY, int playerRotationDeg, int numRays
 
     // Initialize rays.
     if (pl->numRays == 1) {
-        pl->rays[0] = MapRayCreate(pl->posX, pl->posY, pl->rotation, 0, pl->map);
+        pl->rays[0] = MapRayCreate((int) pl->posX, (int) pl->posY, pl->rotation, 0, pl->map);
     } else {   
         double angle_offset = -pl->FOV/2;
         for (int i = 0; i < pl->numRays; i++) {
-            pl->rays[i] = MapRayCreate(pl->posX, pl->posY, pl->rotation, angle_offset*DEG2RAD, pl->map);
+            pl->rays[i] = MapRayCreate((int) pl->posX, (int) pl->posY, pl->rotation, angle_offset*DEG2RAD, pl->map);
             angle_offset += (double) pl->FOV / (double) (pl->numRays - 1);
         }
     }
@@ -96,7 +96,7 @@ static void updateRays(Player p) {
 
     for (int i = 0; i < p->numRays; i++) {
         MapRaySetAngle(p->rays[i], p->rotation);
-        MapRaySetPosition(p->rays[i], p->posX, p->posY);
+        MapRaySetPosition(p->rays[i], (int) p->posX, (int) p->posY);
         MapRayCast(p->rays[i]);
     }
 }
@@ -110,13 +110,13 @@ void PlayerRotate(Player p, double rot) { // rot is in radians
 int PlayerGetX(Player p) {
     assert(p != NULL);
     
-    return p->posX;
+    return (int) p->posX;
 }
 
 int PlayerGetY(Player p) {
     assert(p != NULL);
     
-    return p->posY;
+    return (int) p->posY;
 }
 
 int PlayerGetRotationDeg(Player p) {
@@ -146,11 +146,11 @@ bool PlayerIsColliding(Player p) {
         return false;
     }
 
-    bool colliding = isColliding(p->posX, p->posY, p->map);
+    bool colliding = isColliding((int) p->posX, (int) p->posY, p->map);
 
     // Try collision at 8 points around player.
     for (int angle = 0; angle < 360; angle+=45) {
-        colliding = colliding || isColliding(p->posX + 10*cos(p->rotation + angle*DEG2RAD), p->posY + 10*sin(p->rotation + angle*DEG2RAD), p->map);;
+        colliding = colliding || isColliding((int) (p->posX + 10*cos(p->rotation + angle*DEG2RAD)), (int) (p->posY + 10*sin(p->rotation + angle*DEG2RAD), p->map));
     }
     return colliding;
 }
@@ -159,8 +159,8 @@ bool PlayerIsColliding(Player p) {
 void PlayerDraw2D(Player p) {
     assert(p != NULL);
 
-    DrawCircle(p->posX, p->posY, p->size, (Color) {255, 0, 0, 255});
-    DrawLine(p->posX, p->posY, p->posX + (20*cos(p->rotation)), p->posY + (20*sin(p->rotation)), (Color) {0, 0, 255, 255});
+    DrawCircle((int) p->posX, (int) p->posY, (float) p->size, (Color) {255, 0, 0, 255});
+    DrawLine((int) p->posX, (int) p->posY, (int) (p->posX + (20*cos(p->rotation))), (int) (p->posY + (20*sin(p->rotation))), (Color) {0, 0, 255, 255});
 
     // Draw MapRays
     for (int i = 0; i < p->numRays; i++) {
@@ -187,7 +187,7 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
         
             rayCollision currentCollision = *((rayCollision*) (ListGetCurrent(collisions)));
 
-            Vector2 collisionPoint = (Vector2) {currentCollision.collisionX, currentCollision.collisionY};
+            Vector2 collisionPoint = (Vector2) {(float) currentCollision.collisionX, (float) currentCollision.collisionY};
             
             if (currentCollision.collisionType == COLLISION_MAP_TILE) {
                 double distaux = sqrt(pow(p->posX-collisionPoint.x, 2) + pow(p->posY-collisionPoint.y, 2));
@@ -196,10 +196,6 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
                 Color drawColor = currentCollision.hitSide == X_AXIS ?
                     (Color) {255, 255, 255, 255}
                   : (Color) {210, 210, 210, 255};
-                
-                //DrawRectangle(rayX, (screenHeight/2)-(distance/2), line_width, distance, drawColor);
-    
-                Vector2 collisionPointGrid = (Vector2) {currentCollision.collisionGridX, currentCollision.collisionGridY};
     
                 Texture tex = TileGetTexture(currentCollision.tile);
                 
@@ -214,8 +210,8 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
                 int texture_width = 1;
     
                 DrawTexturePro(tex,
-                    (Rectangle) {texture_offset-1, 0, texture_width, tex.height},
-                    (Rectangle) {rayX, (screenHeight/2)-(distance/2), line_width, distance},
+                    (Rectangle) {(float) (texture_offset-1), 0, (float) texture_width, (float) tex.height},
+                    (Rectangle) {(float) rayX, (float) ((screenHeight/2)-(distance/2)), (float) line_width, (float) distance},
                     (Vector2) {0, 0}, 0, drawColor);
                 
                 ListMoveToNext(collisions);
@@ -226,9 +222,6 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
                 double distance = (1.5*BillboardGetSize(bb)*screenHeight) / (distaux*cos(MapRayGetAngleOffsetRad(ray)));
                 
                 Color drawColor = (Color) {255, 255, 255, 255};
-                //DrawRectangle(rayX, (screenHeight/2)-(distance/2), line_width, distance, drawColor);
-    
-                Vector2 collisionPointGrid = (Vector2) {currentCollision.collisionGridX, currentCollision.collisionGridY};
     
                 Texture tex = BillboardGetTexture(bb);
 
@@ -257,8 +250,8 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
                 int texture_width = 1;    
 
                 DrawTexturePro(tex,
-                    (Rectangle) {texture_offset-1, 0, texture_width, tex.height},
-                    (Rectangle) {rayX, (screenHeight/2)-(distance/2), line_width, distance},
+                    (Rectangle) {(float) (texture_offset-1), 0, (float) texture_width, (float) tex.height},
+                    (Rectangle) {(float) rayX, (float) ((screenHeight/2)-(distance/2)), (float) line_width, (float) distance},
                     (Vector2) {0, 0}, 0, drawColor);
                 
                 ListMoveToNext(collisions);
