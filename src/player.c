@@ -150,7 +150,7 @@ bool PlayerIsColliding(Player p) {
 
     // Try collision at 8 points around player.
     for (int angle = 0; angle < 360; angle+=45) {
-        colliding = colliding || isColliding((int) (p->posX + 10*cos(p->rotation + angle*DEG2RAD)), (int) (p->posY + 10*sin(p->rotation + angle*DEG2RAD), p->map));
+        colliding = colliding || isColliding((int) (p->posX + 10*cos(p->rotation + angle*DEG2RAD)), (int) (p->posY + 10*sin(p->rotation + angle*DEG2RAD)), p->map);
     }
     return colliding;
 }
