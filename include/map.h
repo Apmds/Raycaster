@@ -26,6 +26,6 @@ List MapGetBillboardsAt(Map map, int col, int row);
 Texture MapGetTextureAt(Map map, int row, int col);
 
 void MapDraw2D(Map map);
-void MapDraw3D(Map map, int screenWidth, int screenHeight);
+void MapDraw3D(CMap map, int screenWidth, int screenHeight);
 
 #endif
