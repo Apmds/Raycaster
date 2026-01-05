@@ -28,8 +28,8 @@ static bool isColliding(int posX, int posY, Map map) {
     }
 
     // Get grid position
-    int gridPosX = (int) (posX) / MapGetTileSize(map);
-    int gridPosY = (int) (posY) / MapGetTileSize(map);
+    int gridPosX = posX / MapGetTileSize(map);
+    int gridPosY = posY / MapGetTileSize(map);
 
     return MapGetTile(map, gridPosX, gridPosY) != TILE_GROUND;
 }
@@ -91,7 +91,7 @@ void PlayerSetMap(Player p, Map map) {
     }
 }
 
-static void updateRays(Player p) {
+static void updateRays(CPlayer p) {
     assert(p != NULL);
 
     for (int i = 0; i < p->numRays; i++) {
@@ -107,31 +107,31 @@ void PlayerRotate(Player p, double rot) { // rot is in radians
     p->rotation += rot;
 }
 
-int PlayerGetX(Player p) {
+int PlayerGetX(CPlayer p) {
     assert(p != NULL);
     
     return (int) p->posX;
 }
 
-int PlayerGetY(Player p) {
+int PlayerGetY(CPlayer p) {
     assert(p != NULL);
     
     return (int) p->posY;
 }
 
-int PlayerGetRotationDeg(Player p) {
+int PlayerGetRotationDeg(CPlayer p) {
     assert(p != NULL);
     
     return (int) (p->rotation*RAD2DEG);
 }
 
-double PlayerGetRotationRad(Player p) {
+double PlayerGetRotationRad(CPlayer p) {
     assert(p != NULL);
     
     return p->rotation;
 }
 
-double PlayerGetCameraSensitivity(Player p) {
+double PlayerGetCameraSensitivity(CPlayer p) {
     assert(p != NULL);
     
     return p->sensitivity;
@@ -156,7 +156,7 @@ bool PlayerIsColliding(Player p) {
 }
 
 
-void PlayerDraw2D(Player p) {
+void PlayerDraw2D(CPlayer p) {
     assert(p != NULL);
 
     DrawCircle((int) p->posX, (int) p->posY, (float) p->size, (Color) {255, 0, 0, 255});
@@ -216,7 +216,7 @@ void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
                 
                 ListMoveToNext(collisions);
             } else if (currentCollision.collisionType == COLLISION_BILLBOARD) {
-                Billboard bb = currentCollision.billboard;
+                CBillboard bb = currentCollision.billboard;
 
                 double distaux = sqrt(pow(p->posX-collisionPoint.x, 2) + pow(p->posY-collisionPoint.y, 2));
                 double distance = (1.5*BillboardGetSize(bb)*screenHeight) / (distaux*cos(MapRayGetAngleOffsetRad(ray)));

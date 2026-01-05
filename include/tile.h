@@ -7,6 +7,7 @@
 #define TILE_GROUND 0
 
 typedef struct maptile* Tile;
+typedef const struct maptile* CTile;
 
 // Creates a tile object given its info.
 Tile TileCreateTextured(char* name, int maptile, const char* imgname, bool is_transparent);
@@ -20,12 +21,12 @@ void TileDestroy(Tile* tilep);
 char* TileGetName(Tile tile);
 
 // The number (MapTiles) that this tile represents.
-int TileGetMapTiles(Tile tile);
+int TileGetMapTiles(CTile tile);
 
 // The texture associated with this tile.
-Texture TileGetTexture(Tile tile);
+Texture TileGetTexture(CTile tile);
 
 // True if the tile is transparent
-bool TileIsTransparent(Tile tile);
+bool TileIsTransparent(CTile tile);
 
 #endif

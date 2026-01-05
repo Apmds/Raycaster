@@ -59,17 +59,17 @@ char* TileGetName(Tile tile) {
     return tile->name;
 }
 
-int TileGetMapTiles(Tile tile) {
+int TileGetMapTiles(CTile tile) {
     assert(tile != NULL);
     return tile->mapTile;
 }
 
-Texture TileGetTexture(Tile tile) {
+Texture TileGetTexture(CTile tile) {
     assert(tile != NULL);
     return tile->texture;
 }
 
-bool TileIsTransparent(Tile tile) {
+bool TileIsTransparent(CTile tile) {
     assert(tile != NULL);
     return tile->is_transparent;
 }
