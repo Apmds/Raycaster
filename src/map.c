@@ -29,7 +29,7 @@ struct map {
 
 // djb2 hash
 static unsigned int djb2hash(void* key) {
-    char* str = (char*) key;
+    const char* str = (char*) key;
 
     int hash = 5381;
     int c;
@@ -244,7 +244,7 @@ Map MapCreateFromFile(const char* filename) {
             exit(EXIT_FAILURE);
         }
 
-        HashMap tilestuff = (HashMap) ParserElementGetValue(tile);
+        CHashMap tilestuff = (HashMap) ParserElementGetValue(tile);
         if (!HashMapContains(tilestuff, "surface")) {
             fprintf(stderr, "Error opening \"%s\": Tile \"%s\" has no attribute \"surface\".\n", filename, n);
             exit(EXIT_FAILURE);
@@ -253,7 +253,7 @@ Map MapCreateFromFile(const char* filename) {
         ParserElement tileSurface = (ParserElement) HashMapGet(tilestuff, "surface");
         Tile tileobj = NULL;
         if (ParserElementGetType(tileSurface) == STRING_TYPE) { // Is a file name
-            char* tileSurfaceName = (char*) ParserElementGetValue(HashMapGet(tilestuff, "surface"));
+            const char* tileSurfaceName = (char*) ParserElementGetValue(HashMapGet(tilestuff, "surface"));
 
             // Handle transparency (TODO: change this to be less ugly)
             bool isTransparent = false;
@@ -349,7 +349,7 @@ Map MapCreateFromFile(const char* filename) {
             exit(EXIT_FAILURE);
         }
 
-        HashMap defMap = ParserElementGetValue(def);
+        CHashMap defMap = ParserElementGetValue(def);
         if (!HashMapContains(defMap, "surface")) {
             fprintf(stderr, "Error opening \"%s\": Tile \"%s\" has no attribute \"surface\".\n", filename, n);
             exit(EXIT_FAILURE);
@@ -362,7 +362,7 @@ Map MapCreateFromFile(const char* filename) {
         }
 
         // TODO: While I don't invent anything else, only a texture will need to be saved, later should probably be a "BillboardData" object or something
-        char* fname = ParserElementGetValue(surfaceEl);
+        const char* fname = ParserElementGetValue(surfaceEl);
         Texture* texp = malloc(sizeof(Texture));
         assert(texp != NULL);
 
@@ -414,7 +414,7 @@ Map MapCreateFromFile(const char* filename) {
             exit(EXIT_FAILURE);
         }
 
-        Texture* texp = (Texture*) HashMapGet(map->billboardMap, (char*) ParserElementGetValue(ListGet(bbPlacement, 2)));
+        const Texture* texp = (Texture*) HashMapGet(map->billboardMap, (char*) ParserElementGetValue(ListGet(bbPlacement, 2)));
 
         // Create and store the billboard itself
         Billboard billboard = BillboardCreate(
@@ -499,7 +499,7 @@ void MapDestroy(Map* mp) {
     *mp = NULL;
 }
 
-void MapSetTile(Map map, int row, int col, int tile) {
+void MapSetTile(CMap map, int row, int col, int tile) {
     assert(map != NULL);
     assert(row >= 0);
     assert(col >= 0);
@@ -507,7 +507,7 @@ void MapSetTile(Map map, int row, int col, int tile) {
     map->grid[row][col] = tile;
 }
 
-int MapGetTile(Map map, int row, int col) {
+int MapGetTile(CMap map, int row, int col) {
     assert(map != NULL);
     if (row >= map->numRows || row < 0 || col >= map->numCols || col < 0) {
         return TILE_GROUND;
@@ -521,19 +521,19 @@ Tile MapGetTileObject(Map map, int tile) {
     return HashMapGet(map->tileMap, ListGet(map->tileNames, tile));
 }
 
-int MapGetTileSize(Map map) {
+int MapGetTileSize(CMap map) {
     assert(map != NULL);
     
     return map->tileSize;
 }
 
-int MapGetNumRows(Map map) {
+int MapGetNumRows(CMap map) {
     assert(map != NULL);
 
     return map->numRows;
 }
 
-int MapGetNumCols(Map map) {
+int MapGetNumCols(CMap map) {
     assert(map != NULL);
 
     return map->numCols;
@@ -598,14 +598,14 @@ void MapDraw2D(Map map) {
     // Draw billboards
     ListMoveToStart(map->billboards);
     while (ListCanOperate(map->billboards)) {
-        Billboard bb = ListGetCurrent(map->billboards);
+        CBillboard bb = ListGetCurrent(map->billboards);
         DrawCircle(BillboardGetX(bb), BillboardGetY(bb), (float) BillboardGetSize(bb), (Color) {0, 0, 255, 255});
 
         ListMoveToNext(map->billboards);
     }
 }
 
-void MapDraw3D(Map map, int screenWidth, int screenHeight) {
+void MapDraw3D(CMap map, int screenWidth, int screenHeight) {
     assert(map != NULL);
 
     DrawRectangle(0, 0, screenWidth, screenHeight/2, map->ceilingColor);

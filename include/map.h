@@ -7,18 +7,19 @@
 #define MAP_H
 
 typedef struct map* Map;
+typedef const struct map* CMap;
 
 Map MapCreate(int numRows, int numCols, int tileSize);
 Map MapCreateFromFile(const char* filename);
 void MapDestroy(Map* mp);
 
-void MapSetTile(Map map, int row, int col, int tile);
-int MapGetTile(Map map, int row, int col);
+void MapSetTile(CMap map, int row, int col, int tile);
+int MapGetTile(CMap map, int row, int col);
 Tile MapGetTileObject(Map map, int tile);
 
-int MapGetTileSize(Map map);
-int MapGetNumRows(Map map);
-int MapGetNumCols(Map map);
+int MapGetTileSize(CMap map);
+int MapGetNumRows(CMap map);
+int MapGetNumCols(CMap map);
 
 List MapGetBillboardsAt(Map map, int col, int row);
 
