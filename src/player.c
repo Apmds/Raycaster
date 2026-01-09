@@ -21,7 +21,7 @@ struct player {
 };
 
 // Internal: check if position is colliding with map
-static bool isColliding(int posX, int posY, Map map) {
+static bool isColliding(int posX, int posY, CMap map) {
     // No collision if there's no map.
     if (map == NULL) {
         return false;
@@ -150,7 +150,7 @@ bool PlayerIsColliding(Player p) {
 
     // Try collision at 8 points around player.
     for (int angle = 0; angle < 360; angle+=45) {
-        colliding = colliding || isColliding((int) (p->posX + 10*cos(p->rotation + angle*DEG2RAD)), (int) (p->posY + 10*sin(p->rotation + angle*DEG2RAD)), p->map);
+        colliding = colliding || isColliding((int) (p->posX + 10*cos(p->rotation + (float)angle*DEG2RAD)), (int) (p->posY + 10*sin(p->rotation + (float) angle*DEG2RAD)), p->map);
     }
     return colliding;
 }
@@ -168,7 +168,7 @@ void PlayerDraw2D(CPlayer p) {
     }
 }
 
-void PlayerDraw3D(Player p, int screenWidth, int screenHeight) {
+void PlayerDraw3D(CPlayer p, int screenWidth, int screenHeight) {
     assert(p != NULL);
 
     int line_width = screenWidth / p->numRays;

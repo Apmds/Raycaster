@@ -21,7 +21,7 @@ double PlayerGetCameraSensitivity(CPlayer p);
 bool PlayerIsColliding(Player p);
 
 void PlayerDraw2D(CPlayer p);
-void PlayerDraw3D(Player p, int screenWidth, int screenHeight);
+void PlayerDraw3D(CPlayer p, int screenWidth, int screenHeight);
 
 void PlayerInput(Player p);
 

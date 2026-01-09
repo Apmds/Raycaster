@@ -315,7 +315,7 @@ Map MapCreateFromFile(const char* filename) {
                 exit(EXIT_FAILURE);
             }
 
-            Tile tile = (Tile) HashMapGet(map->tileMap, (char*) ParserElementGetValue(ListGet(tilePlacement, 2)));
+            CTile tile = (Tile) HashMapGet(map->tileMap, (char*) ParserElementGetValue(ListGet(tilePlacement, 2)));
             MapSetTile(map,
                 *((int*) ParserElementGetValue(ListGet(tilePlacement, 0))),
                 *((int*) ParserElementGetValue(ListGet(tilePlacement, 1))),

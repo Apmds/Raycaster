@@ -20,15 +20,15 @@ struct mapray {
 };
 
 // Internal: check if position is colliding with map
-static bool isColliding(int posX, int posY, Map map) {
+static bool isColliding(int posX, int posY, CMap map) {
     // No collision if there's no map.
     if (map == NULL) {
         return false;
     }
 
     // Get grid position
-    int gridPosX = (int) (posX) / MapGetTileSize(map);
-    int gridPosY = (int) (posY) / MapGetTileSize(map);
+    int gridPosX = posX / MapGetTileSize(map);
+    int gridPosY = posY / MapGetTileSize(map);
 
     return MapGetTile(map, gridPosX, gridPosY) != TILE_GROUND;
 }
@@ -93,32 +93,32 @@ void MapRaySetMap(MapRay ray, Map map) {
     ray->map = map;
 }
 
-double MapRayGetTrueAngleRad(MapRay ray) {
+double MapRayGetTrueAngleRad(CMapRay ray) {
     assert(ray != NULL);
 
     return ray->angle + ray->angle_offset;
 }
 
-int MapRayGetTrueAngleDeg(MapRay ray) {
+int MapRayGetTrueAngleDeg(CMapRay ray) {
     assert(ray != NULL);
 
     return (int) ((ray->angle + ray->angle_offset)*RAD2DEG);
 }
 
-double MapRayGetAngleOffsetRad(MapRay ray) {
+double MapRayGetAngleOffsetRad(CMapRay ray) {
     assert(ray != NULL);
 
     return ray->angle_offset;
 }
 
 
-bool MapRayIsColliding(MapRay ray) {
+bool MapRayIsColliding(CMapRay ray) {
     assert(ray != NULL);
 
     return ray->is_colliding;
 }
 
-int MapRayGetCollisionNumber(MapRay ray) {
+int MapRayGetCollisionNumber(CMapRay ray) {
     assert(ray != NULL);
 
     return ListGetSize(ray->collisions);
@@ -152,13 +152,13 @@ Vector2 MapRayGetCollisionPointGrid(MapRay ray, int idx) {
     return (Vector2) {(float) getCollision(ray->collisions, idx).collisionGridX, (float) getCollision(ray->collisions, idx).collisionGridY};
 }
 
-int MapRayGetMaxLength(MapRay ray) {
+int MapRayGetMaxLength(CMapRay ray) {
     assert(ray != NULL);
 
     return ray->max_length;
 }
 
-double MapRayGetLength(MapRay ray) {
+double MapRayGetLength(CMapRay ray) {
     assert(ray != NULL);
 
     return ray->length;
@@ -178,7 +178,7 @@ typedef struct bbcollision {
 } bbcollision;
 
 // INTERNAL: checks if ray collides with bb and returns the collision point if it does
-static bbcollision rayCollidesWithBillboard(MapRay ray, Billboard bb) {
+static bbcollision rayCollidesWithBillboard(MapRay ray, CBillboard bb) {
     assert(ray != NULL);
     assert(bb != NULL);
 
@@ -247,8 +247,8 @@ void MapRayCast(MapRay ray) {
     int tileSize = MapGetTileSize(ray->map);
 
     // Position of ray in map
-    int mapX = (int) ray->posX / MapGetTileSize(ray->map);
-    int mapY = (int) ray->posY / MapGetTileSize(ray->map);
+    int mapX = ray->posX / MapGetTileSize(ray->map);
+    int mapY = ray->posY / MapGetTileSize(ray->map);
 
     // Angle of ray by axis
     double rayDirX = cos(MapRayGetTrueAngleRad(ray));

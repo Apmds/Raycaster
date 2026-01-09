@@ -35,6 +35,7 @@ typedef struct rayCollision {
 } rayCollision;
 
 typedef struct mapray* MapRay;
+typedef const struct mapray* CMapRay;
 
 MapRay MapRayCreate(int posX, int posY, double angle, double angleOffset, Map map);
 void MapRayDestroy(MapRay* mrp);
@@ -42,16 +43,16 @@ void MapRayDestroy(MapRay* mrp);
 void MapRaySetAngle(MapRay ray, double angle);
 void MapRaySetPosition(MapRay ray, int posX, int posY);
 void MapRaySetMap(MapRay ray, Map map);
-double MapRayGetTrueAngleRad(MapRay ray);
-int MapRayGetTrueAngleDeg(MapRay ray);
-double MapRayGetAngleOffsetRad(MapRay ray);
-bool MapRayIsColliding(MapRay ray);
-int MapRayGetCollisionNumber(MapRay ray);
+double MapRayGetTrueAngleRad(CMapRay ray);
+int MapRayGetTrueAngleDeg(CMapRay ray);
+double MapRayGetAngleOffsetRad(CMapRay ray);
+bool MapRayIsColliding(CMapRay ray);
+int MapRayGetCollisionNumber(CMapRay ray);
 List MapRayGetCollisions(MapRay ray);
 Vector2 MapRayGetCollisionPoint(MapRay ray, int idx);
 Vector2 MapRayGetCollisionPointGrid(MapRay ray, int idx);
-int MapRayGetMaxLength(MapRay ray);
-double MapRayGetLength(MapRay ray);
+int MapRayGetMaxLength(CMapRay ray);
+double MapRayGetLength(CMapRay ray);
 MapRayHitSide MapRayGetHitSide(MapRay ray, int idx);
 
 void MapRayCast(MapRay ray);
