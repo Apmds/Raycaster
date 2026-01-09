@@ -11,7 +11,7 @@
 
 #include "resource_dir.h"	// utility header for SearchAndSetResourceDir
 
-#define USAGE_MESSAGE "Usage: raycaster [-h] mapname\n"
+#define USAGE_MESSAGE "Usage: raycaster [-h] [-c] mapname\n"
 #define DESCRIPTION_MESSAGE "Runs the raycaster, loading the specified map file.\n"
 
 float min(float v1, float v2) {
@@ -28,18 +28,26 @@ int main(int argc, char* argv[]) {
     }
     
     const char* map_name;
+    bool uncapped = false;
     for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-h") == 0) {
+        if (strncmp(argv[i], "-h", 2) == 0) {
             printf(USAGE_MESSAGE);
             printf(DESCRIPTION_MESSAGE);
             return EXIT_SUCCESS;
+        } else if (strncmp(argv[i], "-c", 2) == 0) {
+            uncapped = true;
         } else {
             map_name = argv[i];
         }
     }
 
-    // Tell the window to use vsync and work on high DPI displays
-    SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
+    // Tell the window to use vsync when capping fps and work on high DPI displays
+    if (uncapped) {
+        SetConfigFlags(FLAG_WINDOW_HIGHDPI);
+    } else {
+        SetConfigFlags(FLAG_VSYNC_HINT | FLAG_WINDOW_HIGHDPI);
+        SetTargetFPS(60);
+    }
 
     int window_size_x = 1280;
     int window_size_y = 720;
@@ -49,7 +57,6 @@ int main(int argc, char* argv[]) {
     
     // Create the window and OpenGL context
     InitWindow(window_size_x, window_size_y, "Raycaster");
-    SetTargetFPS(60);
 
     RenderTexture2D render_texture = LoadRenderTexture(window_size_x, window_size_y);
     
