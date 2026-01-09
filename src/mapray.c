@@ -303,23 +303,17 @@ void MapRayCast(MapRay ray) {
             hitSide = Y_AXIS;
         }
         
-        ray->is_colliding = MapGetTile(ray->map, mapX, mapY) != TILE_GROUND;
-        
-        if (!ray->is_colliding) {
-            goto loop_continue;
-        }
-
         // Calculate billboard collisions first because they are before the wall
         // Get possible Billboard collisions
         List billboards = MapGetBillboardsAt(ray->map, mapX, mapY);
 
         ListMoveToStart(billboards);
-
+        
         while (ListCanOperate(billboards)) {
             Billboard bb = ListGetCurrent(billboards);
 
             bbcollision bbcol = rayCollidesWithBillboard(ray, bb);
-
+            
             if (!bbcol.exists) {
                 ListMoveToNext(billboards);
                 continue;
@@ -341,22 +335,24 @@ void MapRayCast(MapRay ray) {
 
         ListDestroy(&billboards);
 
-        Tile collidingTile = MapGetTileObject(ray->map, MapGetTile(ray->map, mapX, mapY));
-        rayCollision* col = malloc(sizeof(rayCollision));
-        *col = (rayCollision) {
-            .collisionX = ray->posX + ray->length * rayDirX,
-            .collisionY = ray->posY + ray->length * rayDirY,
-            .collisionGridX = mapX,
-            .collisionGridY = mapY,
-            .collisionType = COLLISION_MAP_TILE,
-            .tile = collidingTile,
-            .hitSide = hitSide
-        };
-        ListAppendFirst(ray->collisions, col);
-        // If the colliding tile is transparent, then just continue
-        ray->is_colliding = !TileIsTransparent(collidingTile);
+        ray->is_colliding = MapGetTile(ray->map, mapX, mapY) != TILE_GROUND;
+        if (ray->is_colliding) {    
+            Tile collidingTile = MapGetTileObject(ray->map, MapGetTile(ray->map, mapX, mapY));
+            rayCollision* col = malloc(sizeof(rayCollision));
+            *col = (rayCollision) {
+                .collisionX = ray->posX + ray->length * rayDirX,
+                .collisionY = ray->posY + ray->length * rayDirY,
+                .collisionGridX = mapX,
+                .collisionGridY = mapY,
+                .collisionType = COLLISION_MAP_TILE,
+                .tile = collidingTile,
+                .hitSide = hitSide
+            };
+            ListAppendFirst(ray->collisions, col);
+            // If the colliding tile is transparent, then just continue
+            ray->is_colliding = !TileIsTransparent(collidingTile);
+        }
 
-    loop_continue:
         if (i == MAX_RAY_STEPS) {
             break;
         }
