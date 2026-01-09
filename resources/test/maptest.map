@@ -11,6 +11,20 @@ WALL2 : {surface: "map2.png"}
 WALL_TRANSPARENT : {surface: "wabbit_alpha.png", transparent: true}
 WALL_RED : {surface: [255, 0, 0, 255]}
 
+[BillboardDefinition]
+WABBIT: {surface: "wabbit_alpha.png"}
+
+[BillboardPlacing]
+Billboards : [
+  [190, 60, "WABBIT"],
+  [190, 190, "WABBIT"],
+  [390, 190, "WABBIT"],
+  [290, 260, "WABBIT"],
+  [390, 330, "WABBIT"],
+  [190, 330, "WABBIT"]
+]
+
+
 [TilePlacing]
 Tiles : [
   [0, 5, "WALL1"],

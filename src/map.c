@@ -551,21 +551,23 @@ List MapGetBillboardsAt(Map map, int col, int row) {
     while (ListCanOperate(map->billboards)) {
         Billboard bb = ListGetCurrent(map->billboards);
 
-        int x = BillboardGetX(bb);
-        int y = BillboardGetY(bb);
+        ListAppendLast(ret, bb);
 
-        int gridX = x / map->tileSize;
-        int gridY = y / map->tileSize;
-
-        
-        for (int r = -check_margin + gridY; r <= check_margin + gridY; r++) {
-            for (int c = -check_margin + gridX; c <= check_margin + gridX; c++) {
-                if (c == col && r == row) {
-                    ListAppendLast(ret, bb);
-                    break;
-                }
-            }
-        }
+        //int x = BillboardGetX(bb);
+        //int y = BillboardGetY(bb);
+        //
+        //int gridX = x / map->tileSize;
+        //int gridY = y / map->tileSize;
+        //
+        //
+        //for (int r = -check_margin + gridY; r <= check_margin + gridY; r++) {
+        //    for (int c = -check_margin + gridX; c <= check_margin + gridX; c++) {
+        //        if (c == col && r == row) {
+        //            ListAppendLast(ret, bb);
+        //            break;
+        //        }
+        //    }
+        //}
 
         ListMoveToNext(map->billboards);
     }

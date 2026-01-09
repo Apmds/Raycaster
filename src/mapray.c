@@ -182,41 +182,35 @@ static bbcollision rayCollidesWithBillboard(CMapRay ray, CBillboard bb) {
     assert(ray != NULL);
     assert(bb != NULL);
 
-    // Calculate circle-line intersection
-    double r = BillboardGetSize(bb);
-    // In the original the coordinates of the circle were on (0, 0), so I'm accounting for that
     double rayDirX = cos(MapRayGetTrueAngleRad(ray));
     double rayDirY = sin(MapRayGetTrueAngleRad(ray));
-    double x1 = ray->posX - (double) BillboardGetX(bb);
-    double y1 = ray->posY - (double) BillboardGetY(bb);
-    double x2 = (ray->posX + ray->length * rayDirX) - (double) BillboardGetX(bb);
-    double y2 = (ray->posY + ray->length * rayDirY) - (double) BillboardGetY(bb);
+    
+    Vector2 A = {(double) ray->posX, (double) ray->posY};
+    Vector2 B = {
+        (double) ray->posX + ray->length * rayDirX,
+        (double) ray->posY + ray->length * rayDirY
+    };
 
-    double dx = x2 - x1;
-    double dy = y2 - y1;
-    double dr = sqrt(dx*dx + dy*dy);
-    double det = x1*y2 - x2*y1;
-    double delta = r*r * dr*dr - det*det;
+    Vector2 C = {
+        (double) BillboardGetX(bb),
+        (double) BillboardGetY(bb)
+    };
 
-    if (delta < 0) { // No collision
-        return (bbcollision) {
-            .exists = false,
-        };
-    }
+    double r = BillboardGetSize(bb);
 
-    int sgn_dy = dy < 0 ? -1 : 1;
-    // There can be 2 collision points, but only one is needed
-    double col_x = (det*dy+sgn_dy*dx*sqrt(delta)) / (dr*dr);
-    double col_y = (-det*dx+fabs(dy)*sqrt(delta)) / (dr*dr);
+    Vector2 AB = Vector2Subtract(B, A);
+    Vector2 AC = Vector2Subtract(C, A);
 
-    // Re-account for the actual world coords
-    col_x += (double) BillboardGetX(bb);
-    col_y += (double) BillboardGetY(bb);
+    float t = Vector2DotProduct(AC, AB) / Vector2DotProduct(AB, AB);
+    t = Clamp(t, 0, 1);
+    
+    Vector2 closest = Vector2Add(A, Vector2Scale(AB, t));
+    double distance = Vector2Length(Vector2Subtract(C, closest));
 
     return (bbcollision) {
-        .exists = true,
-        .col_x = col_x,
-        .col_y = col_y,
+        .exists = distance <= r,
+        .col_x = closest.x,
+        .col_y = closest.y,
     };
 }
 
@@ -303,6 +297,63 @@ void MapRayCast(MapRay ray) {
             hitSide = Y_AXIS;
         }
         
+        ray->is_colliding = MapGetTile(ray->map, mapX, mapY) != TILE_GROUND;
+        if (ray->is_colliding) {
+            // Calculate billboard collisions first because they are before the wall
+            // Get possible Billboard collisions
+            List billboards = MapGetBillboardsAt(ray->map, mapX, mapY);
+    
+            ListMoveToStart(billboards);
+            
+            while (ListCanOperate(billboards)) {
+                Billboard bb = ListGetCurrent(billboards);
+    
+                bbcollision bbcol = rayCollidesWithBillboard(ray, bb);
+                
+                if (!bbcol.exists) {
+                    ListMoveToNext(billboards);
+                    continue;
+                }
+    
+                rayCollision* col = malloc(sizeof(rayCollision));
+                *col = (rayCollision) {
+                    .collisionX = bbcol.col_x,
+                    .collisionY = bbcol.col_y,
+                    .collisionGridX = (int) (bbcol.col_x) / MapGetTileSize(ray->map),
+                    .collisionGridY = (int) (bbcol.col_y) / MapGetTileSize(ray->map),
+                    .collisionType = COLLISION_BILLBOARD,
+                    .billboard = bb
+                };
+                ListAppendFirst(ray->collisions, col);
+    
+                ListMoveToNext(billboards);
+            }
+    
+            ListDestroy(&billboards);
+
+            Tile collidingTile = MapGetTileObject(ray->map, MapGetTile(ray->map, mapX, mapY));
+            rayCollision* col = malloc(sizeof(rayCollision));
+            *col = (rayCollision) {
+                .collisionX = ray->posX + ray->length * rayDirX,
+                .collisionY = ray->posY + ray->length * rayDirY,
+                .collisionGridX = mapX,
+                .collisionGridY = mapY,
+                .collisionType = COLLISION_MAP_TILE,
+                .tile = collidingTile,
+                .hitSide = hitSide
+            };
+            ListAppendFirst(ray->collisions, col);
+            // If the colliding tile is transparent, then just continue
+            ray->is_colliding = !TileIsTransparent(collidingTile);
+        }
+
+        if (i == MAX_RAY_STEPS) {
+            break;
+        }
+        i++;
+    }
+
+    if (!ray->is_colliding) {
         // Calculate billboard collisions first because they are before the wall
         // Get possible Billboard collisions
         List billboards = MapGetBillboardsAt(ray->map, mapX, mapY);
@@ -334,29 +385,6 @@ void MapRayCast(MapRay ray) {
         }
 
         ListDestroy(&billboards);
-
-        ray->is_colliding = MapGetTile(ray->map, mapX, mapY) != TILE_GROUND;
-        if (ray->is_colliding) {    
-            Tile collidingTile = MapGetTileObject(ray->map, MapGetTile(ray->map, mapX, mapY));
-            rayCollision* col = malloc(sizeof(rayCollision));
-            *col = (rayCollision) {
-                .collisionX = ray->posX + ray->length * rayDirX,
-                .collisionY = ray->posY + ray->length * rayDirY,
-                .collisionGridX = mapX,
-                .collisionGridY = mapY,
-                .collisionType = COLLISION_MAP_TILE,
-                .tile = collidingTile,
-                .hitSide = hitSide
-            };
-            ListAppendFirst(ray->collisions, col);
-            // If the colliding tile is transparent, then just continue
-            ray->is_colliding = !TileIsTransparent(collidingTile);
-        }
-
-        if (i == MAX_RAY_STEPS) {
-            break;
-        }
-        i++;
     }
     
     ray->is_colliding = ListGetSize(ray->collisions) > 0;

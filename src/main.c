@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
             // Setup the back buffer for drawing (clear color and depth buffers)
             ClearBackground(BLACK);
 
-             DrawTexturePro(
+            DrawTexturePro(
                 render_texture.texture, 
                 (Rectangle) { 0.0f, 0.0f, (float) render_texture.texture.width, (float) -render_texture.texture.height },       // Draw flipped because of OpenGL shenanigans
                 (Rectangle) { ((float)GetScreenWidth() - ((float)window_size_x*scale))*0.5f, ((float)GetScreenHeight() - ((float)window_size_y*scale))*0.5f, // Draw at the center of the screen
