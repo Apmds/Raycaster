@@ -178,7 +178,7 @@ typedef struct bbcollision {
 } bbcollision;
 
 // INTERNAL: checks if ray collides with bb and returns the collision point if it does
-static bbcollision rayCollidesWithBillboard(MapRay ray, CBillboard bb) {
+static bbcollision rayCollidesWithBillboard(CMapRay ray, CBillboard bb) {
     assert(ray != NULL);
     assert(bb != NULL);
 

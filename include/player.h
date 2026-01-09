@@ -18,7 +18,7 @@ int PlayerGetRotationDeg(CPlayer p);
 double PlayerGetRotationRad(CPlayer p);
 double PlayerGetCameraSensitivity(CPlayer p);
 
-bool PlayerIsColliding(Player p);
+bool PlayerIsColliding(CPlayer p);
 
 void PlayerDraw2D(CPlayer p);
 void PlayerDraw3D(CPlayer p, int screenWidth, int screenHeight);

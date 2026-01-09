@@ -138,7 +138,7 @@ double PlayerGetCameraSensitivity(CPlayer p) {
 }
 
 
-bool PlayerIsColliding(Player p) {
+bool PlayerIsColliding(CPlayer p) {
     assert(p != NULL);
 
     // No collision if there's no map.
