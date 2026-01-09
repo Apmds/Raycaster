@@ -18,6 +18,12 @@ Billboards : [
   [190, 190, "WABBIT"],
   [390, 190, "WABBIT"],
   [290, 260, "WABBIT"],
+  [290, 280, "WABBIT"],
+  [290, 300, "WABBIT"],
+  [290, 320, "WABBIT"],
+  [290, 340, "WABBIT"],
+  [290, 360, "WABBIT"],
+  [290, 380, "WABBIT"],
   [390, 330, "WABBIT"],
   [190, 330, "WABBIT"]
 ]

@@ -353,6 +353,7 @@ void MapRayCast(MapRay ray) {
         i++;
     }
 
+    // Still check for billboards when ray doesn't hit anything
     if (!ray->is_colliding) {
         // Calculate billboard collisions first because they are before the wall
         // Get possible Billboard collisions
