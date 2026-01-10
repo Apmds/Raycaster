@@ -13,6 +13,7 @@
 
 #define USAGE_MESSAGE "Usage: raycaster [-h] [-c] mapname\n"
 #define DESCRIPTION_MESSAGE "Runs the raycaster, loading the specified map file.\n"
+#define NO_MAP_MESSAGE "Must specify a map file to load!\n"
 
 float min(float v1, float v2) {
     return v1 < v2 ? v1 : v2;
@@ -22,12 +23,12 @@ int main(int argc, char* argv[]) {
     // Argument handling
     if (argc <= 1) {
         fprintf(stderr, USAGE_MESSAGE);
-        fprintf(stderr, "Must specify a map file to load!\n");
+        fprintf(stderr, NO_MAP_MESSAGE);
 
         return EXIT_FAILURE;
     }
     
-    const char* map_name;
+    const char* map_name = NULL;
     bool uncapped = false;
     for (int i = 1; i < argc; i++) {
         if (strncmp(argv[i], "-h", 2) == 0) {
@@ -39,6 +40,12 @@ int main(int argc, char* argv[]) {
         } else {
             map_name = argv[i];
         }
+    }
+    if (map_name == NULL) {
+        fprintf(stderr, USAGE_MESSAGE);
+        fprintf(stderr, NO_MAP_MESSAGE);
+        
+        return EXIT_FAILURE;
     }
 
     // Tell the window to use vsync when capping fps and work on high DPI displays
