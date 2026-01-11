@@ -181,7 +181,11 @@ void PlayerDraw3D(CPlayer p, int screenWidth, int screenHeight) {
         
         int rayX = (line_width/2)+i*line_width;
 
+        
         List collisions = MapRayGetCollisions(ray);
+        if (ListGetSize(collisions) > 2) {
+            printf("ray %d: %d collisions\n", i, ListGetSize(collisions));
+        }
         ListMoveToStart(collisions);
         while (ListCanOperate(collisions)) {
         
@@ -247,7 +251,7 @@ void PlayerDraw3D(CPlayer p, int screenWidth, int screenHeight) {
 
                 double texture_offset = dist_normalized*tex.width;
                 
-                int texture_width = 1;    
+                int texture_width = 1;
 
                 DrawTexturePro(tex,
                     (Rectangle) {(float) (texture_offset-1), 0, (float) texture_width, (float) tex.height},
